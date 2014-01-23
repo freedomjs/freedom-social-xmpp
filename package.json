@@ -1,0 +1,20 @@
+{
+  "name": "freedom-social-xmpp",
+  "description": "XMPP Social provider for freedomjs",
+  "version": "0.0.1",
+  "bugs": {
+    "url": "http://github.com/freedomjs/freedom-social-xmpp/issues",
+    "email": "freedom@cs.washington.edu"
+  },
+  "contributors": [
+    "Will Scott <willscott@gmail.com> (https://wills.co.tt/)",
+    "Raymond Cheng <ryscheng@cs.washington.edu>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/freedomjs/freedom-social-xmpp"
+  },
+  "devDependencies": {
+    "node-xmpp-client": "~0.1.6"
+  }
+}
