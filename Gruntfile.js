@@ -7,8 +7,8 @@ module.exports = function(grunt) {
           'node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
-          alias : ['browser-request:request', 'lib/dns.js:dns'],
-          ignore : ['node-stringprep', 'faye-websocket', './srv', 'tls']
+          alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net'],
+          ignore : ['node-stringprep', 'faye-websocket', 'tls']
         }
       }
     }
