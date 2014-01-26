@@ -26,7 +26,7 @@ var SocialProvider = function() {
 
 SocialProvider.prototype.login = function(loginOpts, continuation) {
   view.once('message', this.finishLogin.bind(loginOpts, continuation));
-  view.open({file: 'login.html'}).done(function() {
+  view.open('SocialLogin', {file: 'login.html'}).done(function() {
     view.show();
   });
 };
