@@ -1,0 +1,15 @@
+{
+  "name": "XMPP Rendezvous",
+  "description": "Social provider using XMPP chat protocols",
+  "app": {
+    "script": ["socialprovider.js", "node-xmpp-browser.js"]
+  },
+  "provides": [
+    "social"
+  ],
+  "permissions": [
+    "core.socket",
+    "core.view",
+    "core.storage"
+  ]
+}

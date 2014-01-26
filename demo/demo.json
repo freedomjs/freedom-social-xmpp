@@ -1,0 +1,13 @@
+{
+  "name": "XMPP Chat",
+  "description": "XMPP Chat Sample freedom.js application",
+  "app": {
+    "script": "main.js"
+  },
+  "dependencies": {
+    "socialprovider": {
+      "url": "xmpp/social.xmpp.json",
+      "api": "social"
+    }
+  }
+}
