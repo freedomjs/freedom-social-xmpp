@@ -4,9 +4,8 @@
  **/
 
 var social = freedom.social();
-var window = {
-  socket: freedom['core.socket']()
-};
+var window = {};
+var socket = freedom['core.socket']();
 var view = freedom['core.view']();
 var NETWORK_ID = 'xmpp';
 var NETWORK_NAME = 'Generic XMPP Identity Provider';
@@ -32,15 +31,15 @@ SocialProvider.prototype.login = function(loginOpts, continuation) {
 };
 
 SocialProvider.prototype.finishLogin = function(loginOpts, continuation, msg) {
-  console.warn(JSON.stringify(msg));
   this.updateStatus('OFFLINE', 'Logging In');
-//  var connectOpts = {
-//    xmlns:'jabber:client',
-//    host:,
-//    port:,
-//    jid:
-//  };
-//  this.client = new windowXMPP.Client();
+  // TODO(willscott): Support more broad login methods.
+  var connectOpts = {
+    xmlns:'jabber:client',
+    jid: msg.un,
+    password: msg.pw,
+    disallowTLS: true
+  };
+  this.client = new window.XMPP.Client(connectOpts);
 };
 
 SocialProvider.prototype.getRoster = function(continuation) {

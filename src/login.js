@@ -3,9 +3,8 @@ window.addEventListener('load', function() {
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     parent.postMessage({
-      jid: form.un.value,
-      cred: form.pw.value,
-      host: form.sv.value
+      un: form.un.value,
+      pw: form.pw.value,
     }, '*');
     return false;
   }, true);
