@@ -25,13 +25,14 @@ var SocialProvider = function() {
 };
 
 SocialProvider.prototype.login = function(loginOpts, continuation) {
-  view.once('message', this.finishLogin.bind(loginOpts, continuation));
+  view.once('message', this.finishLogin.bind(this, loginOpts, continuation));
   view.open('SocialLogin', {file: 'login.html'}).done(function() {
     view.show();
   });
 };
 
 SocialProvider.prototype.finishLogin = function(loginOpts, continuation, msg) {
+  console.warn(JSON.stringify(msg));
   this.updateStatus('OFFLINE', 'Logging In');
 //  var connectOpts = {
 //    xmlns:'jabber:client',
