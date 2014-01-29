@@ -18,19 +18,28 @@ var DEFAULT_XMPP_PORT = 5222;
  */
 var SocialProvider = function() {
   this.client = null;
+  this.credentials = null;
   this.id = null;
-  this.roster = {};
   setTimeout(this.updateStatus.bind(this, 'OFFLINE', 'offline'), 0);
+  
+  this.profile = {
+    me: {},
+    roster: {}
+  };
 };
 
 SocialProvider.prototype.login = function(loginOpts, continuation) {
-  view.once('message', this.finishLogin.bind(this, loginOpts, continuation));
-  view.open('SocialLogin', {file: 'login.html'}).done(function() {
-    view.show();
-  });
+  if (!this.credentials) {
+    view.once('message', this.finishLogin.bind(this, loginOpts, continuation));
+    view.open('SocialLogin', {file: 'login.html'}).done(function() {
+      view.show();
+    });
+  }
 };
 
 SocialProvider.prototype.finishLogin = function(loginOpts, continuation, msg) {
+  this.credentials = msg;
+  view.close();
   this.updateStatus('OFFLINE', 'Logging In');
   // TODO(willscott): Support more broad login methods.
   var connectOpts = {
@@ -40,6 +49,15 @@ SocialProvider.prototype.finishLogin = function(loginOpts, continuation, msg) {
     disallowTLS: true
   };
   this.client = new window.XMPP.Client(connectOpts);
+  this.client.addListener('online', function() {
+    console.warn('client online!');
+  }.bind(this));
+  this.client.addListener('error', function(e) {
+    console.error('XMPP error occured: ', e);
+  }.bind(this));
+  this.client.addListener('stanza', function(m) {
+    console.log('xmpp stanza received: ', m);
+  }.bind(this));
 };
 
 SocialProvider.prototype.getRoster = function(continuation) {

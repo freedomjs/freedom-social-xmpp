@@ -21,16 +21,18 @@ var Socket_chrome = function(channel) {
  * the socket user.
  */
 var readSocket = function(socketId) {
-  var saved_socketId = socketId;
-  var dataRead = function (readInfo) {
+  var saved_socketId = socketId,
+      dataRead;
+  dataRead = function (readInfo) {
     if (readInfo.resultCode > 0) {
       var arg = {socketId: socketId, data: readInfo.data};
+      console.warn("Read", arg);
       this.dispatchEvent('onData', arg);
-      readLoop();
+      chrome.socket.read(socketId, null, dataRead);
     } else if (readInfo.resultCode === 0 || readInfo.resultCode === -15 ||
         readInfo.resultCode === -2) {
       // The result code is -15 if the connection was closed, which can
-      // can happen in usual program flow, so we will not log the error.
+      // happen in usual program flow, so we will not log the error.
       // console.warn('Got a disconnection for socket ' + socketId);
       if (readInfo.resultCode === -2) {
         console.log('HACKITY HACK: Ignoring an unexpected -2 from a socket.  ' +
@@ -42,10 +44,7 @@ var readSocket = function(socketId) {
                   ' occured when reading from socket ' + socketId);
     };
   }.bind(this);
-  var readLoop = function () {
-    chrome.socket.read(socketId, null, dataRead);
-  };
-  readLoop();
+  chrome.socket.read(socketId, null, dataRead);
 };
 
 Socket_chrome.prototype.connect = function(socketId, hostname, port, callback) {
