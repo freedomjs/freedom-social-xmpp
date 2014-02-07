@@ -1,14 +1,30 @@
 <html>
-<head>
-<script type='text/javascript' src='login.js'>
-</script>
-</head>
-<body>
-Please Log In:
-<form>
-<label for='un'>Username:</label><input type='text' name='un' placeholder='Username' /><br />
-<label for='pw'>Password:</label><input type='password' name='pw' placeholder='Password' /><br />
-<input type='submit' value='submit' />
-</form>
-</body>
+  <head>
+    <script type='text/javascript' src='login.js'></script>
+  </head>
+  <body>
+    <header>
+      <h1>Please Log In:</h1>
+    </header>
+    <section>
+      <span id='status'></span>
+    </section>
+    <section>
+      <form>
+        <!-- TODO: Make Login UX decent -->
+        <label for='userId'>Username:</label>
+        <input type='text' name='userId' placeholder='Username' /><br />
+        <label for='password'>Password:</label>
+        <input type='password' name='password' placeholder='Password' /><br />
+        <fieldgroup>
+          <legend>Optional</legend>
+          <label for='host'>Host:</label>
+          <input type='text' name='host' placeholder='Host' /><br />
+          <label for='port'>Port:</label>
+          <input type='text' name='port' placeholder='Port' /><br />
+        </fieldgroup>
+        <input type='submit' value='submit' />
+      </form>
+    </section>
+  </body>
 </html>

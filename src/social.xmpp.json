@@ -2,7 +2,7 @@
   "name": "XMPP Rendezvous",
   "description": "Social provider using XMPP chat protocols",
   "app": {
-    "script": ["socialprovider.js", "node-xmpp-browser.js"]
+    "script": ["socialprovider.js", "vcardstore.js", "node-xmpp-browser.js"]
   },
   "provides": [
     "social"
@@ -11,5 +11,8 @@
     "core.socket",
     "core.view",
     "core.storage"
-  ]
+  ],
+  "views": {
+    "XMPPLogin": ["login.html", "login.js"]
+  }
 }
