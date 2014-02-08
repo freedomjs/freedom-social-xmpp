@@ -1,4 +1,4 @@
-/*globals freedom:true,setTimeout,console */
+/*globals freedom:true,setTimeout,console,VCardStore */
 /*jslint indent:2,white:true,sloppy:true */
 
 /**
@@ -102,6 +102,7 @@ XMPPSocialProvider.prototype.initializeState = function() {
     userId: this.credentials.userId,
     clients: {}
   };
+
   this.profile.clients[this.id] = {
     clientId: this.id,
     network: this.loginOpts.network,
@@ -109,6 +110,14 @@ XMPPSocialProvider.prototype.initializeState = function() {
   };
 };
 
+/**
+ * Create an XMPP.Client, and begin connection to the server.
+ * Uses settings from most recent 'login()' call, and from
+ * credentials retrieved from the view.
+ * @method connect
+ * @private
+ * @param {Function} continuation Callback upon connection
+ */
 XMPPSocialProvider.prototype.connect = function(continuation) {
   this.status = 'connecting';
   var key, connectOpts = {
@@ -146,7 +155,19 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
  * }
  */
 XMPPSocialProvider.prototype.getRoster = function(continuation) {
-  continuation(this.roster);
+  var roster = this.vCardStore.getCards(), client;
+
+  if (roster[this.credentials.userId]) {
+    for (client in this.profile) {
+      if (this.profile.hasOwnProperty(client)) {
+        roster[this.credentials.userId].clients[client] = this.profile[client];
+      }
+    }
+  } else {
+    roster[this.credentials.userId] = this.profile;
+  }
+
+  continuation(roster);
 };
 
 /**
@@ -175,7 +196,107 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   continuation();
 };
 
+/**
+ * Handle messages from the XMPP client.
+ * @method onMessage
+ * @private
+ */
 XMPPSocialProvider.prototype.onMessage = function(msg) {
+  // Is it a message?
+  if (msg.is('message') && msg.getChildText('body') && msg.attrs.type !== 'error') {
+    this.sawClient(msg.attrs.from);
+    
+    if (msg.attrs.to.indexOf(this.loginOpts.agent) !== -1) {
+      this.receiveMessage(msg.attrs.from, msg.getChildText('body'));
+    } else {
+      console.warn('Ignoring Chat Message: ' + JSON.stringify(msg.attrs));
+    }
+  // Is it a status request?
+  } else if (msg.is('iq') && msg.attrs.type === 'get') {
+    if (msg.getChild('query') && msg.getChild('query').attrs.xmlns ===
+        'http://jabber.org/protocol/disco#info') {
+      this.sawClient(msg.attrs.from);
+
+      this.sendCapabilities(msg.attrs.from, msg);      
+    }
+  // Is it a staus response?
+  } else if (msg.is('iq') && msg.attrs.type === 'result') {
+    //TODO(willscott): Implement.
+    this.updateRoster(msg);
+  // Is it a status?
+  } else if (msg.is('presence')) {
+    this.onPresence(msg);
+  // Is it something we don't understand?
+  } else {
+    console.warn('Dropped unknown XMPP message');
+  }
+};
+
+/**
+ * Receive a textual message from XMPP and relay it to
+ * the parent module.
+ * @method receiveMessage
+ * @private
+ * @param {String} from The Client ID of the message origin
+ * @param {String} msg The received message.
+ */
+XMPPSocialProvider.prototype.receiveMessage = function(from, msg) {
+  this.dispatchEvent('onMessage', {
+    fromClientId: from,
+    fromUserId: window.XMPP.JID(from).bare().toString(),
+    network: this.loginOpts ? this.loginOpts.network : null,
+    userId: this.credentials ? this.credentials.userId : null,
+    toClientId: this.id,
+    message: msg
+  });
+};
+
+/**
+ * Reply to a capability inquiry with client abilities.
+ * @method sendCapabilities
+ * @private
+ * @param {String} to The client requesting capabilities
+ * @param {XMPP.Stanza} msg The request message
+ */
+XMPPSocialProvider.prototype.sendCapabilities = function(to, msg) {
+  var query = msg.getChild('query');
+  
+  msg.attrs.to = msg.attrs.from;
+  delete msg.attrs.from;
+  msg.attrs.type = 'result';
+
+  query.c('identity', {
+    category: 'client',
+    name: this.loginOpts.agent,
+    type: 'bot'
+  }).up()
+  .c('feature', {'var': 'http://jabber.org/protocol/caps'}).up()
+  .c('feature', {'var': 'http://jabber.org/protocol/disco#info'}).up()
+  .c('feature', {'var': this.loginOpts.url}).up();
+  this.client.send(msg);
+};
+
+/**
+ * Receive an XMPP Presence change message from another user.
+ * @method onPresence
+ * @private
+ * @param {XMPP.Stanza} msg The incoming message
+ */
+XMPPSocialProvider.prototype.onPresence = function(msg) {
+  var status = msg.getChildText('show') || 'online',
+      hash;
+  if (msg.attrs.type === 'unavailable') {
+    status = 'unavailable';
+  }
+
+  if (msg.getChild('x') && msg.getChild('x').getChildText('photo')) {
+    hash = msg.getChild('x').getChildText('photo');
+  }
+  //TODO(willscott):Finish
+};
+
+XMPPSocialProvider.prototype.sawClient = function(client) {
+  //TODO(willscott): Update date
 };
 
 XMPPSocialProvider.prototype.onOnline = function(continuation) {
@@ -234,6 +355,13 @@ XMPPSocialProvider.prototype.onRosterChange = function(user, card) {
   this.dispatchEvent('onChange', card);
 };
 
+/**
+ * Update the parent freedom module with current status.
+ * @method updateStatus
+ * @private
+ * @param {String} msg Current Provider Status
+ *     Expected to be a key in social.STATUS_NETWORK
+ */
 XMPPSocialProvider.prototype.updateStatus = function(msg) {
   var message = {
     network: this.loginOpts ? this.loginOpts.network : null,
@@ -246,6 +374,13 @@ XMPPSocialProvider.prototype.updateStatus = function(msg) {
   return message;
 };
 
+/**
+ * respond to an Error in the XMPP Client.
+ * Logs out, resets state, and reports to parent module.
+ * @method onError
+ * @private
+ * @param {Error|String} err The error.
+ */
 XMPPSocialProvider.prototype.onError = function(err) {
   this.status = 'error';
   var ret = {
@@ -263,6 +398,7 @@ XMPPSocialProvider.prototype.onError = function(err) {
   return ret;
 };
 
+// Register provider when in a module context.
 if (typeof freedom !== 'undefined') {
   freedom.social().provideAsynchronous(XMPPSocialProvider);
 }
