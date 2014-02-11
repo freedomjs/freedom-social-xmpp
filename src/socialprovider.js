@@ -126,7 +126,8 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   var key, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
-    disallowTLS: true
+    disallowTLS: true,
+    preferred: 'PLAIN' //TODO: why doesn't DIGEST-MD5 work?
   };
   for (key in this.credentials) {
     if (this.credentials.hasOwnProperty(key)) {
@@ -135,6 +136,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
 
   try {
+    console.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
     continuation(this.onError('XMPP Connection Error: ' + e));

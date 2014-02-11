@@ -15,7 +15,7 @@
     "url": "https://github.com/freedomjs/freedom-social-xmpp"
   },
   "devDependencies": {
-    "node-xmpp-client": "~0.1.6",
+    "node-xmpp-client": "~0.2.3",
     "grunt": "~0.4.2",
     "grunt-browserify": "~1.3.0",
     "browser-request": "~0.3.1",
