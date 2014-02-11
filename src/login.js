@@ -12,7 +12,7 @@ window.addEventListener('load', function() {
     if (form.port.value) {
       credentials.port = form.port.value;
     }
-    parent.postMessage(credentials, '*');
+    parent.postMessage({cmd: 'auth', message: credentials}, '*');
     return false;
   }, true);
   

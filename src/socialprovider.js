@@ -48,7 +48,9 @@ var XMPPSocialProvider = function() {
  *   network - A string used to differentiate this provider in events.
  */
 XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
-  this.loginOpts = loginOpts;
+  if (loginOpts) {
+    this.loginOpts = loginOpts;
+  }
 
   if (!this.credentials) {
     if (!this.view) {
@@ -68,7 +70,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   if (!this.client) {
     this.initializeState();
   }
-  this.connect();
+  this.connect(continuation);
 };
 
 /**
@@ -83,6 +85,7 @@ XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
     this.credentials = msg.message;
     this.view.close();
     delete this.view;
+    this.login(null, continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
     continuation(this.onError(msg.message));
   } else {
