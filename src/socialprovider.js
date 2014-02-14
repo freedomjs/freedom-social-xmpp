@@ -300,6 +300,29 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   //TODO(willscott):Finish
 };
 
+XMPPSocialProvider.prototype.updateRoster = function(msg) {
+  var from = msg.attrs.from || msg.attrs.to,
+      query = msg.getChild('query'),
+      vCard = msg.getChild('vCard'),
+      items, i;
+
+  // Response to Query
+  if (query && query.attrs.xmlns === 'jabber:iq:roster') {
+    items = query.getChildren('item');
+    for (i = 0; i < items.length; i += 1) {
+      if(items[i].attrs.jid && items[i].attrs.name) {
+        this.vCardStore.updateProperty(items[i].attrs.jid, 'name',
+            items[i].attrs.name);
+      }
+    }
+  }
+
+  // Response to photo
+  if (vCard && vCard.attrs.xmlns === 'vcard-temp') {
+    this.vCardStore.updateVcard(vCard);
+  }
+};
+
 XMPPSocialProvider.prototype.sawClient = function(client) {
   //TODO(willscott): Update date
 };
