@@ -226,7 +226,6 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
     }
   // Is it a staus response?
   } else if (msg.is('iq') && msg.attrs.type === 'result') {
-    //TODO(willscott): Implement.
     this.updateRoster(msg);
   // Is it a status?
   } else if (msg.is('presence')) {
@@ -289,6 +288,7 @@ XMPPSocialProvider.prototype.sendCapabilities = function(to, msg) {
  */
 XMPPSocialProvider.prototype.onPresence = function(msg) {
   var status = msg.getChildText('show') || 'online',
+      user = msg.attrs.from,
       hash;
   if (msg.attrs.type === 'unavailable') {
     status = 'unavailable';
@@ -297,7 +297,14 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   if (msg.getChild('x') && msg.getChild('x').getChildText('photo')) {
     hash = msg.getChild('x').getChildText('photo');
   }
-  //TODO(willscott):Finish
+  
+  if (status === 'unavailable') {
+    this.vCardStore.updatePropety(user, 'status', 'offline');
+  } else {
+    
+  }
+
+  this.vCardStore.refreshCard(user, hash);
 };
 
 XMPPSocialProvider.prototype.updateRoster = function(msg) {
@@ -324,6 +331,7 @@ XMPPSocialProvider.prototype.updateRoster = function(msg) {
 };
 
 XMPPSocialProvider.prototype.sawClient = function(client) {
+  this.vCardStore.updatePropety(client, 'date', new Date());
   //TODO(willscott): Update date
 };
 

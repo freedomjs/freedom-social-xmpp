@@ -82,27 +82,25 @@ VCardStore.prototype.updatePropety = function(user, property, value) {
   this.cards[user][property] = value;
 };
 
-VCardStore.prototype.getVcard = function(user, hash, cb) {
+VCardStore.prototype.refreshContact = function(user, hash) {
   if (!this.storage) {
-    return cb(false);
+    return false;
   }
 
   if (this.cards[user] && (!hash || this.cards[user].hash === hash)) {
-    return cb(this.cards[user]);
+    return this.cards[user];
   }
   
-  this.storage.get('vcard-' + user).done(function(cb, result) {
+  this.storage.get('vcard-' + user).done(function(result) {
     if (result === null || result === undefined) {
-      this.fetchVcard(user, cb);
+      this.fetchVcard(user);
     } else if (hash && hash !== result.hash) {
-      this.fetchVcard(user, cb);
-    } else {
-      cb(result);
+      this.fetchVcard(user);
     }
-  }.bind(this, cb));
+  }.bind(this));
 };
 
-VCardStore.prototype.fetchVcard = function(user, cb) {
+VCardStore.prototype.fetchVcard = function(user) {
   var time = new Date();
   if (!this.requestTime[user] || (time - this.requestTime[user] >
                                   this.REQUEST_TIMEOUT)) {
@@ -110,7 +108,6 @@ VCardStore.prototype.fetchVcard = function(user, cb) {
     this.requestQueue.push(user);
     this.checkVCardQueue();
   }
-  cb({});
 };
 
 VCardStore.prototype.checkVCardQueue = function() {
