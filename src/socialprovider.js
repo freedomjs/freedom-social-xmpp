@@ -63,7 +63,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     this.status = 'authenticating';
     this.updateStatus('Retreiving Credentials');
     this.view.once('message', this.onCredentials.bind(this, continuation));
-    this.view.open('XMPPLogin', {file: 'login.html'}).done(this.view.show.bind(this.view));
+    this.view.open('XMPPLogin', {file: 'login.html'}).then(this.view.show.bind(this.view));
     return;
   }
 
