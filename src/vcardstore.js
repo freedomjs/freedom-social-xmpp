@@ -91,7 +91,7 @@ VCardStore.prototype.refreshContact = function(user, hash) {
     return this.cards[user];
   }
   
-  this.storage.get('vcard-' + user).done(function(result) {
+  this.storage.get('vcard-' + user).then(function(result) {
     if (result === null || result === undefined) {
       this.fetchVcard(user);
     } else if (hash && hash !== result.hash) {
