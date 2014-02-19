@@ -75,11 +75,29 @@ VCardStore.prototype.updateVcard = function(user, hash, message) {
   }
 };
 
+/**
+ * Update a property about the roster.
+ * @method updateProperty
+ * @param {String} user The userid or client identifier to update.
+ * @param {Stirng} property The property to set
+ * @param {Object} value The value to set.
+ */
 VCardStore.prototype.updatePropety = function(user, property, value) {
-  if (!this.cards[user]) {
-    this.cards[user] = {};
+  var userid = window.XMPP.JID(user).bare().toString();
+  if (!this.cards[userid]) {
+    this.cards[userid] = {};
   }
-  this.cards[user][property] = value;
+  if (user === userid) {
+    this.cards[userid][property] = value;
+  } else {
+    if (!this.cards[userid].clients) {
+      this.cards[userid].clients = {};
+    }
+    if (!this.cards[userid].clients[user]) {
+      this.cards[userid].clients[user] = {};
+    }
+    this.cards[userid].clients[user][property] = value;
+  }
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {

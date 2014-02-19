@@ -163,9 +163,9 @@ XMPPSocialProvider.prototype.getRoster = function(continuation) {
   var roster = this.vCardStore.getCards(), client;
 
   if (roster[this.credentials.userId]) {
-    for (client in this.profile) {
-      if (this.profile.hasOwnProperty(client)) {
-        roster[this.credentials.userId].clients[client] = this.profile[client];
+    for (client in this.profile.clients) {
+      if (this.profile.clients.hasOwnProperty(client)) {
+        roster[this.credentials.userId].clients[client] = this.profile.clients[client];
       }
     }
   } else {
@@ -214,6 +214,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
     if (msg.attrs.to.indexOf(this.loginOpts.agent) !== -1) {
       this.receiveMessage(msg.attrs.from, msg.getChildText('body'));
     } else {
+      // TODO: relay chat messages from other clients in some way.
       console.warn('Ignoring Chat Message: ' + JSON.stringify(msg.attrs));
     }
   // Is it a status request?
@@ -301,8 +302,14 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   if (status === 'unavailable') {
     this.vCardStore.updatePropety(user, 'status', 'offline');
   } else {
-    
+    if (msg.getChild('c') && msg.getChild('c').attrs.node === this.loginOpts.url) {
+      this.vCardStore.updateProperty(user, 'status', 'messageable');
+    } else {
+      this.vcardStore.updateProperty(user, 'status', 'online');
+    }
   }
+  
+  this.vCardStore.updateProperty(user, 'xmppStatus', status);
 
   this.vCardStore.refreshCard(user, hash);
 };
@@ -332,7 +339,6 @@ XMPPSocialProvider.prototype.updateRoster = function(msg) {
 
 XMPPSocialProvider.prototype.sawClient = function(client) {
   this.vCardStore.updatePropety(client, 'date', new Date());
-  //TODO(willscott): Update date
 };
 
 XMPPSocialProvider.prototype.onOnline = function(continuation) {
@@ -356,6 +362,8 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
       }).up());
   
   // Update status.
+  this.profile.clients[this.id].status = 'messageable';
+  this.vCardStore.refreshCard(this.id, null);
 };
 
 XMPPSocialProvider.prototype.logout = function(logoutOpts, continuation) {
