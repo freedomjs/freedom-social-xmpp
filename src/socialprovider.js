@@ -16,7 +16,8 @@ var socket = freedom['core.socket']();
  * @class XMPPSocialProvider
  * @constructor
  */
-var XMPPSocialProvider = function() {
+var XMPPSocialProvider = function(dispatchEvent) {
+  this.dispatchEvent = dispatchEvent;
   var social = freedom.social();
   this.STATUS_NETWORK = social.STATUS_NETWORK;
   this.STATUS_CLIENT = social.STATUS_CLIENT;
@@ -139,6 +140,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     console.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
+    console.error(e.stack);
     continuation(this.onError('XMPP Connection Error: ' + e));
     return;
   }

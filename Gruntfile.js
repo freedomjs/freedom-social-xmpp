@@ -25,6 +25,10 @@ module.exports = function(grunt) {
         url: "https://homes.cs.washington.edu/~wrs/demo/chat/main.js",
         filename: "demo/"
       },
+      demoux: {
+        url: "https://homes.cs.washington.edu/~wrs/demo/chat/ux.js",
+        filename: "demo/"
+      },
       democss: {
         url: "https://homes.cs.washington.edu/~wrs/demo/style.css",
         filename: "demo/"
