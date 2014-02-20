@@ -4,7 +4,8 @@
  * @constructor
  * @private
  */
-var Socket_chrome = function(channel) {
+var Socket_chrome = function(channel, dispatch) {
+  this.dispatchEvent = dispatch;
   this.appChannel = channel;
   this.sid = null;
   // http://developer.chrome.com/apps/socket.html

@@ -82,8 +82,8 @@ VCardStore.prototype.updateVcard = function(user, hash, message) {
  * @param {Stirng} property The property to set
  * @param {Object} value The value to set.
  */
-VCardStore.prototype.updatePropety = function(user, property, value) {
-  var userid = window.XMPP.JID(user).bare().toString();
+VCardStore.prototype.updateProperty = function(user, property, value) {
+  var userid = new window.XMPP.JID(user).bare().toString();
   if (!this.cards[userid]) {
     this.cards[userid] = {};
   }

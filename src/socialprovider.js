@@ -140,7 +140,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     console.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
-    console.error(e.stack);
+    console.error(e.stackl);
     continuation(this.onError('XMPP Connection Error: ' + e));
     return;
   }
@@ -236,6 +236,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
   // Is it something we don't understand?
   } else {
     console.warn('Dropped unknown XMPP message');
+    console.warn(msg);
   }
 };
 
@@ -250,7 +251,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
 XMPPSocialProvider.prototype.receiveMessage = function(from, msg) {
   this.dispatchEvent('onMessage', {
     fromClientId: from,
-    fromUserId: window.XMPP.JID(from).bare().toString(),
+    fromUserId: new window.XMPP.JID(from).bare().toString(),
     network: this.loginOpts ? this.loginOpts.network : null,
     userId: this.credentials ? this.credentials.userId : null,
     toClientId: this.id,
@@ -313,7 +314,7 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   
   this.vCardStore.updateProperty(user, 'xmppStatus', status);
 
-  this.vCardStore.refreshCard(user, hash);
+  this.vCardStore.refreshContact(user, hash);
 };
 
 XMPPSocialProvider.prototype.updateRoster = function(msg) {
@@ -365,7 +366,7 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
   
   // Update status.
   this.profile.clients[this.id].status = 'messageable';
-  this.vCardStore.refreshCard(this.id, null);
+  this.vCardStore.refreshContact(this.id, null);
 };
 
 XMPPSocialProvider.prototype.logout = function(logoutOpts, continuation) {
