@@ -140,7 +140,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     console.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
-    console.error(e.stackl);
+    console.error(e.stack);
     continuation(this.onError('XMPP Connection Error: ' + e));
     return;
   }
