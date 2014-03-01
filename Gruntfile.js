@@ -18,7 +18,7 @@ module.exports = function(grunt) {
     },
     download: {
       demojs: {
-        url: "https://homes.cs.washington.edu/~wrs/freedom.js",
+        url: "https://homes.cs.washington.edu/~wrs/chrome/freedom.js",
         filename: "demo/"
       },
       demoscript: {
