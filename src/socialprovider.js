@@ -136,6 +136,17 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     }
   }
 
+  // Patch socket element writer to be less verbose.
+  connectOpts.socket = function() {
+    var net = require('net');
+    var sock = new net.Socket();
+    sock.serializeStanza = function(el, cb) {
+      cb(el.toString());
+    };
+    console.warn('returning a ' + sock);
+    return sock;
+  };
+
   try {
     console.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
@@ -308,7 +319,7 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
     if (msg.getChild('c') && msg.getChild('c').attrs.node === this.loginOpts.url) {
       this.vCardStore.updateProperty(user, 'status', 'messageable');
     } else {
-      this.vcardStore.updateProperty(user, 'status', 'online');
+      this.vCardStore.updateProperty(user, 'status', 'online');
     }
   }
   
