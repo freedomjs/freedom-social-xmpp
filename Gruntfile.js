@@ -18,19 +18,19 @@ module.exports = function(grunt) {
     },
     download: {
       demojs: {
-        url: "https://homes.cs.washington.edu/~wrs/chrome/freedom.js",
+        url: "http://freedomjs.github.io/release/freedom-chrome/freedom.v0.1.0.js",
         filename: "demo/"
       },
       demoscript: {
-        url: "https://homes.cs.washington.edu/~wrs/demo/chat/main.js",
+        url: "http://freedomjs.github.io/demo/v0.4/demo/chat/main.js",
         filename: "demo/"
       },
       demoux: {
-        url: "https://homes.cs.washington.edu/~wrs/demo/chat/ux.js",
+        url: "http://freedomjs.github.io/demo/v0.4/demo/chat/ux.js",
         filename: "demo/"
       },
       democss: {
-        url: "https://homes.cs.washington.edu/~wrs/demo/style.css",
+        url: "http://freedomjs.github.io/demo/v0.4/demo/style.css",
         filename: "demo/"
       }
     },
