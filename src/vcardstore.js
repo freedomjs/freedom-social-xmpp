@@ -1,11 +1,12 @@
-/*globals freedom:true,setTimeout */
+/*globals freedom:true,setTimeout,window */
 /*jslint indent:2,white:true,sloppy:true */
 
 var VCardStore = function () {
   if (freedom && freedom['core.storage']) {
     this.storage = freedom['core.storage']();
   }
-  this.cards = {};
+  this.clients = {};
+  this.users = {};
   this.requestTime = {};
   this.requestQueue = [];
   this.fetchTime = new Date();
@@ -17,17 +18,74 @@ var VCardStore = function () {
 VCardStore.prototype.loadCard = function(user) {};
 
 /**
- * Overridden method for handling changes to roster state.
+ * Overridden method for handling changes to user state.
  */
-VCardStore.prototype.onChange = function(card) {};
+VCardStore.prototype.onUserChange = function(card) {};
+
+/**
+ * Overridden method for handling changes to client state.
+ */
+VCardStore.prototype.onClientChange = function(card) {};
 
 // Time before a request is considered 'dead'.
 VCardStore.prototype.REQUEST_TIMEOUT = 3000;
 
 VCardStore.prototype.THROTTLE_TIMEOUT = 500;
 
-VCardStore.prototype.updateVcard = function(user, hash, message) {
-  var vcard = this.cards[user] || {},
+VCardStore.prototype.getClient = function(user) {
+  var userid = new window.XMPP.JID(user).bare().toString(), state = {
+    userId: userid,
+    clientId: user,
+    status: 'OFFLINE',
+    timestamp: 0
+  };
+
+  if (this.clients[user]) {
+    state.status = this.clients[user].status;
+    state.timestamp = this.clients[user].date;
+  }
+  
+  return state;
+};
+
+VCardStore.prototype.getClients = function() {
+  var client, cards = {};
+  for (client in this.clients) {
+    if (this.clients.hasOwnProperty(client)) {
+      cards[client] = this.getClient(client); 
+    }
+  }
+  return cards;
+};
+
+VCardStore.prototype.getUser = function(user) {
+  var state = {
+    userId: user
+  };
+  
+  if (this.users[user]) {
+    state.timestamp = this.users[user].timestamp;
+    state.name = this.users[user].name;
+    state.url = this.users[user].url;
+    state.imageData = this.users[user].imageData;
+  }
+
+  return state;
+};
+
+VCardStore.prototype.getUsers = function() {
+  var user, cards = {};
+  for (user in this.cards) {
+    if (this.cards.hasOwnProperty(user)) {
+      cards[user] = this.getUser(user);
+    }
+  }
+  return cards;
+};
+
+VCardStore.prototype.updateVcard = function(from, message) {
+  var userid = new window.XMPP.JID(from).bare().toString(),
+      user = this.users[userid] || {},
       name, url, photo,
       changed = false;
   if (message.attr.xmlns !== 'vcard-temp' ||
@@ -35,69 +93,74 @@ VCardStore.prototype.updateVcard = function(user, hash, message) {
     return;
   }
 
+  user.userId = userid;
   name = message.getChildText('FN');
   url = message.getChildText('URL');
   photo = message.getChildText('PHOTO');
 
   if (name) {
-    if (name !== vcard.name) {
+    if (name !== user.name) {
       changed = true;
     }
-    vcard.name = name;
+    user.name = name;
   }
   if (url) {
-    if (url !== vcard.url) {
+    if (url !== user.url) {
       changed = true;
     }
-    vcard.url = url;
+    user.url = url;
   }
   if (photo && photo.getChildText('EXTVAL')) {
-    if (vcard.imageUrl !== photo.getChildText('EXTVAL')) {
+    if (user.imageData !== photo.getChildText('EXTVAL')) {
       changed = true;
     }
-    vcard.imageUrl = photo.getChildText('EXTVAL');
+    user.imageData = photo.getChildText('EXTVAL');
   } else if (photo && photo.getChildText('TYPE') &&
             photo.getChildText('BINVAL')) {
     url = 'data:' +
       photo.getChildText('TYPE') + ';base64,' +
       photo.getChildText('BINVAL');
-    if (vcard.imageData !== url) {
+    if (user.imageData !== url) {
       changed = true;
     }
-    vcard.imageData = url;
+    user.imageData = url;
   }
-  vcard.hash = hash;
-  this.storage.set('vcard-' + user, JSON.stringify(vcard));
-
-  this.cards[user] = vcard;
   if (changed) {
-    this.onChange(vcard);
+    user.timestamp = Date.now();
+    this.onUserChange(user);
   }
+
+  this.storage.set('vcard-' + from, JSON.stringify(user));
 };
 
 /**
- * Update a property about the roster.
+ * Update a property about a client.
  * @method updateProperty
- * @param {String} user The userid or client identifier to update.
+ * @param {String} user The client identifier to update.
  * @param {Stirng} property The property to set
  * @param {Object} value The value to set.
  */
 VCardStore.prototype.updateProperty = function(user, property, value) {
   var userid = new window.XMPP.JID(user).bare().toString();
-  if (!this.cards[userid]) {
-    this.cards[userid] = {};
+  if (!this.clients[user]) {
+    this.clients[user] = {
+      userId: userid,
+      clientId: user
+    };
   }
-  if (user === userid) {
-    this.cards[userid][property] = value;
-  } else {
-    if (!this.cards[userid].clients) {
-      this.cards[userid].clients = {};
-    }
-    if (!this.cards[userid].clients[user]) {
-      this.cards[userid].clients[user] = {};
-    }
-    this.cards[userid].clients[user][property] = value;
+  this.clients[user][property] = value;
+  this.clients[user].timestamp = Date.now();
+  this.onClientChange(this.clients[user]);
+};
+
+VCardStore.prototype.updateUser = function(user, property, value) {
+  if (!this.users[user]) {
+    this.users[user] = {
+      userId: user
+    };
   }
+  this.users[user][property] = value;
+  this.users[user].timestamp = Date.now();
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {
@@ -105,8 +168,8 @@ VCardStore.prototype.refreshContact = function(user, hash) {
     return false;
   }
 
-  if (this.cards[user] && (!hash || this.cards[user].hash === hash)) {
-    return this.cards[user];
+  if (this.users[user] && (!hash || this.users[user].hash === hash)) {
+    return this.users[user];
   }
   
   this.storage.get('vcard-' + user).then(function(result) {

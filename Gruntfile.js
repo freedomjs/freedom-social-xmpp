@@ -18,7 +18,7 @@ module.exports = function(grunt) {
     },
     download: {
       demojs: {
-        url: "http://freedomjs.github.io/release/freedom-chrome/freedom.v0.1.0.js",
+        url: "http://freedomjs.github.io/release/freedom-chrome/freedom.v0.1.1.js",
         filename: "demo/"
       },
       demoscript: {

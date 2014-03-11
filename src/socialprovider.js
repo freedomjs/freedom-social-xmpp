@@ -19,8 +19,8 @@ var socket = freedom['core.socket']();
 var XMPPSocialProvider = function(dispatchEvent) {
   this.dispatchEvent = dispatchEvent;
   var social = freedom.social();
-  this.STATUS_NETWORK = social.STATUS_NETWORK;
-  this.STATUS_CLIENT = social.STATUS_CLIENT;
+  this.STATUS = social.STATUS;
+  this.ERRCODE = social.ERRCODE;
 
   this.client = null;
   this.credentials = null;
@@ -30,12 +30,8 @@ var XMPPSocialProvider = function(dispatchEvent) {
   // Metadata about the roster
   this.vCardStore = new VCardStore();
   this.vCardStore.loadCard = this.requestUserStatus.bind(this);
-  this.vCardStore.onChange = this.onRosterChange.bind(this);
-  this.profile = {};
-
-  this.status = 'offline';
-  setTimeout(this.updateStatus.bind(this, 'Initializing'), 0);
-  
+  this.vCardStore.onUserChange = this.onUserChange.bind(this);
+  this.vCardStore.onClientChange = this.onClientChange.bind(this);
 };
 
 /**
@@ -61,8 +57,6 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       this.view = freedom['core.view']();
     }
 
-    this.status = 'authenticating';
-    this.updateStatus('Retreiving Credentials');
     this.view.once('message', this.onCredentials.bind(this, continuation));
     this.view.open('XMPPLogin', {file: 'login.html'}).then(this.view.show.bind(this.view));
     return;
@@ -88,9 +82,9 @@ XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
     delete this.view;
     this.login(null, continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
-    continuation(this.onError(msg.message));
+    continuation(undefined, this.ERRCODE.LOGIN_FAILEDCONNECTION);
   } else {
-    continuation(this.onError('Unrecognized Authentication: ' + JSON.stringify(msg)));
+    continuation(undefined, this.ERRCODE.LOGIN_BADCREDENTIALS);
   }
 };
 
@@ -101,17 +95,6 @@ XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
  */
 XMPPSocialProvider.prototype.initializeState = function() {
   this.id = this.credentials.userId + '/' + this.loginOpts.agent;
-  this.updateStatus('Initializing Connection');
-  this.profile = {
-    userId: this.credentials.userId,
-    clients: {}
-  };
-
-  this.profile.clients[this.id] = {
-    clientId: this.id,
-    network: this.loginOpts.network,
-    status: 'offline'
-  };
 };
 
 /**
@@ -123,7 +106,6 @@ XMPPSocialProvider.prototype.initializeState = function() {
  * @param {Function} continuation Callback upon connection
  */
 XMPPSocialProvider.prototype.connect = function(continuation) {
-  this.status = 'connecting';
   var key, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
@@ -141,40 +123,53 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
     console.error(e.stack);
-    continuation(this.onError('XMPP Connection Error: ' + e));
+    continuation(undefined, {
+      errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
+      message: e.message
+    });
     return;
   }
   this.client.addListener('online', this.onOnline.bind(this, continuation));
   this.client.addListener('error', function(e) {
-    continuation(this.onError('XMPP Connection Error: ' + e));
+    console.error(e.stack);
+    continuation(undefined, {
+      errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
+      message: e.message
+    });
+
+
+    if (this.client) {
+      this.client.end();
+      delete this.client;
+    }
   }.bind(this));
   this.client.addListener('stanza', this.onMessage.bind(this));
 };
 
 /**
- * Returns all user cards seen so far and provided by 'onChange' events.
- * The user's own card will be in this list.
- * @method getRoster
- * @return {Object} { List of [user cards] indexed by userId
- *    'userId1': [user card],
- *    'userId2': [user card],
- *    ...
- * }
+ * Clear any credentials / state in the app.
+ * @method clearCachedCredentials
  */
-XMPPSocialProvider.prototype.getRoster = function(continuation) {
-  var roster = this.vCardStore.getCards(), client;
+XMPPSocialProvider.prototype.clearCachedCredentials  = function(continuation) {
+  delete this.credentials;
+  continuation();
+};
 
-  if (roster[this.credentials.userId]) {
-    for (client in this.profile.clients) {
-      if (this.profile.clients.hasOwnProperty(client)) {
-        roster[this.credentials.userId].clients[client] = this.profile.clients[client];
-      }
-    }
-  } else {
-    roster[this.credentials.userId] = this.profile;
-  }
-
-  continuation(roster);
+/**
+ * Returns all the <client_state>s that we've seen so far (from any 'onClientState' event)
+ * Note: this instance's own <client_state> will be somewhere in this list
+ * Use the clientId returned from social.login() to extract your element
+ * 
+ * @method getClients
+ * @return {Object} { 
+ *    'clientId1': <client_state>,
+ *    'clientId2': <client_state>,
+ *     ...
+ * } List of <client_state>s indexed by clientId
+ *   On failure, rejects with an error code (see above)
+ */
+XMPPSocialProvider.prototype.getClients = function(continuation) {
+  continuation(this.vCardStore.getClients());
 };
 
 /**
@@ -188,7 +183,7 @@ XMPPSocialProvider.prototype.getRoster = function(continuation) {
 XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   if (!this.client) {
     console.warn('No client available to send message to ' + to);
-    continuation();
+    continuation(undefined, this.ERRCODE.OFFLINE);
     return;
   }
   
@@ -199,6 +194,11 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
     }).c('body').t(msg));
   } catch(e) {
     console.error(e.stack);
+    continuation(undefined, {
+      errcode: this.ERRCODE.UNKNOWN,
+      message: e.message
+    });
+    return;
   }
   continuation();
 };
@@ -250,11 +250,8 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
  */
 XMPPSocialProvider.prototype.receiveMessage = function(from, msg) {
   this.dispatchEvent('onMessage', {
-    fromClientId: from,
-    fromUserId: new window.XMPP.JID(from).bare().toString(),
-    network: this.loginOpts ? this.loginOpts.network : null,
-    userId: this.credentials ? this.credentials.userId : null,
-    toClientId: this.id,
+    from: this.vCardStore.getClient(from),
+    to: this.vCardStore.getClient(this.id),
     message: msg
   });
 };
@@ -303,12 +300,12 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   }
   
   if (status === 'unavailable') {
-    this.vCardStore.updatePropety(user, 'status', 'offline');
+    this.vCardStore.updatePropety(user, 'status', 'OFFLINE');
   } else {
     if (msg.getChild('c') && msg.getChild('c').attrs.node === this.loginOpts.url) {
-      this.vCardStore.updateProperty(user, 'status', 'messageable');
+      this.vCardStore.updateProperty(user, 'status', 'ONLINE');
     } else {
-      this.vCardStore.updateProperty(user, 'status', 'online');
+      this.vCardStore.updateProperty(user, 'status', 'ONLINE_WITH_OTHER_APP');
     }
   }
   
@@ -328,20 +325,21 @@ XMPPSocialProvider.prototype.updateRoster = function(msg) {
     items = query.getChildren('item');
     for (i = 0; i < items.length; i += 1) {
       if(items[i].attrs.jid && items[i].attrs.name) {
-        this.vCardStore.updateProperty(items[i].attrs.jid, 'name',
+        this.vCardStore.updateUser(items[i].attrs.jid, 'name',
             items[i].attrs.name);
+        this.vCardStore.refreshContact(items[i].attrs.jid);
       }
     }
   }
 
   // Response to photo
   if (vCard && vCard.attrs.xmlns === 'vcard-temp') {
-    this.vCardStore.updateVcard(vCard);
+    this.vCardStore.updateVcard(from, vCard);
   }
 };
 
 XMPPSocialProvider.prototype.sawClient = function(client) {
-  this.vCardStore.updatePropety(client, 'date', new Date());
+  this.vCardStore.updateProperty(client, 'timestamp', new Date());
 };
 
 XMPPSocialProvider.prototype.onOnline = function(continuation) {
@@ -355,9 +353,7 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
         hash: 'fixed'
       }).up());
 
-  this.status = 'online';
-  this.updateStatus('Online');
-  
+  this.status = 'ONLINE';  
   // Get roster.
   this.client.send(new window.XMPP.Element('iq', {type: 'get'})
       .c('query', {
@@ -365,17 +361,16 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
       }).up());
   
   // Update status.
-  this.profile.clients[this.id].status = 'messageable';
+  this.vCardStore.updateProperty(this.id, 'status', 'ONLINE');
   this.vCardStore.refreshContact(this.id, null);
+  
+  continuation(this.vCardStore.getClient(this.id));
 };
 
 XMPPSocialProvider.prototype.logout = function(logoutOpts, continuation) {
   var userId = this.credentials? this.credentials.userId : null;
 
   this.status = 'offline';
-  if (this.profile) {
-    this.profile.clients = {};
-  }
   this.credentials = null;
   if (this.client) {
     this.client.send(new window.XMPP.Element('presence', {
@@ -384,7 +379,7 @@ XMPPSocialProvider.prototype.logout = function(logoutOpts, continuation) {
     this.client.end();
     this.client = null;
   }
-  continuation(this.updateStatus('Offline'));
+  continuation();
 };
 
 XMPPSocialProvider.prototype.requestUserStatus = function(user) {
@@ -398,51 +393,12 @@ XMPPSocialProvider.prototype.requestUserStatus = function(user) {
   }).c('vCard', {'xmlns': 'vcard-temp'}).up());
 };
 
-XMPPSocialProvider.prototype.onRosterChange = function(user, card) {
-  this.dispatchEvent('onChange', card);
+XMPPSocialProvider.prototype.onUserChange = function(card) {
+  this.dispatchEvent('onUserProfile', card);
 };
 
-/**
- * Update the parent freedom module with current status.
- * @method updateStatus
- * @private
- * @param {String} msg Current Provider Status
- *     Expected to be a key in social.STATUS_NETWORK
- */
-XMPPSocialProvider.prototype.updateStatus = function(msg) {
-  var message = {
-    network: this.loginOpts ? this.loginOpts.network : null,
-    userId: this.credentials ? this.credentials.userId : null,
-    clientId: this.id,
-    status: this.STATUS_NETWORK[this.status],
-    message: msg
-  };
-  this.dispatchEvent('onStatus', message);
-  return message;
-};
-
-/**
- * respond to an Error in the XMPP Client.
- * Logs out, resets state, and reports to parent module.
- * @method onError
- * @private
- * @param {Error|String} err The error.
- */
-XMPPSocialProvider.prototype.onError = function(err) {
-  this.status = 'error';
-  var ret = {
-    id: this.credentials ? this.credentials.userId : null,
-    network: this.loginOpts ? this.loginOpts.network : null,
-    status: this.status,
-    message: err
-  };
-  if (this.client) {
-    this.client.end();
-    delete this.client;
-  }
-  this.updateStatus('Error: ' + err);
-  this.credentials = null;
-  return ret;
+XMPPSocialProvider.prototype.onClientChange = function(card) {
+  this.dispatchEvent('onClientState', card);
 };
 
 // Register provider when in a module context.
