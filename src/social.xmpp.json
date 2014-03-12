@@ -8,7 +8,8 @@
     "social"
   ],
   "permissions": [
-    "core.socket",
+    "core.tcpsocket",
+    "core.udpsocket",
     "core.view",
     "core.storage"
   ],

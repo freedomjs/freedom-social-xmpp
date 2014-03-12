@@ -7,7 +7,6 @@
  **/
 
 var window = {};
-var socket = freedom['core.socket']();
 
 /**
  * The SocialProvider implements the freedom.js social API
