@@ -18,19 +18,19 @@ module.exports = function(grunt) {
     },
     download: {
       demojs: {
-        url: "http://freedomjs.github.io/release/freedom-chrome/freedom.v0.1.1.js",
+        url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
         filename: "demo/"
       },
       demoscript: {
-        url: "http://freedomjs.github.io/demo/v0.4/demo/chat/main.js",
+        url: "http://freedomjs.org/demo/v0.4/demo/chat/main.js",
         filename: "demo/"
       },
       demoux: {
-        url: "http://freedomjs.github.io/demo/v0.4/demo/chat/ux.js",
+        url: "http://freedomjs.org/demo/v0.4/demo/chat/ux.js",
         filename: "demo/"
       },
       democss: {
-        url: "http://freedomjs.github.io/demo/v0.4/demo/style.css",
+        url: "http://freedomjs.org/demo/v0.4/demo/style.css",
         filename: "demo/"
       }
     },
@@ -57,6 +57,8 @@ module.exports = function(grunt) {
   grunt.registerTask('demo', [
     'download',
     'copy:demo'
+  ]);
+  grunt.registerTask('test', [
   ]);
   grunt.registerTask('default', ['compile']);
 };
