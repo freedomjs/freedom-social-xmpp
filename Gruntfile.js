@@ -1,3 +1,14 @@
+var FILES = require('freedom/Gruntfile.js').FILES;
+for (var key in FILES) {
+  FILES[key] = FILES[key].map(function(str) {
+    if (str[0] === '!') {
+      return '!node_modules/freedom/' + str.substr(1);
+    } else {
+      return 'node_modules/freedom/' + str;
+    }
+  });
+};
+
 module.exports = function(grunt) {
   var distFiles = [
     'node-xmpp-browser.js',
@@ -42,6 +53,15 @@ module.exports = function(grunt) {
         filter: 'isFile',
         expand: true
       }
+    },
+    jasmine: {
+      freedomIntegration: {
+        src: FILES.src.concat(FILES.srcprovider).concat(FILES.jasminehelper).concat(['spec/helper.js']),
+        options: {
+          specs: 'node_modules/freedom/spec/providers/social/**/*.integration.spec.js',
+          keepRunner: false
+        }
+      }
     }
   });
 
@@ -49,6 +69,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-download');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-jasmine');
 
   // Default tasks.
   grunt.registerTask('compile', [
