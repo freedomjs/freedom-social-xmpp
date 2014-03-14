@@ -52,6 +52,10 @@ module.exports = function(grunt) {
         flatten: true,
         filter: 'isFile',
         expand: true
+      },
+      jasmine: {
+        src: ['node_modules/freedom/freedom.js'],
+        dest: 'freedom.js'
       }
     },
     jasmine: {
@@ -80,6 +84,8 @@ module.exports = function(grunt) {
     'copy:demo'
   ]);
   grunt.registerTask('test', [
+    'copy:jasmine',
+    'jasmine'
   ]);
   grunt.registerTask('default', ['compile']);
 };

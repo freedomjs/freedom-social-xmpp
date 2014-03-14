@@ -1,1 +1,1 @@
-TEMPLATE = "src/social.xmpp.json";
+TEMPLATE = "/src/social.xmpp.json";
