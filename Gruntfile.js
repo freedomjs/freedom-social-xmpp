@@ -11,7 +11,7 @@ for (var key in FILES) {
 
 module.exports = function(grunt) {
   var distFiles = [
-    'node-xmpp-browser.js',
+    'build/node-xmpp-browser.js',
     'src/*'
   ];
   grunt.initConfig({
@@ -19,7 +19,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          'node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
+          'build/node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
           alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep'],
@@ -53,6 +53,13 @@ module.exports = function(grunt) {
         filter: 'isFile',
         expand: true
       },
+      dist: {
+        src: ['src/*'],
+        dest: 'build/',
+        flatten: true,
+        filter: 'isFile',
+        expand: true
+      },
       jasmine: {
         src: ['node_modules/freedom/freedom.js'],
         dest: 'freedom.js'
@@ -77,7 +84,8 @@ module.exports = function(grunt) {
 
   // Default tasks.
   grunt.registerTask('compile', [
-    'browserify'
+    'browserify',
+    'copy:dist'
   ]);
   grunt.registerTask('demo', [
     'download',

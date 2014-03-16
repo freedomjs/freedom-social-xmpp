@@ -1,5 +1,5 @@
 node_modules
-node-xmpp-browser.js
+build
 demo/freedom*.js
 demo/style.css
 demo/main.js
