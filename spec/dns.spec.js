@@ -1,4 +1,4 @@
-describe("Test DNS for lookup `foo`", function() {
+describe("Tests for DNS lookup", function() {
 
   var family = 0;
   var dnsServer = '8.8.8.8';
