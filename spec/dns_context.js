@@ -5,13 +5,43 @@ var freedom = {};
 var ArrayBuffers;
 (function (ArrayBuffers) {
     /**
+    * Converts an ArrayBuffer to a string.
+    *
+    * @param {ArrayBuffer} buffer The buffer to convert.
+    */
+    function arrayBufferToString(buffer) {
+        var bytes = new Uint8Array(buffer);
+        var a = [];
+        for (var i = 0; i < bytes.length; ++i) {
+            a.push(String.fromCharCode(bytes[i]));
+        }
+        return a.join('');
+    }
+    ArrayBuffers.arrayBufferToString = arrayBufferToString;
+
+    /**
+    * Converts a string to an ArrayBuffer.
+    *
+    * @param {string} s The string to convert.
+    */
+    function stringToArrayBuffer(s) {
+        var buffer = new ArrayBuffer(s.length);
+        var bytes = new Uint8Array(buffer);
+        for (var i = 0; i < s.length; ++i) {
+            bytes[i] = s.charCodeAt(i);
+        }
+        return buffer;
+    }
+    ArrayBuffers.stringToArrayBuffer = stringToArrayBuffer;
+
+    /**
     * Creates a hex char code e.g. 2 => 0x02
     *
     * @param {number} n The number to convert
     */
     function numberToHex(n) {
         if (n < 10) {
-            return "0" + n;
+            return n.toString();
         } else {
             return n.toString(16);
         }
