@@ -35,20 +35,6 @@ var ArrayBuffers;
     ArrayBuffers.stringToArrayBuffer = stringToArrayBuffer;
 
     /**
-    * Creates a hex char code e.g. 2 => 0x02
-    *
-    * @param {number} n The number to convert
-    */
-    function numberToHex(n) {
-        if (n < 10) {
-            return n.toString();
-        } else {
-            return n.toString(16);
-        }
-    }
-    ArrayBuffers.numberToHex = numberToHex;
-
-    /**
     * Converts an ArrayBuffer to a string of hex codes and interpretations as
     * a char code.
     *
@@ -58,7 +44,7 @@ var ArrayBuffers;
         var bytes = new Uint8Array(buffer);
         var a = [];
         for (var i = 0; i < buffer.byteLength; ++i) {
-            a.push(numberToHex(bytes[i]));
+            a.push(bytes[i].toString(16));
         }
         return a.join('.');
     }
