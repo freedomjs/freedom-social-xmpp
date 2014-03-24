@@ -54,8 +54,6 @@ describe("Tests for DNS lookup", function() {
       done();
     }
   });
-
-
   it("lookup domain (`www.google.com`) having an a-record", function(done) {
     var result = exports.lookup(googleComHostname,family);
 
@@ -65,6 +63,7 @@ describe("Tests for DNS lookup", function() {
       done();
     }
   });
+
 
   it("isIP('0.0.0.0') === 4", function() {
     expect(isIP('0.0.0.0')).toBe(4);
