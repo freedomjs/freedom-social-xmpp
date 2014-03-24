@@ -66,5 +66,23 @@ describe("Tests for DNS lookup", function() {
     }
   });
 
+  it("isIP('0.0.0.0') === 4", function() {
+    expect(isIP('0.0.0.0')).toBe(4);
+  });
+  it("isIP('143.44.3.254') === 4", function() {
+    expect(isIP('143.44.3.254')).toBe(4);
+  });
+  it("isIP('255.255.255.255') === 4", function() {
+    expect(isIP('255.255.255.255')).toBe(4);
+  });
+  it("isIP('foo') === 0", function() {
+    expect(isIP('foo')).toBe(0);
+  });
+  it("isIP('') === 0", function() {
+    expect(isIP('')).toBe(0);
+  });
+  it("isIP('www.google.com') === 0", function() {
+    expect(isIP('www.google.com')).toBe(0);
+  });
 
 });
