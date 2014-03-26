@@ -7,3 +7,4 @@ demo/ux.js
 demo/xmpp
 /npm-debug.log
 /freedom.js
+.grunt/
