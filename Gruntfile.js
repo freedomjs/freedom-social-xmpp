@@ -69,7 +69,7 @@ module.exports = function(grunt) {
       dns: {
         src: ['spec/dns_context.js', 'lib/dns.js'],
         options: {
-          specs: 'spec/dns.spec.js',
+          specs: 'spec/dns.unit.spec.js',
           keepRunner: false
         }
       },
