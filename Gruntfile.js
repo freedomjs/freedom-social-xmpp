@@ -100,7 +100,7 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('test', [
     'copy:jasmine',
-    'jasmine'
+    'jasmine:dns'
   ]);
   grunt.registerTask('default', ['compile']);
 };
