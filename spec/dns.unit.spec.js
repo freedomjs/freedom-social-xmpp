@@ -28,21 +28,26 @@ describe("Tests for DNS lookup", function() {
            query2HexString.substring(7,query2HexString.length);
   }
 
-  this.queryDNS = queryDNS;
-  // Fake the queryDNS to use our predefined results.
-  spyOn(this, 'queryDNS')
-      .and.callFake(function(dnsServer, dnsQuery, callback) {
-    // We convert to base 64 ascii to check the input is what we expect
-    // because phantomjs can't do array comparison.
-    if(equivalentDnsQueries(dnsQuery, fooDnsQuery)) {
-      setTimeout(function(){callback(fooDnsResponse);}, 1);
-    } else if(equivalentDnsQueries(dnsQuery, googleDnsQuery)) {
-      setTimeout(function(){callback(googleDnsResponse);}, 1);
-    } else {
-      throw(new Error("unexpected query to fake: " + dnsQueryHexString));
-    }
+  var unSpiedQueryDNS = queryDNS;
+
+  beforeEach(function() {
+    // Fake the queryDNS to use our predefined results.
+    this.queryDNS = unSpiedQueryDNS;
+    spyOn(this, 'queryDNS')
+        .and.callFake(function(dnsServer, dnsQuery, callback) {
+      // We convert to base 64 ascii to check the input is what we expect
+      // because phantomjs can't do array comparison.
+      if(equivalentDnsQueries(dnsQuery, fooDnsQuery)) {
+        setTimeout(function(){callback(fooDnsResponse);}, 1);
+      } else if(equivalentDnsQueries(dnsQuery, googleDnsQuery)) {
+        setTimeout(function(){callback(googleDnsResponse);}, 1);
+      } else {
+        throw(new Error("unexpected query to fake: " + dnsQueryHexString));
+      }
+    });
+    // Rebind to the spied version.
+    queryDNS = this.queryDNS;
   });
-  queryDNS = this.queryDNS;
 
 
   it("lookup domain (`foo`) having no A record", function(done) {
