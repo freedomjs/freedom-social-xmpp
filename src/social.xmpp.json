@@ -1,5 +1,5 @@
 {
-  "name": "XMPP Rendezvous",
+  "name": "XMPP Social Provider",
   "description": "Social provider using XMPP chat protocols",
   "app": {
     "script": ["socialprovider.js", "vcardstore.js", "node-xmpp-browser.js"]

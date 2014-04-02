@@ -66,6 +66,13 @@ module.exports = function(grunt) {
       }
     },
     jasmine: {
+      dns: {
+        src: ['spec/dns_context.js', 'lib/dns.js'],
+        options: {
+          specs: 'spec/dns.unit.spec.js',
+          keepRunner: false
+        }
+      },
       freedomIntegration: {
         src: FILES.src.concat(FILES.srcprovider).concat(FILES.jasminehelper).concat(['spec/helper.js']),
         options: {
@@ -93,7 +100,7 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('test', [
     'copy:jasmine',
-    'jasmine'
+    'jasmine:dns'
   ]);
   grunt.registerTask('default', ['compile']);
 };
