@@ -189,7 +189,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   try {
     this.client.send(new window.XMPP.Element('message', {
       to: to,
-      type: 'normal'
+      type: 'chat'  // TODO: should be normal for users of the same client.
     }).c('body').t(msg));
   } catch(e) {
     console.error(e.stack);
@@ -211,13 +211,17 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
   // Is it a message?
   if (msg.is('message') && msg.getChildText('body') && msg.attrs.type !== 'error') {
     this.sawClient(msg.attrs.from);
-    
+    // TODO: check the agent matches our resource Id so we don't pick up chats not directed
+    // at this client.
+    this.receiveMessage(msg.attrs.from, msg.getChildText('body'));
+    /*
     if (msg.attrs.to.indexOf(this.loginOpts.agent) !== -1) {
       this.receiveMessage(msg.attrs.from, msg.getChildText('body'));
     } else {
       // TODO: relay chat messages from other clients in some way.
       console.warn('Ignoring Chat Message: ' + JSON.stringify(msg.attrs));
     }
+    */
   // Is it a status request?
   } else if (msg.is('iq') && msg.attrs.type === 'get') {
     if (msg.getChild('query') && msg.getChild('query').attrs.xmlns ===

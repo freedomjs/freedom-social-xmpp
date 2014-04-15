@@ -43,12 +43,35 @@ module.exports = function(grunt) {
       democss: {
         url: "http://freedomjs.org/demo/v0.4/demo/style.css",
         filename: "demo/"
+      },
+      google_demojs: {
+        url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
+        filename: "demo_google/"
+      },
+      google_demoscript: {
+        url: "http://freedomjs.org/demo/v0.4/demo/chat/main.js",
+        filename: "demo_google/"
+      },
+      google_demoux: {
+        url: "http://freedomjs.org/demo/v0.4/demo/chat/ux.js",
+        filename: "demo_google/"
+      },
+      google_democss: {
+        url: "http://freedomjs.org/demo/v0.4/demo/style.css",
+        filename: "demo_google/"
       }
     },
     copy: {
       demo: {
         src: distFiles,
         dest: 'demo/xmpp/',
+        flatten: true,
+        filter: 'isFile',
+        expand: true
+      },
+      demo_google: {
+        src: distFiles,
+        dest: 'demo_google/xmpp/',
         flatten: true,
         filter: 'isFile',
         expand: true
@@ -97,6 +120,10 @@ module.exports = function(grunt) {
   grunt.registerTask('demo', [
     'download',
     'copy:demo'
+  ]);
+  grunt.registerTask('demo_google', [
+    'download',
+    'copy:demo_google'
   ]);
   grunt.registerTask('test', [
     'copy:jasmine',
