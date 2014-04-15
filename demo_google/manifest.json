@@ -1,29 +1,29 @@
 {
-	"name": "Google Social Demo Application",
-	"description": "Demonstrates functionality of the freedom Google social provider.",
-	"version": "0.1",
-	"manifest_version": 2,
-	"app": {
-		"background": {
-			"scripts": ["background.js"]
-		}
-	},
-	"permissions": [
-	  {"socket": ["tcp-connect", "udp-send-to", "udp-bind"]},
-	  "identity",
-	  "https://www.googleapis.com/*"
-	],
-    // This key and client_id pair is copied from the UProxy chrome app.
-	"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk6KrQptZchMYwQN8CsbRVmhV/COoR0lxansERcz+OrkPctUBSTQVYJw3t17+6JyMPnKYR2DMKCTeYQGrmXzm2U0KpujEKN3WSTtZI4ynTzKbGhWIYo6exaHufcslJngEG91ua/q1fJz3e5Mla8+tIsT9bVdVf4NLfODNbky/Uo0M6KpOLO9r2zJoiO0yg4ThBH+TkNwH8icvHJbt2LzZVRSZtQ1Wl1uT15vnwJPOEYVQkpnEMY5yMBPxyOZ1AmUx714YAas80pSZ7+BlM9ReIirYB7lxeY6hAqs4u8iP5SDh5bg6YFXeYecwQyvnKglLdHq6djy9QyVLKUKxFzMH/wIDAQAB",
-    "oauth2": {
-      "client_id": "746567772449-hkkfuprstl4uh7eedsi601c8qrpal011.apps.googleusercontent.com",
-      "scopes": [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/googletalk"
-      ]
-    },
-	"icons": {
-		"16": "demo-256.png",
-		"128": "demo-256.png"
-	}
+  "name": "Google Social Demo Application",
+  "description": "Demonstrates functionality of the freedom Google social provider.",
+  "version": "0.1",
+  "manifest_version": 2,
+  "app": {
+    "background": {
+       "scripts": ["background.js"]
+    }
+  },
+  "permissions": [
+    {"socket": ["tcp-connect", "udp-send-to", "udp-bind"]},
+      "identity",
+      "https://www.googleapis.com/*"
+  ],
+  // This key and client_id pair is copied from the UProxy chrome app.
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk6KrQptZchMYwQN8CsbRVmhV/COoR0lxansERcz+OrkPctUBSTQVYJw3t17+6JyMPnKYR2DMKCTeYQGrmXzm2U0KpujEKN3WSTtZI4ynTzKbGhWIYo6exaHufcslJngEG91ua/q1fJz3e5Mla8+tIsT9bVdVf4NLfODNbky/Uo0M6KpOLO9r2zJoiO0yg4ThBH+TkNwH8icvHJbt2LzZVRSZtQ1Wl1uT15vnwJPOEYVQkpnEMY5yMBPxyOZ1AmUx714YAas80pSZ7+BlM9ReIirYB7lxeY6hAqs4u8iP5SDh5bg6YFXeYecwQyvnKglLdHq6djy9QyVLKUKxFzMH/wIDAQAB",
+  "oauth2": {
+    "client_id": "746567772449-hkkfuprstl4uh7eedsi601c8qrpal011.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/googletalk"
+    ]
+  },
+  "icons": {
+    "16": "demo-256.png",
+    "128": "demo-256.png"
+  }
 }
