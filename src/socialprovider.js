@@ -303,7 +303,7 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   }
   
   if (status === 'unavailable') {
-    this.vCardStore.updatePropety(user, 'status', 'OFFLINE');
+    this.vCardStore.updateProperty(user, 'status', 'OFFLINE');
   } else {
     if (msg.getChild('c') && msg.getChild('c').attrs.node === this.loginOpts.url) {
       this.vCardStore.updateProperty(user, 'status', 'ONLINE');
