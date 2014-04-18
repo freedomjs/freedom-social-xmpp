@@ -48,10 +48,6 @@ module.exports = function(grunt) {
         url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
         filename: "demo_google/"
       },
-      google_demoscript: {
-        url: "http://freedomjs.org/demo/v0.4/demo/chat/main.js",
-        filename: "demo_google/"
-      },
       google_demoux: {
         url: "http://freedomjs.org/demo/v0.4/demo/chat/ux.js",
         filename: "demo_google/"

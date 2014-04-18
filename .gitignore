@@ -5,6 +5,10 @@ demo/style.css
 demo/main.js
 demo/ux.js
 demo/xmpp
+demo_google/freedom*.js
+demo_google/style.css
+demo_google/ux.js
+demo_google/xmpp
 /npm-debug.log
 /freedom.js
 .grunt/
