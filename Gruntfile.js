@@ -12,7 +12,8 @@ for (var key in FILES) {
 module.exports = function(grunt) {
   var distFiles = [
     'build/node-xmpp-browser.js',
-    'src/*'
+    'src/*',
+    'node_modules/freedom-for-chrome/freedom-for-chrome.js'
   ];
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -28,10 +29,6 @@ module.exports = function(grunt) {
       }
     },
     download: {
-      demojs: {
-        url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
-        filename: "demo/"
-      },
       demoscript: {
         url: "http://freedomjs.org/demo/v0.4/demo/chat/main.js",
         filename: "demo/"
@@ -43,10 +40,6 @@ module.exports = function(grunt) {
       democss: {
         url: "http://freedomjs.org/demo/v0.4/demo/style.css",
         filename: "demo/"
-      },
-      google_demojs: {
-        url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
-        filename: "demo_google/"
       },
       google_demoux: {
         url: "http://freedomjs.org/demo/v0.4/demo/chat/ux.js",
