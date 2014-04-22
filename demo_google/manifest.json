@@ -11,6 +11,7 @@
   "permissions": [
     {"socket": ["tcp-connect", "udp-send-to", "udp-bind"]},
       "identity",
+      "storage",
       "https://www.googleapis.com/*"
   ],
   // This key and client_id pair is copied from the UProxy chrome app.

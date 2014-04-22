@@ -171,6 +171,10 @@ XMPPSocialProvider.prototype.getClients = function(continuation) {
   continuation(this.vCardStore.getClients());
 };
 
+XMPPSocialProvider.prototype.getUsers = function(continuation) {
+  continuation(this.vCardStore.getUsers());
+};
+
 /**
  * Sends a message to a user on the network.
  * If the destination is not specified or invalid, the mssage is dropped.
