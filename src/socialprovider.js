@@ -57,7 +57,9 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     }
 
     this.view.once('message', this.onCredentials.bind(this, continuation));
-    this.view.open('XMPPLogin', {file: 'login.html'}).then(this.view.show.bind(this.view));
+    this.view.open(loginOpts.network || 'XMPPLogin',
+                   {file: 'login.html'})
+        .then(this.view.show.bind(this.view));
     return;
   }
 
@@ -169,6 +171,10 @@ XMPPSocialProvider.prototype.clearCachedCredentials  = function(continuation) {
  */
 XMPPSocialProvider.prototype.getClients = function(continuation) {
   continuation(this.vCardStore.getClients());
+};
+
+XMPPSocialProvider.prototype.getUsers = function(continuation) {
+  continuation(this.vCardStore.getUsers());
 };
 
 /**

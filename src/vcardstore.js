@@ -74,13 +74,13 @@ VCardStore.prototype.getUser = function(user) {
 };
 
 VCardStore.prototype.getUsers = function() {
-  var user, cards = {};
-  for (user in this.cards) {
-    if (this.cards.hasOwnProperty(user)) {
-      cards[user] = this.getUser(user);
+  var allUsers = {};
+  for (var userId in this.users) {
+    if (this.users.hasOwnProperty(userId)) {
+      allUsers[userId] = this.getUser(userId);
     }
   }
-  return cards;
+  return allUsers;
 };
 
 VCardStore.prototype.updateVcard = function(from, message) {
@@ -88,7 +88,7 @@ VCardStore.prototype.updateVcard = function(from, message) {
       user = this.users[userid] || {},
       name, url, photo,
       changed = false;
-  if (message.attr.xmlns !== 'vcard-temp' ||
+  if (message.attr('xmlns') !== 'vcard-temp' ||
      !this.storage) {
     return;
   }
@@ -125,8 +125,10 @@ VCardStore.prototype.updateVcard = function(from, message) {
     }
     user.imageData = url;
   }
+
   if (changed) {
     user.timestamp = Date.now();
+    this.users[userid] = user;
     this.onUserChange(user);
   }
 
