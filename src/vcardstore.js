@@ -74,8 +74,8 @@ VCardStore.prototype.getUser = function(user) {
 };
 
 VCardStore.prototype.getUsers = function() {
-  var allUsers = {};
-  for (var userId in this.users) {
+  var allUsers = {}, userId;
+  for (userId in this.users) {
     if (this.users.hasOwnProperty(userId)) {
       allUsers[userId] = this.getUser(userId);
     }
