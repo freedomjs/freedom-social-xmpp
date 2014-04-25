@@ -16,32 +16,49 @@ View_googleAuth.prototype.open = function (name, what, continuation) {
 };
 
 View_googleAuth.prototype.show = function (continuation) {
-  var url = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json';
-  chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
-    if (chrome.runtime.lastError) {
-      // TODO: is this needed?  does this ever get hit?
-      console.log('found lastError');
-    } else {
-      console.log('Got Oauth2 token:' + token);
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-      xhr.onload = function() {
-        var response = JSON.parse(this.response);
-        var credentials = {
-          userId: response.email,
-          jid: response.email,
-          oauth2_token: token,
-          oauth2_auth: 'http://www.google.com/talk/protocol/auth',
-          host: 'talk.google.com'
+  var googleOauth2Url = 'https://accounts.google.com/o/oauth2/auth?' +
+    'response_type=token' +
+    '&redirect_uri=' + chrome.identity.getRedirectURL() +
+    '&client_id=746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com' +
+    '&scope=email%20https://www.googleapis.com/auth/googletalk';
+  console.log('googleOauth2Url: ' + googleOauth2Url);
+  chrome.identity.launchWebAuthFlow(
+      {url: googleOauth2Url, interactive: true},
+      function(responseUrl) {
+        console.log('got responseUrl: ' + responseUrl);
+        if (chrome.runtime.lastError) {
+          console.log('Error logging into Google: ', chrome.runtime.lastError);
+          return;
+        }
+
+        // Parse Oauth2 token from responseUrl
+        var token = responseUrl.match(/access_token=([^&]+)/)[1];
+        console.log('Got Oauth2 token:' + token);
+        if (!token) {
+          console.error('Error getting token for Google');
+          return;
+        }
+
+        // Invoke userinfo API to get user's email address, then pass
+        // credentials back to social provider.
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json');
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.onload = function() {
+          var response = JSON.parse(this.response);
+          var credentials = {
+            userId: response.email,
+            jid: response.email,
+            oauth2_token: token,
+            oauth2_auth: 'http://www.google.com/talk/protocol/auth',
+            host: 'talk.google.com'
+          };
+          console.log('Got googletalk credentials: ' + JSON.stringify(credentials));
+          parent.postMessage({cmd: 'auth', message: credentials}, '*');
+          continuation();
         };
-        console.log('Got googletalk credentials: ' + JSON.stringify(credentials));
-        parent.postMessage({cmd: 'auth', message: credentials}, '*');
-        continuation();
-      };
-      xhr.send();
-    }
-  });
+        xhr.send();
+      });
 };
 
 View_googleAuth.prototype.postMessage = function (args, continuation) {
