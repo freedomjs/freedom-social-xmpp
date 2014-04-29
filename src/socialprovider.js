@@ -373,7 +373,7 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
   continuation(this.vCardStore.getClient(this.id));
 };
 
-XMPPSocialProvider.prototype.logout = function(logoutOpts, continuation) {
+XMPPSocialProvider.prototype.logout = function(continuation) {
   var userId = this.credentials? this.credentials.userId : null;
 
   this.status = 'offline';
