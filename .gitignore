@@ -1,10 +1,8 @@
 node_modules
 build
 demo/freedom*.js
-demo/style.css
-demo/main.js
-demo/ux.js
 demo/xmpp
+demo_google/xmpp
 /npm-debug.log
 /freedom.js
 .grunt/
