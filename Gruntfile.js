@@ -12,7 +12,9 @@ for (var key in FILES) {
 module.exports = function(grunt) {
   var distFiles = [
     'build/node-xmpp-browser.js',
-    'src/*'
+    'src/*',
+    'demo_common/*',
+    'node_modules/freedom-for-chrome/freedom-for-chrome.js'
   ];
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -25,40 +27,6 @@ module.exports = function(grunt) {
           alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep'],
           ignore : ['faye-websocket', 'tls']
         }
-      }
-    },
-    download: {
-      demojs: {
-        url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
-        filename: "demo/"
-      },
-      demoscript: {
-        url: "http://freedomjs.org/demo/v0.4/demo/chat/main.js",
-        filename: "demo/"
-      },
-      demoux: {
-        url: "http://freedomjs.org/demo/v0.4/demo/chat/ux.js",
-        filename: "demo/"
-      },
-      democss: {
-        url: "http://freedomjs.org/demo/v0.4/demo/style.css",
-        filename: "demo/"
-      },
-      google_demojs: {
-        url: "http://freedomjs.org/release/freedom-chrome/freedom.v0.1.2.js",
-        filename: "demo_google/"
-      },
-      google_demoscript: {
-        url: "http://freedomjs.org/demo/v0.4/demo/chat/main.js",
-        filename: "demo_google/"
-      },
-      google_demoux: {
-        url: "http://freedomjs.org/demo/v0.4/demo/chat/ux.js",
-        filename: "demo_google/"
-      },
-      google_democss: {
-        url: "http://freedomjs.org/demo/v0.4/demo/style.css",
-        filename: "demo_google/"
       }
     },
     copy: {
@@ -108,7 +76,6 @@ module.exports = function(grunt) {
 
   // Load tasks.
   grunt.loadNpmTasks('grunt-browserify');
-  grunt.loadNpmTasks('grunt-download');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
 
@@ -118,11 +85,9 @@ module.exports = function(grunt) {
     'copy:dist'
   ]);
   grunt.registerTask('demo', [
-    'download',
     'copy:demo'
   ]);
   grunt.registerTask('demo_google', [
-    'download',
     'copy:demo_google'
   ]);
   grunt.registerTask('test', [

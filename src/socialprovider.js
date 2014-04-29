@@ -78,7 +78,6 @@ XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
   if (msg.cmd && msg.cmd === 'auth') {
     this.credentials = msg.message;
     this.view.close();
-    delete this.view;
     this.login(null, continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
     continuation(undefined, this.ERRCODE.LOGIN_FAILEDCONNECTION);
@@ -385,6 +384,9 @@ XMPPSocialProvider.prototype.logout = function(logoutOpts, continuation) {
     }));
     this.client.end();
     this.client = null;
+  }
+  if (this.view) {
+    this.view.postMessage('logout');
   }
   continuation();
 };
