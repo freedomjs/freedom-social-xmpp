@@ -44,9 +44,7 @@ function login() {
 freedom.on('send-message', function(val) {
   social.sendMessage(val.to, val.message);
 });
-freedom.on('logout', function(val) {
-  social.logout();
-});
+freedom.on('logout', social.logout.bind(social));
 freedom.on('login', login);
 
 /**
