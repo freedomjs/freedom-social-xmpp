@@ -1,9 +1,20 @@
+/**
+ * This file implements freedom's core.view API.
+ * This view class is invoked by the social provider (XMPPSocialProvider)
+ * to handle login and logout functionality for Google.
+ * TODO: revisit this design - ideally users of the social.google.json
+ * module should not have to reimplement Google login/logout, or if they
+ * do there should be a cleaner way to specify login/logout functions.
+ **/
+
 'use strict';
 
 // CLIENT_ID is from
 // https://console.developers.google.com/project/746567772449/apiui/credential
 // It needs to have the redirect URL from chrome.identity.getRedirectURL()
 // associated with it.
+// TODO: this demo should not hard-code the client id for a single app.
+// see https://github.com/freedomjs/freedom-social-xmpp/issues/34
 var CLIENT_ID =
     '746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com';
 
