@@ -23,9 +23,11 @@
     "grunt-contrib-copy": "~0.5.0",
     "freedom-for-chrome": "~0.1.5",
     "grunt-contrib-jasmine": "^0.6.1",
-    "es5-shim": "^2.3.0"
+    "es5-shim": "^2.3.0",
+    "freedom-for-node": "0.0.3",
+    "grunt-jasmine-node": "~0.2.1"
   },
   "peerDependencies": {
-    "freedom": "^0.4.3"
+    "freedom": "^0.4.6"
   }
 }

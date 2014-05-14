@@ -1,0 +1,11 @@
+{
+  "name": "freedom main module",
+  "description": "Test harness freedom module for social integration tests",
+  "app": { "script": [ "freedom.js" ] },
+  "dependencies": {
+    "socialprovider": {
+      "url": "../../build/social.xmpp.json",
+      "api": "social"
+    }
+  }
+}

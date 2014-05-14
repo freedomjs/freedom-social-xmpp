@@ -1,6 +1,7 @@
-var FILES = require('freedom/Gruntfile.js').FILES;
-for (var key in FILES) {
-  FILES[key] = FILES[key].map(function(str) {
+var FILES = {},
+    freedomFiles = require('freedom/Gruntfile.js').FILES;
+for (var key in freedomFiles) {
+  FILES[key] = freedomFiles[key].map(function(str) {
     if (str[0] === '!') {
       return '!node_modules/freedom/' + str.substr(1);
     } else {
@@ -71,6 +72,9 @@ module.exports = function(grunt) {
           keepRunner: false
         }
       }
+    },
+    jasmine_node: {
+      integration: ['spec/integration/']
     }
   });
 
@@ -78,6 +82,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-jasmine-node');
 
   // Default tasks.
   grunt.registerTask('compile', [
