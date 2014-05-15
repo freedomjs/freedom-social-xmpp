@@ -188,11 +188,20 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
     continuation(undefined, this.ERRCODE.OFFLINE);
     return;
   }
+
+  // If the destination client is ONLINE (i.e. using the same type of client)
+  // send this message with type 'normal' so it only reaches that client,
+  // otherwise use type 'chat' to send to all clients.
+  // Sending all messages as type 'normal' means we can't communicate across
+  // different client types, but sending all as type 'chat' means messages
+  // will be broadcast to all clients.
+  var messageType = (this.vCardStore.getClient(to).status == 'ONLINE') ?
+      'normal' : 'chat';
   
   try {
     this.client.send(new window.XMPP.Element('message', {
       to: to,
-      type: 'chat'  // TODO: should be normal for users of the same client.
+      type: messageType
     }).c('body').t(msg));
   } catch(e) {
     console.error(e.stack);
