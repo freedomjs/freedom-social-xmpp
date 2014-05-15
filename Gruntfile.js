@@ -66,7 +66,7 @@ module.exports = function(grunt) {
         }
       },
       freedomIntegration: {
-        src: FILES.lib.concat(FILES.platform).concat(FILES.srcProvider).concat(FILES.srcJasmineHelper),
+        src: FILES.srcCore.concat(FILES.srcPlatform, FILES.srcProvider).concat(FILES.srcJasmineHelper).concat(['spec/helper.js']),
         options: {
           specs: 'node_modules/freedom/spec/providers/social/**/*.integration.spec.js',
           keepRunner: false
