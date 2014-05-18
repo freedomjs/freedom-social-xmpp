@@ -1,4 +1,4 @@
-/*globals freedom:true,setTimeout,console,VCardStore */
+/*globals freedom:true,setTimeout,console,VCardStore,global */
 /*jslint indent:2,white:true,sloppy:true */
 
 /**
@@ -6,7 +6,12 @@
  * uses sockets to make xmpp connections to chat networks.
  **/
 
-var window = {};
+
+// Global declarations for node.js
+if (typeof window === 'undefined') {
+  global.window = {};
+  global.XMLHttpRequest = {};
+}
 
 /**
  * The SocialProvider implements the freedom.js social API
@@ -195,7 +200,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   // Sending all messages as type 'normal' means we can't communicate across
   // different client types, but sending all as type 'chat' means messages
   // will be broadcast to all clients.
-  var messageType = (this.vCardStore.getClient(to).status == 'ONLINE') ?
+  var messageType = (this.vCardStore.getClient(to).status === 'ONLINE') ?
       'normal' : 'chat';
   
   try {

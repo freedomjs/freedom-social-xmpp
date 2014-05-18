@@ -1,7 +1,7 @@
-/*globals freedom:true,setTimeout,window */
+/*globals freedom:true,setTimeout,window,VCardStore:true */
 /*jslint indent:2,white:true,sloppy:true */
 
-var VCardStore = function () {
+VCardStore = function () {
   if (freedom && freedom['core.storage']) {
     this.storage = freedom['core.storage']();
   }
