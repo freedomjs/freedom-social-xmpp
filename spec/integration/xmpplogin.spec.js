@@ -19,12 +19,17 @@ CredentializingView.prototype.close = function(continuation) {
 };
 
 describe('Login integration', function() {
-  var freedom;
+  var freedom, acct;
 
   beforeEach(function() {
     freedom = require('freedom-for-node').freedom;
     console.log(fdom.link.Node);
     fdom.apis.register('core.view', CredentializingView);
+    var credential = (process.env.XMPPACCT || "alice:hiimalice").split(":");
+    acct = {
+      userId: credential[0] + '@xmpp.uproxy.org',
+      password: credential[1]
+    };
   });
 
   it('logs in', function(done) {
@@ -33,10 +38,7 @@ describe('Login integration', function() {
     
     credentials.push({
       cmd: 'auth',
-      message: {
-        userId: 'alice@xmpp.uproxy.org',
-        password: 'hiimalice'
-      }
+      message: acct
     });
                        
     socialClient.emit('login', [{
