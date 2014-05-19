@@ -16,7 +16,7 @@
     "url": "https://github.com/freedomjs/freedom-social-xmpp"
   },
   "scripts": {
-    "test": "grunt jasmine_node"
+    "test": "grunt travis"
   },
   "devDependencies": {
     "node-xmpp-client": "~0.4.0",

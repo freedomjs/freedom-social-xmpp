@@ -99,5 +99,9 @@ module.exports = function(grunt) {
     'copy:jasmine',
     'jasmine:dns'
   ]);
+  grunt.registerTask('travis', [
+    'compile',
+    'jasmine_node'
+  ]);
   grunt.registerTask('default', ['compile']);
 };
