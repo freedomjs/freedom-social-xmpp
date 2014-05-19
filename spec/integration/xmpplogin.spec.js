@@ -29,13 +29,13 @@ describe('Login integration', function() {
 
   it('logs in', function(done) {
     var socialClient = freedom('freedom.json', {debug:true});
-    socialClient.emit('relay', 'onUserProfile');
+    socialClient.emit('relay', 'onClientState');
     
     credentials.push({
       cmd: 'auth',
       message: {
         userId: 'alice@xmpp.uproxy.org',
-        password: 'test'
+        password: 'hiimalice'
       }
     });
                        
@@ -47,7 +47,8 @@ describe('Login integration', function() {
       rememberLogin: false
     }]);
     
-    socialClient.on('onUserProfile', function(prof) {
+    socialClient.on('onClientState', function(prof) {
+      expect(prof.status).toEqual('ONLINE');
       done();
     });
   });
