@@ -23,7 +23,8 @@ describe('Login integration', function() {
 
   beforeEach(function() {
     freedom = require('freedom-for-node').freedom;
-    console.log(fdom.link.Node);
+    expect(fdom.link.Node).toBeDefined();
+
     fdom.apis.register('core.view', CredentializingView);
     var credential = (process.env.XMPPACCT || "alice:hiimalice").split(":");
     acct = {
