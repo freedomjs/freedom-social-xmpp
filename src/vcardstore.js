@@ -96,7 +96,7 @@ VCardStore.prototype.updateVcard = function(from, message) {
   user.userId = userid;
   name = message.getChildText('FN');
   url = message.getChildText('URL');
-  photo = message.getChildText('PHOTO');
+  photo = message.getChild('PHOTO');
 
   if (name) {
     if (name !== user.name) {
