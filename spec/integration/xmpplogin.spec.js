@@ -24,7 +24,6 @@ describe('Login integration', function() {
   beforeEach(function() {
     freedom = require('freedom-for-node').freedom;
     expect(freedom).toBeDefined();
-    expect(fdom.link.Node).toBeDefined();
 
     fdom.apis.register('core.view', CredentializingView);
     var credential = (process.env.XMPPACCT || "alice:hiimalice").split(":");
