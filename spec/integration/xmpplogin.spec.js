@@ -19,24 +19,27 @@ CredentializingView.prototype.close = function(continuation) {
 };
 
 describe('Login integration', function() {
-  var freedom;
+  var freedom, acct;
 
   beforeEach(function() {
     freedom = require('freedom-for-node').freedom;
-    console.log(fdom.link.Node);
+    expect(freedom).toBeDefined();
+
     fdom.apis.register('core.view', CredentializingView);
+    var credential = (process.env.XMPPACCT || "alice:hiimalice").split(":");
+    acct = {
+      userId: credential[0] + '@xmpp.uproxy.org',
+      password: credential[1]
+    };
   });
 
   it('logs in', function(done) {
     var socialClient = freedom('freedom.json', {debug:true});
-    socialClient.emit('relay', 'onUserProfile');
+    socialClient.emit('relay', 'onClientState');
     
     credentials.push({
       cmd: 'auth',
-      message: {
-        userId: 'alice@xmpp.uproxy.org',
-        password: 'test'
-      }
+      message: acct
     });
                        
     socialClient.emit('login', [{
@@ -47,7 +50,8 @@ describe('Login integration', function() {
       rememberLogin: false
     }]);
     
-    socialClient.on('onUserProfile', function(prof) {
+    socialClient.on('onClientState', function(prof) {
+      expect(prof.status).toEqual('ONLINE');
       done();
     });
   });
