@@ -248,7 +248,8 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
       this.sendCapabilities(msg.attrs.from, msg);      
     }
   // Is it a staus response?
-  } else if (msg.is('iq') && msg.attrs.type === 'result') {
+  } else if (msg.is('iq') && (msg.attrs.type === 'result' ||
+      msg.attrs.type === 'set')) {
     this.updateRoster(msg);
   // Is it a status?
   } else if (msg.is('presence')) {
