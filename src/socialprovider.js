@@ -8,9 +8,20 @@
 
 
 // Global declarations for node.js
-if (typeof window === 'undefined') {
-  global.window = {};
-  global.XMLHttpRequest = {};
+if (typeof global !== 'undefined') {
+  if (typeof window === 'undefined') {
+    global.window = {};
+  }
+  if (typeof XMLHttpRequest === 'undefined') {
+    global.XMLHttpRequest = {};
+  }
+} else {
+  if (typeof window === 'undefined') {
+    window = {};
+  }
+  if (typeof XMLHttpRequest === 'undefined') {
+    XMLHttpRequest = {};
+  }
 }
 
 /**
