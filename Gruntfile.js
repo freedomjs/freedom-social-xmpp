@@ -107,12 +107,15 @@ module.exports = function(grunt) {
     'copy:dist'
   ]);
   grunt.registerTask('demo', [
+    'browserify',
     'copy:demo'
   ]);
   grunt.registerTask('demo_google', [
+    'browserify',
     'copy:demo_google'
   ]);
   grunt.registerTask('firefox-google-demo', [
+    'browserify',
     'copy:demo_firefox_google',
     'copy:demo_firefox_google1'
   ]);
