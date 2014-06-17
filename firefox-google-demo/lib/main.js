@@ -18,9 +18,10 @@ var button = buttons.ActionButton({
 
 function handleClick(state) {
   var manifest = self.data.url('demo.json');
-  var freedom = setupFreedom(manifest, {freedomcfg:function(register) {
-		register('core.view', require('view_googleauth.js').View_googleAuth);
-	}});
+  var freedom =
+      setupFreedom(manifest, {freedomcfg:function(register) {
+        register('core.view', require('view_googleauth.js').View_googleAuth);
+      }});
   tabs.open({
     url: self.data.url("../lib/tab.html"),
     onLoad: function onLoad(tab) {
@@ -29,7 +30,7 @@ function handleClick(state) {
           self.data.url("../lib/display.js")]
       });
       displayWorker.port.emit("setUp");
-      require("tmp.js").setupListeners(freedom, displayWorker);
+      require("listen.js").setupListeners(freedom, displayWorker);
     }
   });
 }

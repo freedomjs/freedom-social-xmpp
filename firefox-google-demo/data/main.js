@@ -91,6 +91,3 @@ social.on('onClientState', function(data) {
   }
   freedom.emit('recv-buddylist', buddylist);
 });
-
-/** LOGIN AT START **/
-//login();
