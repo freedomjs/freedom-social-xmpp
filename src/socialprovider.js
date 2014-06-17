@@ -124,7 +124,8 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     xmlns: 'jabber:client',
     jid: this.id,
     disallowTLS: true,
-    preferred: 'PLAIN' //TODO: why doesn't DIGEST-MD5 work?
+    preferred: 'PLAIN', //TODO: why doesn't DIGEST-MD5 work?
+    reconnect: true  // Automatically try reconnecting if disconnected.
   };
   for (key in this.credentials) {
     if (this.credentials.hasOwnProperty(key)) {
@@ -145,7 +146,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
   this.client.addListener('online', this.onOnline.bind(this, continuation));
   this.client.addListener('error', function(e) {
-    console.error(e.stack);
+    console.error('client.error: ', e.stack);
     continuation(undefined, {
       errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
       message: e.message
@@ -157,6 +158,23 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
       delete this.client;
     }
   }.bind(this));
+  this.client.addListener('offline', function(e) {
+    // TODO: tell users of the API that this client is now offline,
+    // either by emitting an onClientState with OFFLINE using:
+    //   this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
+    // or emit a new type of event, or invoke this.logout directly to
+    // clean things up.
+    console.error('received unhandled offline event', e);
+  });
+  this.client.addListener('close', function(e) {
+    // This may indicate a broken connection to XMPP.
+    // TODO: handle this.
+    console.error('received unhandled close event', e);
+  });
+  this.client.addListener('end', function(e) {
+    // TODO: figure out when this is fired and handle this.
+    console.error('received unhandled end event', e);
+  });
   this.client.addListener('stanza', this.onMessage.bind(this));
 };
 
