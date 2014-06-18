@@ -52,7 +52,7 @@ module.exports = function(grunt) {
         filter: 'isFile',
         expand: true
       },
-      demo_firefox_google: {
+      demo_firefox_google_data: {
         src: ['demo_google/demo.json',
               'node_modules/freedom-for-firefox/freedom-for-firefox.jsm'],
         dest: 'firefox-google-demo/data/',
@@ -60,7 +60,7 @@ module.exports = function(grunt) {
         filter: 'isFile',
         expand: true
       },
-      demo_firefox_google1: {
+      demo_firefox_google_data_xmpp: {
         src: ['src/*',
 							'build/node-xmpp-browser.js',
               'firefox-google-demo/data/main.js'],
@@ -116,8 +116,8 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('firefox-google-demo', [
     'browserify',
-    'copy:demo_firefox_google',
-    'copy:demo_firefox_google1'
+    'copy:demo_firefox_google_data',
+    'copy:demo_firefox_google_data_xmpp'
   ]);
   grunt.registerTask('test', [
     'copy:jasmine',

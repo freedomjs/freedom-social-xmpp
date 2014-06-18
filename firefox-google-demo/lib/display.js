@@ -76,6 +76,3 @@ self.port.on("recv-uid", function(data){
   loginButton.innerHTML = "log out";
 });
 
-self.port.on("recv-status", function(msg){
-});
-
