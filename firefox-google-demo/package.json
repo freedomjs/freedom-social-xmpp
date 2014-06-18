@@ -1,10 +1,10 @@
 {
-  "name": "my-addon",
-  "title": "my-addon",
+  "name": "chat-demo",
+  "title": "chat demo",
   "id": "jid1-Bg1EHWFjmimS9Q",
-  "description": "a basic add-on",
+  "description": "a basic google chat demo",
   "author": "",
-  "license": "MPL 2.0",
+  "license": "Apache",
   "version": "0.1",
   "permissions": {
         "cross-domain-content": ["http://www.google.com", "https://www.google.com", "http://www.googleapis.com", "https://www.googleapis.com"],

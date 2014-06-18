@@ -1,5 +1,6 @@
 /**
- * @fileoverview Description of this file.
+ * attached to main window as a content script, defines interaction
+ * between display page and add-on environment.
  */
 
 var buddylist = document.getElementById('buddylist');
