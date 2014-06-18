@@ -54,6 +54,7 @@ module.exports = function(grunt) {
       },
       demo_firefox_google_data: {
         src: ['demo_google/demo.json',
+              'demo_common/ux.js',
               'node_modules/freedom-for-firefox/freedom-for-firefox.jsm'],
         dest: 'firefox-google-demo/data/',
         flatten: true,
@@ -62,8 +63,8 @@ module.exports = function(grunt) {
       },
       demo_firefox_google_data_xmpp: {
         src: ['src/*',
-							'build/node-xmpp-browser.js',
-              'firefox-google-demo/data/main.js'],
+              'build/node-xmpp-browser.js',
+              'demo_common/main.js'],
         dest: 'firefox-google-demo/data/xmpp/',
         flatten: true,
         filter: 'isFile',

@@ -1,11 +1,11 @@
 function setupListeners(freedom, displayWorker) {
-	freedom.on(displayWorker.port.emit.bind(displayWorker.port));
+  freedom.on(displayWorker.port.emit.bind(displayWorker.port));
 
-  displayWorker.port.on('logIn', function() {
+  displayWorker.port.on('login', function() {
     freedom.emit("login");
   });
 
-  displayWorker.port.on('logOut', function() {
+  displayWorker.port.on('logout', function() {
     freedom.emit("logout");
   });
 

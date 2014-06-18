@@ -27,7 +27,7 @@ function handleClick(state) {
     onLoad: function onLoad(tab) {
       displayWorker = tab.attach({
         contentScriptFile : [
-          self.data.url("../lib/display.js")]
+          self.data.url("ux.js")]
       });
       displayWorker.port.emit("setUp");
       require("listen.js").setupListeners(freedom, displayWorker);
