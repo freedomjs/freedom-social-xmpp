@@ -5,10 +5,10 @@ const {XMLHttpRequest} = require("sdk/net/xhr");
 var CREDENTIALS = "";
 
 var CLIENT_ID =
-  "222861774905-u4e5lp293k0hm2cbmr9iil4jk3os7i3b.apps.googleusercontent.com";
-var CLIENT_SECRET = "SB-6TREbiMAM9b8Mnwhizo1p";
+    "222861774905-tkvp9gq42v5l3orqvqk6850b160i8tfk.apps.googleusercontent.com";
+var CLIENT_SECRET = "hDJxfvLqKs6vj1IW_M77Jn5w";
 
-var REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
+var REDIRECT_URI = "https://www.uproxy.org/";
 
 var View_googleAuth = function (app, dispatchEvent) {
   this.dispatchEvent = dispatchEvent;
@@ -49,10 +49,10 @@ function googleAuth(dispatchEvent, continuation) {
       isPrivate: true,
 
       onLoad: function onLoad(tab) {
-        var title = tab.title;
-        if (title.startsWith("Success")) {
-          var code = title.match(/code=([^&]+)/)[1];
-					getToken(code, dispatchEvent, continuation);
+        var url = tab.url;
+        if (url.startsWith(REDIRECT_URI)) {
+          var code = url.match(/code=([^&]+)/)[1];
+          getToken(code, dispatchEvent, continuation);
           tab.close();
         }
       }
@@ -88,8 +88,8 @@ function getUserInfo(token, dispatchEvent, continuation) {
       oauth2_auth: 'http://www.google.com/talk/protocol/auth',
       host: 'talk.google.com'
     };
-		dispatchEvent('message', {cmd: 'auth', message: CREDENTIALS});
-		continuation();
+    dispatchEvent('message', {cmd: 'auth', message: CREDENTIALS});
+    continuation();
   }
   xhr.send();
 }

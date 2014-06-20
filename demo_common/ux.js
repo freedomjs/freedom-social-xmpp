@@ -2,6 +2,11 @@
  * These functions provide interaction for the freedom.js chat demo.
  */
 if (typeof window.freedom === 'undefined') {
+  // In firefox window.freedom is not defined
+  // instead communicate with main.js wich is responsible forwarding messages to
+  // freedom.
+  // TODO(salomege): figure out how to split this code into common ux and
+  // firefox specific files.
   window.freedom = {
     on: self.port.on.bind(self.port),
     emit: self.port.emit.bind(self.port),
