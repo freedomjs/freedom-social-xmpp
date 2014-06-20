@@ -3,7 +3,7 @@
  */
 if (typeof window.freedom === 'undefined') {
   // In firefox window.freedom is not defined
-  // instead communicate with main.js wich is responsible forwarding messages to
+  // instead communicate with main.js wich is responsible for forwarding messages to
   // freedom.
   // TODO(salomege): figure out how to split this code into common ux and
   // firefox specific files.
@@ -45,7 +45,7 @@ window.onload = function() {
   // on changes to the buddylist, redraw entire buddylist
   window.freedom.on('recv-buddylist', function(val) {
     if (logInOrOut.textContent === 'Log in') {
-      // We are already loggin out, ignore buddylist
+      // We are already logging out, ignore buddylist.
       return;
     }
     var onClick = function(jid, child) {
