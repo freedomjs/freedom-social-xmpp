@@ -1,4 +1,4 @@
-/*globals freedom:true,setTimeout,console,VCardStore */
+/*globals freedom:true,setTimeout,console,VCardStore,global */
 /*jslint indent:2,white:true,sloppy:true */
 
 /**
@@ -6,7 +6,23 @@
  * uses sockets to make xmpp connections to chat networks.
  **/
 
-var window = {};
+
+// Global declarations for node.js
+if (typeof global !== 'undefined') {
+  if (typeof window === 'undefined') {
+    global.window = {};
+  }
+  if (typeof XMLHttpRequest === 'undefined') {
+    global.XMLHttpRequest = {};
+  }
+} else {
+  if (typeof window === 'undefined') {
+    window = {};
+  }
+  if (typeof XMLHttpRequest === 'undefined') {
+    XMLHttpRequest = {};
+  }
+}
 
 /**
  * The SocialProvider implements the freedom.js social API
@@ -108,7 +124,8 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     xmlns: 'jabber:client',
     jid: this.id,
     disallowTLS: true,
-    preferred: 'PLAIN' //TODO: why doesn't DIGEST-MD5 work?
+    preferred: 'PLAIN', //TODO: why doesn't DIGEST-MD5 work?
+    reconnect: true  // Automatically try reconnecting if disconnected.
   };
   for (key in this.credentials) {
     if (this.credentials.hasOwnProperty(key)) {
@@ -129,7 +146,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
   this.client.addListener('online', this.onOnline.bind(this, continuation));
   this.client.addListener('error', function(e) {
-    console.error(e.stack);
+    console.error('client.error: ', e.stack);
     continuation(undefined, {
       errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
       message: e.message
@@ -141,6 +158,23 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
       delete this.client;
     }
   }.bind(this));
+  this.client.addListener('offline', function(e) {
+    // TODO: tell users of the API that this client is now offline,
+    // either by emitting an onClientState with OFFLINE using:
+    //   this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
+    // or emit a new type of event, or invoke this.logout directly to
+    // clean things up.
+    console.error('received unhandled offline event', e);
+  });
+  this.client.addListener('close', function(e) {
+    // This may indicate a broken connection to XMPP.
+    // TODO: handle this.
+    console.error('received unhandled close event', e);
+  });
+  this.client.addListener('end', function(e) {
+    // TODO: figure out when this is fired and handle this.
+    console.error('received unhandled end event', e);
+  });
   this.client.addListener('stanza', this.onMessage.bind(this));
 };
 
@@ -195,7 +229,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   // Sending all messages as type 'normal' means we can't communicate across
   // different client types, but sending all as type 'chat' means messages
   // will be broadcast to all clients.
-  var messageType = (this.vCardStore.getClient(to).status == 'ONLINE') ?
+  var messageType = (this.vCardStore.getClient(to).status === 'ONLINE') ?
       'normal' : 'chat';
   
   try {
@@ -243,7 +277,8 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
       this.sendCapabilities(msg.attrs.from, msg);      
     }
   // Is it a staus response?
-  } else if (msg.is('iq') && msg.attrs.type === 'result') {
+  } else if (msg.is('iq') && (msg.attrs.type === 'result' ||
+      msg.attrs.type === 'set')) {
     this.updateRoster(msg);
   // Is it a status?
   } else if (msg.is('presence')) {

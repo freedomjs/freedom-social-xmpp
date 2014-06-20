@@ -26,7 +26,7 @@ module.exports = function(grunt) {
         },
         options: {
           alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep'],
-          ignore : ['faye-websocket', 'tls']
+          ignore : ['faye-websocket', 'tls', './websockets']
         }
       }
     },
@@ -123,6 +123,10 @@ module.exports = function(grunt) {
   grunt.registerTask('test', [
     'copy:jasmine',
     'jasmine:dns'
+  ]);
+  grunt.registerTask('travis', [
+    'compile',
+    'jasmine_node'
   ]);
   grunt.registerTask('default', ['compile']);
 };
