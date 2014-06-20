@@ -1,6 +1,18 @@
 /*
  * These functions provide interaction for the freedom.js chat demo.
  */
+if (typeof window.freedom === 'undefined') {
+  // In firefox window.freedom is not defined
+  // instead communicate with main.js wich is responsible for forwarding messages to
+  // freedom.
+  // TODO(salomege): figure out how to split this code into common ux and
+  // firefox specific files.
+  window.freedom = {
+    on: self.port.on.bind(self.port),
+    emit: self.port.emit.bind(self.port),
+  }
+}
+
 window.onload = function() {
   document.getElementById('msg-input').focus();
   // If messages are going to a specific user, store that here.
@@ -29,13 +41,16 @@ window.onload = function() {
     log.appendChild(br);
     br.scrollIntoView();
   }
-  
+
   // on changes to the buddylist, redraw entire buddylist
   window.freedom.on('recv-buddylist', function(val) {
+    if (logInOrOut.textContent === 'Log in') {
+      // We are already logging out, ignore buddylist.
+      return;
+    }
     var onClick = function(jid, child) {
       if (activeId != jid) {
         activeId = jid;
-        child.innerHTML = "[" + val[i] + "]";
       } else {
         activeId = undefined;
         child.innerHTML = val[i];
@@ -63,8 +78,8 @@ window.onload = function() {
 
   // Display our own userId when we get it
   window.freedom.on('recv-uid', function(data) {
-    uidElement.innerText = "Logged in as: "+data;
-    logInOrOut.innerText = 'Log out';
+    uidElement.textContent = "Logged in as: " + data;
+    logInOrOut.textContent = 'Log out';
   });
 
   // Display the current status of our connection to the Social provider
@@ -92,12 +107,12 @@ window.onload = function() {
   };
 
   logInOrOut.onclick = function() {
-    if (logInOrOut.innerText == 'Log out') {
+    if (logInOrOut.textContent == 'Log out') {
       // Tell parent window to logout (invoke social.logout),
       // then update UI.
       window.freedom.emit('logout');
-      logInOrOut.innerText = 'Log in';
-      uidElement.innerText = '';
+      logInOrOut.textContent = 'Log in';
+      uidElement.textContent = '';
       clearBuddylist();
       clearLog();
     } else {
