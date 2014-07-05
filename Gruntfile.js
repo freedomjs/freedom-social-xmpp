@@ -105,8 +105,10 @@ module.exports = function(grunt) {
     'copy:demo_firefox_google_data_xmpp'
   ]);
   grunt.registerTask('test', [
+    'compile',
     'copy:jasmine',
-    'jasmine:dns'
+    'jasmine:dns',
+    'jasmine_node'
   ]);
   grunt.registerTask('travis', [
     'compile',
