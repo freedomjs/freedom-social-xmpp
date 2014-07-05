@@ -1,14 +1,5 @@
-var FILES = {},
-    freedomFiles = require('freedom/Gruntfile.js').FILES;
-for (var key in freedomFiles) {
-  FILES[key] = freedomFiles[key].map(function(str) {
-    if (str[0] === '!') {
-      return '!node_modules/freedom/' + str.substr(1);
-    } else {
-      return 'node_modules/freedom/' + str;
-    }
-  });
-};
+var freedomPrefix = require.resolve('freedom').substr(0,
+        require.resolve('freedom').lastIndexOf('freedom') + 8);
 
 module.exports = function(grunt) {
   var distFiles = [
@@ -71,7 +62,7 @@ module.exports = function(grunt) {
         expand: true
       },
       jasmine: {
-        src: ['node_modules/freedom/freedom.js'],
+        src: [freedomPrefix + '/freedom.js'],
         dest: 'freedom.js'
       }
     },
@@ -80,13 +71,6 @@ module.exports = function(grunt) {
         src: ['spec/dns_context.js', 'lib/dns.js'],
         options: {
           specs: 'spec/dns.unit.spec.js',
-          keepRunner: false
-        }
-      },
-      freedomIntegration: {
-        src: FILES.srcCore.concat(FILES.srcPlatform, FILES.srcProvider).concat(FILES.srcJasmineHelper).concat(['spec/helper.js']),
-        options: {
-          specs: 'node_modules/freedom/spec/providers/social/**/*.integration.spec.js',
           keepRunner: false
         }
       }
