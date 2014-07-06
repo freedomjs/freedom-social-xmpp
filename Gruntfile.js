@@ -91,15 +91,15 @@ module.exports = function(grunt) {
     'browserify',
     'copy:dist'
   ]);
-  grunt.registerTask('demo', [
+  grunt.registerTask('chrome_demo_login', [
     'browserify',
     'copy:demo'
   ]);
-  grunt.registerTask('demo_google', [
+  grunt.registerTask('chrome_demo_oauth', [
     'browserify',
     'copy:demo_google'
   ]);
-  grunt.registerTask('firefox-google-demo', [
+  grunt.registerTask('firefox_demo_oauth', [
     'browserify',
     'copy:demo_firefox_google_data',
     'copy:demo_firefox_google_data_xmpp'
@@ -108,10 +108,6 @@ module.exports = function(grunt) {
     'compile',
     'copy:jasmine',
     'jasmine:dns',
-    'jasmine_node'
-  ]);
-  grunt.registerTask('travis', [
-    'compile',
     'jasmine_node'
   ]);
   grunt.registerTask('default', ['compile']);
