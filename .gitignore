@@ -3,6 +3,7 @@ build
 demo/freedom*.js
 demo/xmpp
 demo_google/xmpp
+firefox-google-demo/data
 /npm-debug.log
 /freedom.js
 .grunt/
