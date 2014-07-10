@@ -46,7 +46,7 @@ module.exports = function(grunt) {
       demo_firefox_google_data: {
         src: ['demo_google/demo.json',
               'demo_common/ux.js',
-              'node_modules/freedom-for-firefox/freedom-for-firefox.jsm'],
+              'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm'],
         dest: 'firefox-google-demo/data/',
         flatten: true,
         filter: 'isFile',
