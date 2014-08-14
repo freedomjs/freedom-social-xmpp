@@ -1,0 +1,13 @@
+{
+  "name": "chat-demo",
+  "title": "chat demo",
+  "id": "jid1-Bg1EHWFjmimS9Q",
+  "description": "a basic facebook chat demo",
+  "author": "",
+  "license": "Apache",
+  "version": "0.1",
+  "permissions": {
+        "cross-domain-content": ["http://www.facebook.com", "https://www.facebook.com", "http://graph.facebook.com", "https://graph.facebook.com"],
+        "private-browsing": true
+  }
+}

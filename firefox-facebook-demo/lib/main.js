@@ -6,8 +6,8 @@ const {Cu} = require("chrome");
 Cu.import(self.data.url('freedom-for-firefox.jsm'));
 
 var button = buttons.ActionButton({
-  id: "google-demo",
-  label: "Google demo",
+  id: "facebook-demo",
+  label: "Facebook demo",
   icon: {
     "16": "./icon-16.png",
     "32": "./icon-32.png",
@@ -24,7 +24,7 @@ function handleClick(state) {
         // freedom workers (main-freedom-worker.js)
         portType: "BackgroundFrame",
         freedomcfg:function(register) {
-          register('core.view', require('view_googleauth.js').View_googleAuth);
+          register('core.view', require('view_facebookauth.js').View_facebookAuth);
         }
       });
   tabs.open({

@@ -44,6 +44,7 @@ window.onload = function() {
 
   // on changes to the buddylist, redraw entire buddylist
   window.freedom.on('recv-buddylist', function(val) {
+    console.log('dborkan: recv-buddylist called');
     if (logInOrOut.textContent === 'Log in') {
       // We are already logging out, ignore buddylist.
       return;
@@ -51,9 +52,10 @@ window.onload = function() {
     var onClick = function(jid, child) {
       if (activeId != jid) {
         activeId = jid;
+        child.innerHTML = '[' + val[i].userName + ', ' + val[i].clientId + ']';
       } else {
         activeId = undefined;
-        child.innerHTML = val[i];
+        child.innerHTML = val[i].userName + ', ' + val[i].clientId;
       }
       console.log("Messages will be sent to: " + activeId);
       document.getElementById('msg-input').focus();
@@ -62,11 +64,13 @@ window.onload = function() {
     clearBuddylist();
 
     // Create a new element for each buddy
+    console.log('dborkan: val.length ' + val.length);
     for (var i in val) {
+      console.log('dborkan: adding buddy i ' + i);
       var child = document.createElement('div');
-      child.innerHTML = val[i];
+      child.innerHTML = val[i].userName + ', ' + val[i].clientId;
       // If the user clicks on a buddy, change our current destination for messages
-      child.addEventListener('click', onClick.bind(this, val[i], child), true);
+      child.addEventListener('click', onClick.bind(this, val[i].clientId, child), true);
       buddylist.appendChild(child);
     }
   });

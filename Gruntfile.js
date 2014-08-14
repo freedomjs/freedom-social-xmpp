@@ -16,7 +16,7 @@ module.exports = function(grunt) {
           'build/node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
-          alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep'],
+          alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
           ignore : ['faye-websocket', 'tls', './websockets']
         }
       }
@@ -61,6 +61,24 @@ module.exports = function(grunt) {
         filter: 'isFile',
         expand: true
       },
+      demo_firefox_facebook_data: {
+        src: ['demo_facebook/demo.json',
+              'demo_common/ux.js',
+              'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm'],
+        dest: 'firefox-facebook-demo/data/',
+        flatten: true,
+        filter: 'isFile',
+        expand: true
+      },
+      demo_firefox_facebook_data_xmpp: {
+        src: ['src/*',
+              'build/node-xmpp-browser.js',
+              'demo_common/main.js'],
+        dest: 'firefox-facebook-demo/data/xmpp/',
+        flatten: true,
+        filter: 'isFile',
+        expand: true
+      },
       jasmine: {
         src: [freedomPrefix + '/freedom.js'],
         dest: 'freedom.js'
@@ -95,14 +113,19 @@ module.exports = function(grunt) {
     'browserify',
     'copy:demo'
   ]);
-  grunt.registerTask('chrome_demo_oauth', [
+  grunt.registerTask('chrome_demo_google', [
     'browserify',
     'copy:demo_google'
   ]);
-  grunt.registerTask('firefox_demo_oauth', [
+  grunt.registerTask('firefox_demo_google', [
     'browserify',
     'copy:demo_firefox_google_data',
     'copy:demo_firefox_google_data_xmpp'
+  ]);
+  grunt.registerTask('firefox_demo_facebook', [
+    'browserify',
+    'copy:demo_firefox_facebook_data',
+    'copy:demo_firefox_facebook_data_xmpp'
   ]);
   grunt.registerTask('test', [
     'compile',
