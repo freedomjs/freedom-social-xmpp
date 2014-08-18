@@ -22,7 +22,7 @@ function handleClick(state) {
       setupFreedom(manifest, {
         // this is needed to see output trace in Developer Console printed from
         // freedom workers (main-freedom-worker.js)
-        portType: "BackgroundFrame",
+        //portType: "BackgroundFrame",
         freedomcfg:function(register) {
           register('core.view', require('view_facebookauth.js').View_facebookAuth);
         }
