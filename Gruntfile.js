@@ -13,7 +13,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          'build/node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
+          'build/node-xmpp-browser-raw.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
           alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
@@ -95,6 +95,16 @@ module.exports = function(grunt) {
     },
     jasmine_node: {
       integration: ['spec/integration/']
+    },
+    replace: {
+      facebook: {
+        src: ['build/node-xmpp-browser-raw.js'],
+        dest: 'build/node-xmpp-browser.js',
+        replacements: [{
+          from: 'XFacebookPlatform.host',
+          to: 'XFacebookPlatform.prototype.host'
+        }]
+      }
     }
   });
 
@@ -103,27 +113,33 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-jasmine-node');
+  grunt.loadNpmTasks('grunt-text-replace');
 
   // Default tasks.
   grunt.registerTask('compile', [
     'browserify',
+    'replace',
     'copy:dist'
   ]);
   grunt.registerTask('chrome_demo_login', [
     'browserify',
+    'replace',
     'copy:demo'
   ]);
   grunt.registerTask('chrome_demo_google', [
     'browserify',
+    'replace',
     'copy:demo_google'
   ]);
   grunt.registerTask('firefox_demo_google', [
     'browserify',
+    'replace',
     'copy:demo_firefox_google_data',
     'copy:demo_firefox_google_data_xmpp'
   ]);
   grunt.registerTask('firefox_demo_facebook', [
     'browserify',
+    'replace',
     'copy:demo_firefox_facebook_data',
     'copy:demo_firefox_facebook_data_xmpp'
   ]);
