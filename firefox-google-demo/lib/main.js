@@ -20,9 +20,6 @@ function handleClick(state) {
   var manifest = self.data.url('demo.json');
   var freedom =
       setupFreedom(manifest, {
-        // this is needed to see output trace in Developer Console printed from
-        // freedom workers (main-freedom-worker.js)
-        portType: "BackgroundFrame",
         freedomcfg:function(register) {
           register('core.view', require('view_googleauth.js').View_googleAuth);
         }
