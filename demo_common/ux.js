@@ -44,7 +44,6 @@ window.onload = function() {
 
   // on changes to the buddylist, redraw entire buddylist
   window.freedom.on('recv-buddylist', function(val) {
-    console.log('dborkan: recv-buddylist called');
     if (logInOrOut.textContent === 'Log in') {
       // We are already logging out, ignore buddylist.
       return;
@@ -64,9 +63,7 @@ window.onload = function() {
     clearBuddylist();
 
     // Create a new element for each buddy
-    console.log('dborkan: val.length ' + val.length);
     for (var i in val) {
-      console.log('dborkan: adding buddy i ' + i);
       var child = document.createElement('div');
       child.innerHTML = val[i].userName + ', ' + val[i].clientId;
       // If the user clicks on a buddy, change our current destination for messages

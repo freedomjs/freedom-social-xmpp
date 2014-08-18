@@ -37,7 +37,7 @@ function login() {
   });
 }
 
-/** 
+/**
  * on a 'send-message' event from the parent (the outer page)
  * Just forward it to the Social provider
  **/
@@ -60,7 +60,6 @@ social.on('onMessage', function(data) {
  **/
 social.on('onUserProfile', function(data) {
   //Just save it for now
-  console.error('dborkan: got user profile ' + data.name);
   userList[data.userId] = data;
   updateBuddyList();
 });
@@ -69,7 +68,6 @@ social.on('onUserProfile', function(data) {
  * On newly online or offline clients, let's update the roster
  **/
 social.on('onClientState', function(data) {
-  console.error('dborkan: got client state ' + data.status);
   if (data.status == social.STATUS["OFFLINE"]) {
     if (clientList.hasOwnProperty(data.clientId)) {
       delete clientList[data.clientId];
@@ -101,7 +99,7 @@ function updateBuddyList() {
       }
     }
   }
-  freedom.emit('recv-buddylist', buddylist);  
+  freedom.emit('recv-buddylist', buddylist);
 }
 
 /** LOGIN AT START **/
