@@ -96,6 +96,8 @@ module.exports = function(grunt) {
     jasmine_node: {
       integration: ['spec/integration/']
     },
+    // TODO: remove this after resolving
+    // https://github.com/freedomjs/freedom-social-xmpp/issues/54
     replace: {
       facebook: {
         src: ['build/node-xmpp-browser-raw.js'],
