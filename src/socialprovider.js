@@ -123,7 +123,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   var key, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
-    disallowTLS: true,
+    disallowTLS: false,
     preferred: 'PLAIN', //TODO: why doesn't DIGEST-MD5 work?
     reconnect: true  // Automatically try reconnecting if disconnected.
   };
@@ -146,7 +146,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
   this.client.addListener('online', this.onOnline.bind(this, continuation));
   this.client.addListener('error', function(e) {
-    console.error('client.error: ', e.stack);
+    console.error('client.error: ', e);
     continuation(undefined, {
       errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
       message: e.message

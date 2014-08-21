@@ -4,6 +4,9 @@ demo/freedom*.js
 demo/xmpp
 demo_google/xmpp
 firefox-google-demo/data
+firefox-facebook-demo/data/xmpp
+firefox-facebook-demo/data/freedom-for-firefox.jsm
+firefox-facebook-demo/data/ux.js
 /npm-debug.log
 /freedom.js
 .grunt/

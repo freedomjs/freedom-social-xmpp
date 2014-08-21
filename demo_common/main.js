@@ -37,7 +37,7 @@ function login() {
   });
 }
 
-/** 
+/**
  * on a 'send-message' event from the parent (the outer page)
  * Just forward it to the Social provider
  **/
@@ -61,6 +61,7 @@ social.on('onMessage', function(data) {
 social.on('onUserProfile', function(data) {
   //Just save it for now
   userList[data.userId] = data;
+  updateBuddyList();
 });
 
 /**
@@ -82,15 +83,24 @@ social.on('onClientState', function(data) {
       freedom.emit('recv-status', "offline");
     }
   }
-  // Iterate over our roster and just send over userId's where there is at least 1 client online
+  updateBuddyList();
+});
+
+function updateBuddyList() {
+  // Iterate over our roster and just send over clientId/userName where there is at least 1 client online
   var buddylist = [];
   for (var k in clientList) {
     if (clientList.hasOwnProperty(k)) {
-      buddylist.push(k);
+      var client = clientList[k];
+      var user = userList[client.userId];
+      if (user) {
+        var buddyInfo = {userName: user.name, clientId: client.clientId};
+        buddylist.push(buddyInfo);
+      }
     }
   }
   freedom.emit('recv-buddylist', buddylist);
-});
+}
 
 /** LOGIN AT START **/
 login();

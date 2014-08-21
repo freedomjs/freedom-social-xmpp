@@ -51,9 +51,10 @@ window.onload = function() {
     var onClick = function(jid, child) {
       if (activeId != jid) {
         activeId = jid;
+        child.innerHTML = '[' + val[i].userName + ', ' + val[i].clientId + ']';
       } else {
         activeId = undefined;
-        child.innerHTML = val[i];
+        child.innerHTML = val[i].userName + ', ' + val[i].clientId;
       }
       console.log("Messages will be sent to: " + activeId);
       document.getElementById('msg-input').focus();
@@ -64,9 +65,9 @@ window.onload = function() {
     // Create a new element for each buddy
     for (var i in val) {
       var child = document.createElement('div');
-      child.innerHTML = val[i];
+      child.innerHTML = val[i].userName + ', ' + val[i].clientId;
       // If the user clicks on a buddy, change our current destination for messages
-      child.addEventListener('click', onClick.bind(this, val[i], child), true);
+      child.addEventListener('click', onClick.bind(this, val[i].clientId, child), true);
       buddylist.appendChild(child);
     }
   });
