@@ -30,7 +30,7 @@
     "freedom-for-chrome": "^0.2.0",
     "freedom-for-firefox": "^0.4.0",
     "grunt-contrib-jasmine": "^0.6.1",
-    "freedom-for-node": "^0.1.0",
+    "freedom-for-node": "~0.1.6",
     "grunt-jasmine-node": "~0.2.1",
     "es6-promise": "~1.0.0",
     "es5-shim": "~3.4.0"
