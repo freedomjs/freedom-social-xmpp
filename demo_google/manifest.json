@@ -9,12 +9,23 @@
     }
   },
   "permissions": [
-    {"socket": ["tcp-connect", "udp-send-to", "udp-bind"]},
-      "identity",
-      "storage",
-      "https://www.googleapis.com/*",
-      "https://accounts.google.com/*"
+    "identity",
+    "storage",
+    "https://www.googleapis.com/*",
+    "https://accounts.google.com/*"
   ],
+  "sockets":{
+    "tcp": {
+      "connect": ["*"]
+    },
+    "tcpServer": {
+      "listen": ["*"]
+    },
+    "udp": {
+      "bind": ["*"],
+      "send": ["*"]
+    }
+  },
   // This key is copied from the chrome the UProxy chrome app.
   // It is needed so that chrome.identity.getRedirectURL returns
   // the correct URL associated with our Cient ID
