@@ -29,7 +29,8 @@ describe('Login integration', function() {
     var credential = (process.env.XMPPACCT || "alice:hiimalice").split(":");
     acct = {
       userId: credential[0] + '@xmpp.uproxy.org',
-      password: credential[1]
+      password: credential[1],
+      disallowTLS: true
     };
   });
 
