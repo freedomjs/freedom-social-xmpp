@@ -1,7 +1,7 @@
 {
   "name": "freedom-social-xmpp",
   "description": "XMPP Social provider for freedomjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage": "http://freedomjs.org",
   "bugs": {
     "url": "http://github.com/freedomjs/freedom-social-xmpp/issues",
@@ -27,7 +27,7 @@
     "browser-request": "~0.3.1",
     "grunt-contrib-copy": "~0.5.0",
     "freedom": "^0.5.0",
-    "freedom-for-chrome": "^0.2.0",
+    "freedom-for-chrome": "^0.3.0",
     "freedom-for-firefox": "^0.4.0",
     "grunt-contrib-jasmine": "^0.6.1",
     "freedom-for-node": "~0.1.6",
