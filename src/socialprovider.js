@@ -60,6 +60,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
  *   network - A string used to differentiate this provider in events.
  */
 XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
+  console.log('in XMPPSocialProvider.prototype.login');
   if (loginOpts) {
     this.loginOpts = loginOpts;
   }

@@ -22,7 +22,8 @@ function handleClick(state) {
       setupFreedom(manifest, {
         freedomcfg:function(register) {
           register('core.view', require('view_facebookauth.js').View_facebookAuth);
-        }
+        },
+        portType: 'BackgroundFrame'
       });
   tabs.open({
     url: self.data.url("../lib/tab.html"),
