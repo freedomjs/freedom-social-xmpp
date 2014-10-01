@@ -125,23 +125,14 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     jid: this.id,
     disallowTLS: false,
     preferred: 'PLAIN', //TODO: why doesn't DIGEST-MD5 work?
-    reconnect: true  // Automatically try reconnecting if disconnected.
+    reconnect: true,  // Automatically try reconnecting if disconnected.
+    serialized: true  // Less messy writes.
   };
   for (key in this.credentials) {
     if (this.credentials.hasOwnProperty(key)) {
       connectOpts[key] = this.credentials[key];
     }
   }
-
-  // Patch socket element writer to be less verbose.
-  connectOpts.socket = function() {
-    var net = require('net'),
-        sock = new net.Socket();
-    sock.serializeStanza = function(el, cb) {
-      cb(el.toString());
-    };
-    return sock;
-  };
 
   try {
     console.warn(JSON.stringify(connectOpts));
