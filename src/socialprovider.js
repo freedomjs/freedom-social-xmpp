@@ -126,7 +126,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     disallowTLS: false,
     preferred: 'PLAIN', //TODO: why doesn't DIGEST-MD5 work?
     reconnect: true,  // Automatically try reconnecting if disconnected.
-    serialized: true  // Less messy writes.
+    serialized: false  // Less messy writes.
   };
   for (key in this.credentials) {
     if (this.credentials.hasOwnProperty(key)) {
