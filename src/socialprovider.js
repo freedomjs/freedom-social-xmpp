@@ -50,7 +50,8 @@ var XMPPSocialProvider = function(dispatchEvent) {
 
   // Used to batch messages sent through social provider (for
   // rate limiting).
-  this.isWaitingForMoreMessages = false;
+  this.sendMessagesTimeout = null;
+  this.timeOfFirstMessageInBatch = 0;
   this.messages = [];
 };
 
@@ -238,18 +239,26 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
       'normal' : 'chat';
   
   try {
-    // Send messages in batches every second.
+    // After each message is received, reset the timeout to
+    // wait for at least 100ms to batch other messages received 
+    // in that window. However, if the oldest message in the batch 
+    // was received over 2s ago, don't reset the timeout, and 
+    // just allow the current timeout to execute.
     this.messages.push(msg);
-    if (!this.isWaitingForMoreMessages) {
-      setTimeout(function() {
+    if (!this.sendMessagesTimeout) {
+      this.timeOfFirstMessageInBatch = Date.now();
+    }
+    if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) 
+        || !this.sendMessagesTimeout) {
+      clearTimeout(this.sendMessagesTimeout);
+      this.sendMessagesTimeout = setTimeout(function() {
         this.client.send(new window.XMPP.Element('message', {
           to: to,
           type: messageType
         }).c('body').t(JSON.stringify(this.messages)));
-        this.isWaitingForMoreMessages = false;
         this.messages = [];
-      }.bind(this), 1000);
-      this.isWaitingForMoreMessages = true; 
+        this.sendMessagesTimeout = null;
+      }.bind(this), 100);  
     }
   } catch(e) {
     console.error(e.stack);
