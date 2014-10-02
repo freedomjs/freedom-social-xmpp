@@ -47,6 +47,11 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.vCardStore.loadCard = this.requestUserStatus.bind(this);
   this.vCardStore.onUserChange = this.onUserChange.bind(this);
   this.vCardStore.onClientChange = this.onClientChange.bind(this);
+
+  // Used to batch messages sent through social provider (for
+  // rate limiting).
+  this.isWaitingForMoreMessages = false;
+  this.messages = [];
 };
 
 /**
@@ -233,10 +238,19 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
       'normal' : 'chat';
   
   try {
-    this.client.send(new window.XMPP.Element('message', {
-      to: to,
-      type: messageType
-    }).c('body').t(msg));
+    // Send messages in batches every second.
+    this.messages.push(msg);
+    if (!this.isWaitingForMoreMessages) {
+      setTimeout(function() {
+        this.client.send(new window.XMPP.Element('message', {
+          to: to,
+          type: messageType
+        }).c('body').t(JSON.stringify(this.messages)));
+        this.isWaitingForMoreMessages = false;
+        this.messages = [];
+      }.bind(this), 1000);
+      this.isWaitingForMoreMessages = true; 
+    }
   } catch(e) {
     console.error(e.stack);
     continuation(undefined, {
@@ -296,14 +310,17 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
  * @method receiveMessage
  * @private
  * @param {String} from The Client ID of the message origin
- * @param {String} msg The received message.
+ * @param {String} msgs A batch of messages.
  */
-XMPPSocialProvider.prototype.receiveMessage = function(from, msg) {
-  this.dispatchEvent('onMessage', {
-    from: this.vCardStore.getClient(from),
-    to: this.vCardStore.getClient(this.id),
-    message: msg
-  });
+XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
+  var parsedMessages = JSON.parse(msgs);
+  for (var i = 0; i < parsedMessages.length; i++) {
+    this.dispatchEvent('onMessage', {
+      from: this.vCardStore.getClient(from),
+      to: this.vCardStore.getClient(this.id),
+      message: parsedMessages[i]
+    });
+  }
 };
 
 /**
