@@ -47,6 +47,12 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.vCardStore.loadCard = this.requestUserStatus.bind(this);
   this.vCardStore.onUserChange = this.onUserChange.bind(this);
   this.vCardStore.onClientChange = this.onClientChange.bind(this);
+
+  // Used to batch messages sent through social provider (for
+  // rate limiting).
+  this.sendMessagesTimeout = null;
+  this.timeOfFirstMessageInBatch = 0;
+  this.messages = [];
 };
 
 /**
@@ -234,10 +240,27 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
       'normal' : 'chat';
   
   try {
-    this.client.send(new window.XMPP.Element('message', {
-      to: to,
-      type: messageType
-    }).c('body').t(msg));
+    // After each message is received, reset the timeout to
+    // wait for at least 100ms to batch other messages received 
+    // in that window. However, if the oldest message in the batch 
+    // was received over 2s ago, don't reset the timeout, and 
+    // just allow the current timeout to execute.
+    this.messages.push(msg);
+    if (!this.sendMessagesTimeout) {
+      this.timeOfFirstMessageInBatch = Date.now();
+    }
+    if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) 
+        || !this.sendMessagesTimeout) {
+      clearTimeout(this.sendMessagesTimeout);
+      this.sendMessagesTimeout = setTimeout(function() {
+        this.client.send(new window.XMPP.Element('message', {
+          to: to,
+          type: messageType
+        }).c('body').t(JSON.stringify(this.messages)));
+        this.messages = [];
+        this.sendMessagesTimeout = null;
+      }.bind(this), 100);  
+    }
   } catch(e) {
     console.error(e.stack);
     continuation(undefined, {
@@ -297,14 +320,17 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
  * @method receiveMessage
  * @private
  * @param {String} from The Client ID of the message origin
- * @param {String} msg The received message.
+ * @param {String} msgs A batch of messages.
  */
-XMPPSocialProvider.prototype.receiveMessage = function(from, msg) {
-  this.dispatchEvent('onMessage', {
-    from: this.vCardStore.getClient(from),
-    to: this.vCardStore.getClient(this.id),
-    message: msg
-  });
+XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
+  var parsedMessages = JSON.parse(msgs);
+  for (var i = 0; i < parsedMessages.length; i++) {
+    this.dispatchEvent('onMessage', {
+      from: this.vCardStore.getClient(from),
+      to: this.vCardStore.getClient(this.id),
+      message: parsedMessages[i]
+    });
+  }
 };
 
 /**
