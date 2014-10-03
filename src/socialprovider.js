@@ -134,6 +134,13 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     }
   }
 
+  if (connectOpts.host == 'talk.google.com') {
+    // Use JID with domain of 'google.com', to fix cert errors (TODO: explain)
+    var jid = new window.XMPP.JID(this.id);
+    jid.setDomain('google.com');
+    connectOpts.jid = jid;
+  }
+
   try {
     console.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
