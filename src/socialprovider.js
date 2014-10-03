@@ -135,7 +135,10 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
 
   if (connectOpts.host == 'talk.google.com') {
-    // Use JID with domain of 'google.com', to fix cert errors (TODO: explain)
+    // Use JID with domain of 'google.com', to fix cert errors.  If we don't
+    // do this, we will get the cert for gmail.com, which will result in an
+    // error on Chrome because it will not match the google.com domain
+    // we connect to.
     var jid = new window.XMPP.JID(this.id);
     jid.setDomain('google.com');
     connectOpts.jid = jid;
