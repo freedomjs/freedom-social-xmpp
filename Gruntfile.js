@@ -45,6 +45,13 @@ module.exports = function(grunt) {
         filter: 'isFile',
         expand: true
       },
+      demo_facebook: {
+        src: distFiles,
+        dest: 'demo_facebook/xmpp/',
+        flatten: true,
+        filter: 'isFile',
+        expand: true
+      },
       dist: {
         src: ['src/*'],
         dest: 'build/',
@@ -159,6 +166,11 @@ module.exports = function(grunt) {
     'browserify',
     'replace',
     'copy:demo_google'
+  ]);
+  grunt.registerTask('chrome_demo_facebook', [
+    'browserify',
+    'replace',
+    'copy:demo_facebook'
   ]);
   grunt.registerTask('firefox_demo_google', [
     'browserify',
