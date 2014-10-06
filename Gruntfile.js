@@ -109,6 +109,15 @@ module.exports = function(grunt) {
           specs: 'spec/tcp.unit.spec.js',
           keepRunner: false
         }
+      },
+      social: {
+        src: FILES.jasmine_helpers.concat(
+          ['src/socialprovider.js', 'src/vcardstore.js', 
+           'build/node-xmpp-browser.js']),
+        options: {
+          specs: 'src/socialprovider.spec.js',
+          keepRunner: false
+        }
       }
     },
     jasmine_node: {
@@ -167,6 +176,7 @@ module.exports = function(grunt) {
     'compile',
     'copy:jasmine',
     'jasmine:dns',
+    'jasmine:social',
     'jasmine_node'
   ]);
   grunt.registerTask('default', ['compile']);
