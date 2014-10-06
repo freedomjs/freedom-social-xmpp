@@ -1,8 +1,7 @@
 node_modules
 build
-demo/freedom*.js
-demo/xmpp
 demo_google/xmpp
+demo_facebook/xmpp
 firefox-google-demo/data
 firefox-facebook-demo/data/xmpp
 firefox-facebook-demo/data/freedom-for-firefox.jsm
