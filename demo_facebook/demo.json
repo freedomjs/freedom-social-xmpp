@@ -1,0 +1,13 @@
+{
+  "name": "Facebook Chat",
+  "description": "Facebook Chat Sample freedom.js application",
+  "app": {
+    "script": "xmpp/main.js"
+  },
+  "dependencies": {
+    "socialprovider": {
+      "url": "xmpp/social.facebook.json",
+      "api": "social"
+    }
+  }
+}
