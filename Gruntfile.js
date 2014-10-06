@@ -1,6 +1,15 @@
 var freedomPrefix = require.resolve('freedom').substr(0,
         require.resolve('freedom').lastIndexOf('freedom') + 8);
 
+var FILES = {
+  jasmine_helpers: [
+    // Help Jasmine's PhantomJS understand promises.
+    'node_modules/es6-promise/dist/promise-*.js',
+    '!node_modules/es6-promise/dist/promise-*amd.js',
+    '!node_modules/es6-promise/dist/promise-*.min.js'
+  ]
+};
+
 module.exports = function(grunt) {
   var distFiles = [
     'build/node-xmpp-browser.js',
@@ -86,9 +95,18 @@ module.exports = function(grunt) {
     },
     jasmine: {
       dns: {
-        src: ['spec/dns_context.js', 'lib/dns.js'],
+        src: FILES.jasmine_helpers.concat(
+          ['spec/dns_context.js', 'lib/dns.js']),
         options: {
           specs: 'spec/dns.unit.spec.js',
+          keepRunner: false
+        }
+      },
+      tcp: {
+        src: FILES.jasmine_helpers.concat(
+          ['spec/tcp_context.js', 'lib/tcp.js']),
+        options: {
+          specs: 'spec/tcp.unit.spec.js',
           keepRunner: false
         }
       }
