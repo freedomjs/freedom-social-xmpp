@@ -1,5 +1,6 @@
 node_modules
 
+build/*spec.js
 demo
 demo_google
 demo_common
