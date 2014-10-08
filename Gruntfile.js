@@ -31,16 +31,23 @@ module.exports = function(grunt) {
       }
     },
     copy: {
-      demo: {
+      chrome_demo_login: {
         src: distFiles,
-        dest: 'demo/xmpp/',
+        dest: 'chrome_demo_login/xmpp/',
         flatten: true,
         filter: 'isFile',
         expand: true
       },
-      demo_google: {
+      chrome_demo_google: {
         src: distFiles,
-        dest: 'demo_google/xmpp/',
+        dest: 'chrome_demo_google/xmpp/',
+        flatten: true,
+        filter: 'isFile',
+        expand: true
+      },
+      chrome_demo_facebook: {
+        src: distFiles,
+        dest: 'chrome_demo_facebook/xmpp/',
         flatten: true,
         filter: 'isFile',
         expand: true
@@ -53,10 +60,10 @@ module.exports = function(grunt) {
         expand: true
       },
       demo_firefox_google_data: {
-        src: ['demo_google/demo.json',
+        src: ['chrome_demo_google/demo.json',
               'demo_common/ux.js',
               'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm'],
-        dest: 'firefox-google-demo/data/',
+        dest: 'firefox_demo_google/data/',
         flatten: true,
         filter: 'isFile',
         expand: true
@@ -65,16 +72,16 @@ module.exports = function(grunt) {
         src: ['src/*',
               'build/node-xmpp-browser.js',
               'demo_common/main.js'],
-        dest: 'firefox-google-demo/data/xmpp/',
+        dest: 'firefox_demo_google/data/xmpp/',
         flatten: true,
         filter: 'isFile',
         expand: true
       },
       demo_firefox_facebook_data: {
-        src: ['demo_facebook/demo.json',
+        src: ['chrome_demo_facebook/demo.json',
               'demo_common/ux.js',
               'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm'],
-        dest: 'firefox-facebook-demo/data/',
+        dest: 'firefox_demo_facebook/data/',
         flatten: true,
         filter: 'isFile',
         expand: true
@@ -83,7 +90,7 @@ module.exports = function(grunt) {
         src: ['src/*',
               'build/node-xmpp-browser.js',
               'demo_common/main.js'],
-        dest: 'firefox-facebook-demo/data/xmpp/',
+        dest: 'firefox_demo_facebook/data/xmpp/',
         flatten: true,
         filter: 'isFile',
         expand: true
@@ -153,12 +160,17 @@ module.exports = function(grunt) {
   grunt.registerTask('chrome_demo_login', [
     'browserify',
     'replace',
-    'copy:demo'
+    'copy:chrome_demo_login'
   ]);
   grunt.registerTask('chrome_demo_google', [
     'browserify',
     'replace',
-    'copy:demo_google'
+    'copy:chrome_demo_google'
+  ]);
+  grunt.registerTask('chrome_demo_facebook', [
+    'browserify',
+    'replace',
+    'copy:chrome_demo_facebook'
   ]);
   grunt.registerTask('firefox_demo_google', [
     'browserify',

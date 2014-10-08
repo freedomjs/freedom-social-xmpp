@@ -1,10 +1,12 @@
 node_modules
 
 build/*spec.js
-demo
-demo_google
+chrome_demo_facebook
+chrome_demo_google
+chrome_demo_login
 demo_common
-firefox-google-demo
+firefox_demo_facebook
+firefox_demo_google
 
 /npm-debug.log
 /freedom.js
