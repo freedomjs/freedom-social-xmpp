@@ -1,5 +1,6 @@
 node_modules
 
+build/*spec.js
 chrome_demo_facebook
 chrome_demo_google
 chrome_demo_login
