@@ -2,11 +2,11 @@
   "name": "Facebook Chat",
   "description": "Facebook Chat Sample freedom.js application",
   "app": {
-    "script": "xmpp/main.js"
+    "script": "main.js"
   },
   "dependencies": {
     "socialprovider": {
-      "url": "xmpp/social.facebook.json",
+      "url": "social.facebook.json",
       "api": "social"
     }
   }

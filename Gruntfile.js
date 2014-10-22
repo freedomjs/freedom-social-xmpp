@@ -37,7 +37,7 @@ module.exports = function(grunt) {
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
           'src/demo_chrome_login/**/*',
         ],
-        dest: 'build/demo_chrome_login/xmpp/',
+        dest: 'build/demo_chrome_login/',
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_google: {
@@ -47,7 +47,7 @@ module.exports = function(grunt) {
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
           'src/demo_chrome_google/**/*',
         ],
-        dest: 'build/demo_chrome_google/xmpp/',
+        dest: 'build/demo_chrome_google/',
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_facebook: {
@@ -57,31 +57,41 @@ module.exports = function(grunt) {
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
           'src/demo_chrome_facebook/**/*',
         ],
-        dest: 'build/demo_chrome_facebook/xmpp/',
+        dest: 'build/demo_chrome_facebook/',
         flatten: true, filter: 'isFile', expand: true
       },
-      demo_firefox_google: {
+      demo_firefox_google: { 
+        src: [ '**/*' ], 
+        dest: 'build/demo_firefox_google/',
+        cwd: 'src/demo_firefox_google/',
+        filter: 'isFile', expand: true,
+      },
+      demo_firefox_google_data: {
         src: [
           'build/dist/*',
           'src/demo_common/main.js',
           'src/demo_common/ux.js',
           'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm',
           'src/demo_chrome_google/demo.json',
-          'src/demo_firefox_google/**/*',
         ],
         dest: 'build/demo_firefox_google/data/',
         flatten: true, filter: 'isFile', expand: true
       },
       demo_firefox_facebook: {
+        src: [ '**/*' ], 
+        dest: 'build/demo_firefox_facebook/',
+        cwd: 'src/demo_firefox_facebook/',
+        filter: 'isFile', expand: true,
+      },
+      demo_firefox_facebook_data: {
         src: [
           'build/dist/*',
           'src/demo_common/main.js',
           'src/demo_common/ux.js',
           'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm',
           'src/demo_chrome_facebook/demo.json',
-          'src/demo_firefox_facebook/**/*',
         ],
-        dest: 'demo_firefox_facebook/data/',
+        dest: 'build/demo_firefox_facebook/data/',
         flatten: true, filter: 'isFile', expand: true
       },
       jasmine: {
@@ -149,31 +159,26 @@ module.exports = function(grunt) {
 
   // Build the demos
   grunt.registerTask('demo_chrome_login', [
-    'browserify',
-    'replace',
+    'build',
     'copy:demo_chrome_login'
   ]);
   grunt.registerTask('demo_chrome_google', [
-    'browserify',
-    'replace',
+    'build',
     'copy:demo_chrome_google'
   ]);
   grunt.registerTask('demo_chrome_facebook', [
-    'browserify',
-    'replace',
+    'build',
     'copy:demo_chrome_facebook'
   ]);
   grunt.registerTask('demo_firefox_google', [
-    'browserify',
-    'replace',
+    'build',
+    'copy:demo_firefox_google',
     'copy:demo_firefox_google_data',
-    'copy:demo_firefox_google_data_xmpp'
   ]);
   grunt.registerTask('demo_firefox_facebook', [
-    'browserify',
-    'replace',
+    'build',
+    'copy:demo_firefox_facebook',
     'copy:demo_firefox_facebook_data',
-    'copy:demo_firefox_facebook_data_xmpp'
   ]);
   grunt.registerTask('build_demos', [
     'demo_chrome_login',
