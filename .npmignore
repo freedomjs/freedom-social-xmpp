@@ -1,12 +1,9 @@
-node_modules
+node_modules/
+/freedom.js
 
 build/*spec.js
-chrome_demo_facebook
-chrome_demo_google
-chrome_demo_login
-demo_common
-firefox_demo_facebook
-firefox_demo_google
+build/demo*
 
 /npm-debug.log
-/freedom.js
+.grunt/
+.*.swp

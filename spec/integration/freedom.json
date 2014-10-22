@@ -4,7 +4,7 @@
   "app": { "script": [ "freedom.js" ] },
   "dependencies": {
     "socialprovider": {
-      "url": "../../build/social.xmpp.json",
+      "url": "../../build/dist/social.xmpp.json",
       "api": "social"
     }
   }
