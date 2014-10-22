@@ -8,9 +8,18 @@
 			"scripts": ["background.js"]
 		}
 	},
-	"permissions": [
-	  {"socket": ["tcp-connect", "udp-send-to", "udp-bind"]}
-	],
+  "sockets":{
+    "tcp": {
+      "connect": ["*"]
+    },
+    "tcpServer": {
+      "listen": ["*"]
+    },
+    "udp": {
+      "bind": ["*"],
+      "send": ["*"]
+    }
+  },
 	"icons": {
 		"16": "demo-256.png",
 		"128": "demo-256.png"

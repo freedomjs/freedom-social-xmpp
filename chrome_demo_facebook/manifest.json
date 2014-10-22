@@ -2,6 +2,7 @@
   "name": "Google Social Demo Application",
   "description": "Demonstrates functionality of the freedom Google social provider.",
   "version": "0.1",
+  "minimum_chrome_version": "38",
   "manifest_version": 2,
   "app": {
     "background": {
@@ -9,12 +10,23 @@
     }
   },
   "permissions": [
-    {"socket": ["tcp-connect", "udp-send-to", "udp-bind"]},
-      "identity",
-      "storage",
-      "https://www.googleapis.com/*",
-      "https://accounts.google.com/*"
+    "identity",
+    "storage",
+    "https://www.facebook.com/*",
+    "https://graph.facebook.com/*"
   ],
+  "sockets":{
+    "tcp": {
+      "connect": ["*"]
+    },
+    "tcpServer": {
+      "listen": ["*"]
+    },
+    "udp": {
+      "bind": ["*"],
+      "send": ["*"]
+    }
+  },
   // This key is copied from the chrome the UProxy chrome app.
   // It is needed so that chrome.identity.getRedirectURL returns
   // the correct URL associated with our Cient ID

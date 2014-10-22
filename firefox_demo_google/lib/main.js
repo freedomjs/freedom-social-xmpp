@@ -19,9 +19,11 @@ var button = buttons.ActionButton({
 function handleClick(state) {
   var manifest = self.data.url('demo.json');
   var freedom =
-      setupFreedom(manifest, {freedomcfg:function(register) {
-        register('core.view', require('view_googleauth.js').View_googleAuth);
-      }});
+      setupFreedom(manifest, {
+        freedomcfg:function(register) {
+          register('core.view', require('view_googleauth.js').View_googleAuth);
+        }
+      });
   tabs.open({
     url: self.data.url("../lib/tab.html"),
     onLoad: function onLoad(tab) {

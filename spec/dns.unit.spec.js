@@ -50,23 +50,14 @@ describe("Tests for DNS lookup", function() {
   });
 
 
-  it("lookup domain (`foo`) having no A record", function(done) {
-    var result = exports.lookup(fooHostname,family);
-
-    var addresses_;
-    result.oncomplete = function(addresses) {
-      expect(addresses).toEqual(null);
-      done();
-    }
-  });
-  it("lookup domain (`www.google.com`) having an a-record", function(done) {
-    var result = exports.lookup(googleComHostname,family);
-
-    var addresses_;
-    result.oncomplete = function(addresses) {
-      expect(addresses).toEqual(["74.125.226.178", "74.125.226.176", "74.125.226.180", "74.125.226.177", "74.125.226.179"]);
-      done();
-    }
+  it("lookup invokes callback with hostname", function(done) {
+    exports.lookup(googleComHostname, family,
+        function(error, hostname, familyFromCallback) {
+          expect(error).toEqual(null);
+          expect(hostname).toEqual(googleComHostname);
+          expect(familyFromCallback).toEqual(family);
+          done();
+        });
   });
 
 
