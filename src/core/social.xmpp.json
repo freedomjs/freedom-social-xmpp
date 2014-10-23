@@ -5,7 +5,8 @@
     "script": [ 
       "socialprovider.js", 
       "vcardstore.js", 
-      "node-xmpp-browser.js" 
+      "node-xmpp-browser.js",
+      "xmpp-auth.js"
     ]
   },
   "provides": [
@@ -18,6 +19,6 @@
     "core.storage"
   ],
   "views": {
-    "XMPPLogin": ["login.html", "login.js"]
+    "XMPPLogin": ["xmpp-view.html", "xmpp-view.js"]
   }
 }
