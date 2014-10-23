@@ -28,7 +28,7 @@ header {
   display: inline-block;
 }
 
-#triangle {
+.triangle {
   padding-left: 0.5em;
   font-size: 85%;
   color: #666;
@@ -74,7 +74,33 @@ button:active {
   background: #eee;
 }
 
+/** Chat Demo **/
+section {
+  border: 1px 
+  solid black; 
+  position:relative; 
+  display: inline-block; 
+  vertical-align:top;
+}
 #log-in-or-out {
   color: #999999;
   text-align: center;
+}
+#uid {
+  font-family: helvetica; 
+  float:left;
+}
+#buddylist {
+  padding: 5px; 
+  margin-left:-5px; 
+  min-width: 150px;
+}
+#msg-input {
+  width:700px; m
+  argin:0;
+}
+#messagelist {
+  height: 400px; 
+  overflow-y: scroll; 
+  padding-left: 5px;
 }

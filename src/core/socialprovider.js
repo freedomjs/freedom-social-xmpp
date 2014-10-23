@@ -6,7 +6,6 @@
  * uses sockets to make xmpp connections to chat networks.
  **/
 
-
 // Global declarations for node.js
 if (typeof global !== 'undefined') {
   if (typeof window === 'undefined') {

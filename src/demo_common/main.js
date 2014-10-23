@@ -1,3 +1,5 @@
+/*jslint sloppy:true */
+/*globals freedom */
 /**
  * Chat demo backend.
  * Because the Social API provides message passing primitives,
@@ -7,100 +9,105 @@
  *
  **/
 
+var logger;
+freedom.core().getLogger('[Chat Backend]').then(function (log) { logger = log; });
 
-var social = freedom.socialprovider();
-var userList;    //Keep track of the roster
-var clientList;
-var myClientState;
+var Chat = function (dispatchEvent) {
+  this.dispatchEvent = dispatchEvent;
 
-function login() {
-  userList = {};
-  clientList = {};
-  myClientState = null;
-  social.login({
+  this.userList = {};    //Keep track of the roster
+  this.clientList = {};
+  this.myClientState = null;
+  this.social = freedom.socialprovider();
+
+  this.boot();
+};
+
+/** 
+ * sent messages should be forwarded to the Social provider.
+ **/
+Chat.prototype.send = function (to, message) {
+  return this.social.sendMessage(to, message);
+};
+
+Chat.prototype.boot = function () {
+  this.social.login({
     agent: 'chatdemo',
     version: '0.1',
     url: '',
     interactive: true,
     rememberLogin: false
-  }).then(function(ret) {
-    myClientState = ret;
-    console.log("Login successful: " + JSON.stringify(myClientState));
-    if (ret.status == social.STATUS["ONLINE"]) {
-      freedom.emit('recv-uid', ret.clientId);
-      freedom.emit('recv-status', "online");
+  }).then(function (ret) {
+    this.myClientState = ret;
+    logger.log("onLogin", this.myClientState);
+    if (ret.status === this.social.STATUS.ONLINE) {
+      this.dispatchEvent('recv-uid', ret.clientId);
+      this.dispatchEvent('recv-status', "online");
     } else {
-      freedom.emit('recv-status', "offline");
+      this.dispatchEvent('recv-status', "offline");
     }
-  }, function(err) {
-    freedom.emit("recv-err", err);
-  });
-}
+  }.bind(this), function (err) {
+    logger.log("Log In Failed", err);
+    this.dispatchEvent("recv-err", err);
+  }.bind(this));
 
-/**
- * on a 'send-message' event from the parent (the outer page)
- * Just forward it to the Social provider
- **/
-freedom.on('send-message', function(val) {
-  social.sendMessage(val.to, val.message);
-});
-freedom.on('logout', social.logout.bind(social));
-freedom.on('login', login);
+  this.updateBuddyList();
 
-/**
- * on an 'onMessage' event from the Social provider
- * Just forward it to the outer page
- */
-social.on('onMessage', function(data) {
-  freedom.emit('recv-message', data);
-});
-
-/**
- * On user profile changes, let's keep track of them
- **/
-social.on('onUserProfile', function(data) {
-  //Just save it for now
-  userList[data.userId] = data;
-  updateBuddyList();
-});
-
-/**
- * On newly online or offline clients, let's update the roster
- **/
-social.on('onClientState', function(data) {
-  if (data.status == social.STATUS["OFFLINE"]) {
-    if (clientList.hasOwnProperty(data.clientId)) {
-      delete clientList[data.clientId];
+  /**
+  * on an 'onMessage' event from the Social provider
+  * Just forward it to the outer page
+  */
+  this.social.on('onMessage', function (data) {
+    logger.info("Message Received", data);
+    this.dispatchEvent('recv-message', data);
+  }.bind(this));
+  
+  /**
+  * On user profile changes, let's keep track of them
+  **/
+  this.social.on('onUserProfile', function (data) {
+    //Just save it for now
+    this.userList[data.userId] = data;
+    this.updateBuddyList();
+  }.bind(this));
+  
+  /**
+  * On newly online or offline clients, let's update the roster
+  **/
+  this.social.on('onClientState', function (data) {
+    logger.debug("Roster Change", data);
+    if (data.status === this.social.STATUS.OFFLINE) {
+      if (this.clientList.hasOwnProperty(data.clientId)) {
+        delete this.clientList[data.clientId];
+      }
+    } else {  //Only track non-offline clients
+      this.clientList[data.clientId] = data;
     }
-  } else {  //Only track non-offline clients
-    clientList[data.clientId] = data;
-  }
-  //If mine, send to the page
-  if (myClientState !== null && data.clientId == myClientState.clientId) {
-    if (data.status == social.STATUS["ONLINE"]) {
-      freedom.emit('recv-status', "online");
-    } else {
-      freedom.emit('recv-status', "offline");
+    //If mine, send to the page
+    if (this.myClientState !== null && data.clientId === this.myClientState.clientId) {
+      if (data.status === this.social.STATUS.ONLINE) {
+        this.dispatchEvent('recv-status', "online");
+      } else {
+        this.dispatchEvent('recv-status', "offline");
+      }
     }
-  }
-  updateBuddyList();
-});
+    
+    this.updateBuddyList();
+  }.bind(this));
+};
 
-function updateBuddyList() {
-  // Iterate over our roster and just send over clientId/userName where there is at least 1 client online
-  var buddylist = [];
-  for (var k in clientList) {
-    if (clientList.hasOwnProperty(k)) {
-      var client = clientList[k];
-      var user = userList[client.userId];
-      if (user) {
-        var buddyInfo = {userName: user.name, clientId: client.clientId};
-        buddylist.push(buddyInfo);
+Chat.prototype.updateBuddyList = function () {
+  // Iterate over our roster and send over user profiles where there is at least 1 client online
+  var buddylist = {}, k, userId;
+  for (k in this.clientList) {
+    if (this.clientList.hasOwnProperty(k)) {
+      userId = this.clientList[k].userId;
+      if (this.userList[userId]) {
+        buddylist[userId] = this.userList[userId];
       }
     }
   }
-  freedom.emit('recv-buddylist', buddylist);
-}
+  this.dispatchEvent('recv-buddylist', buddylist);
+};
 
-/** LOGIN AT START **/
-login();
+freedom().providePromises(Chat);
