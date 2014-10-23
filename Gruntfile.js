@@ -16,7 +16,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          'build/dist/node-xmpp-browser-raw.js': ['./node_modules/node-xmpp-client/browserify.js'],
+          'dist/node-xmpp-browser-raw.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
           alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
@@ -27,12 +27,12 @@ module.exports = function(grunt) {
     copy: {
       dist: {
         src: ['src/core/*'],
-        dest: 'build/dist/',
+        dest: 'dist/',
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_login: {
         src: [ 
-          'build/dist/*',
+          'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
           'src/demo_chrome_login/**/*',
@@ -42,7 +42,7 @@ module.exports = function(grunt) {
       },
       demo_chrome_google: {
         src: [ 
-          'build/dist/*',
+          'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
           'src/demo_chrome_google/**/*',
@@ -52,7 +52,7 @@ module.exports = function(grunt) {
       },
       demo_chrome_facebook: {
         src: [ 
-          'build/dist/*',
+          'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
           'src/demo_chrome_facebook/**/*',
@@ -68,7 +68,7 @@ module.exports = function(grunt) {
       },
       demo_firefox_google_data: {
         src: [
-          'build/dist/*',
+          'dist/*',
           'src/demo_common/main.js',
           'src/demo_common/ux.js',
           'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm',
@@ -85,7 +85,7 @@ module.exports = function(grunt) {
       },
       demo_firefox_facebook_data: {
         src: [
-          'build/dist/*',
+          'dist/*',
           'src/demo_common/main.js',
           'src/demo_common/ux.js',
           'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm',
@@ -118,10 +118,10 @@ module.exports = function(grunt) {
       },
       social: {
         src: FILES.jasmine_helpers.concat(
-          ['build/dist/socialprovider.js', 'build/dist/vcardstore.js', 
-           'build/dist/node-xmpp-browser.js']),
+          ['dist/socialprovider.js', 'dist/vcardstore.js', 
+           'dist/node-xmpp-browser.js']),
         options: {
-          specs: 'build/dist/socialprovider.spec.js',
+          specs: 'dist/socialprovider.spec.js',
           keepRunner: false
         }
       }
@@ -133,8 +133,8 @@ module.exports = function(grunt) {
     // https://github.com/freedomjs/freedom-social-xmpp/issues/54
     replace: {
       facebook: {
-        src: ['build/dist/node-xmpp-browser-raw.js'],
-        dest: 'build/dist/node-xmpp-browser.js',
+        src: ['dist/node-xmpp-browser-raw.js'],
+        dest: 'dist/node-xmpp-browser.js',
         replacements: [{
           from: 'XFacebookPlatform.host',
           to: 'XFacebookPlatform.prototype.host'

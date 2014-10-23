@@ -2,6 +2,7 @@ node_modules/
 /freedom.js
 
 build/
+dist/
 
 /npm-debug.log
 .grunt/

@@ -1,8 +1,7 @@
 node_modules/
 /freedom.js
 
-build/*spec.js
-build/demo*
+build/
 
 /npm-debug.log
 .grunt/
