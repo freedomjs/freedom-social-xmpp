@@ -1,4 +1,4 @@
-/*globals freedom:true,setTimeout,console,VCardStore,global */
+/*globals freedom:true,setTimeout,console,VCardStore,global,window */
 /*jslint indent:2,white:true,sloppy:true */
 
 /**
@@ -11,15 +11,9 @@ if (typeof global !== 'undefined') {
   if (typeof window === 'undefined') {
     global.window = {};
   }
-  if (typeof XMLHttpRequest === 'undefined') {
-    global.XMLHttpRequest = {};
-  }
 } else {
   if (typeof window === 'undefined') {
-    window = {};
-  }
-  if (typeof XMLHttpRequest === 'undefined') {
-    XMLHttpRequest = {};
+    var window = {};
   }
 }
 
@@ -56,37 +50,12 @@ var XMPPSocialProvider = function(dispatchEvent) {
 
 /**
  * Begin the login view, potentially prompting for credentials.
+ * This is expected to be overridden by a *-auth.js file
+ * @override
  * @method login
  * @param {Object} loginOpts Setup information about the desired network.
- *   keys used by this provider include
- *   agent - The user agent to expose on the network
- *   url - The url of the client connecting
- *   version - The version of the client.
- *   network - A string used to differentiate this provider in events.
  */
-XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
-  if (loginOpts) {
-    this.loginOpts = loginOpts;
-  }
-
-  if (!this.credentials) {
-    if (!this.view) {
-      this.view = freedom['core.view']();
-    } else {
-      this.view.close();
-      this.view = freedom['core.view']();
-    }
-
-    this.view.once('message', this.onCredentials.bind(this, continuation));
-    this.view.open('XMPPLogin', {file: 'login.html'}).then(this.view.show.bind(this.view));
-    return;
-  }
-
-  if (!this.client) {
-    this.initializeState();
-  }
-  this.connect(continuation);
-};
+//XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {};
 
 /**
  * Get credentials back from the view.
@@ -125,7 +94,7 @@ XMPPSocialProvider.prototype.initializeState = function() {
  * @param {Function} continuation Callback upon connection
  */
 XMPPSocialProvider.prototype.connect = function(continuation) {
-  var key, connectOpts = {
+  var key, jid, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
     disallowTLS: false,
@@ -139,12 +108,12 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     }
   }
 
-  if (connectOpts.host == 'talk.google.com') {
+  if (connectOpts.host === 'talk.google.com') {
     // Use JID with domain of 'google.com', to fix cert errors.  If we don't
     // do this, we will get the cert for gmail.com, which will result in an
     // error on Chrome because it will not match the google.com domain
     // we connect to.
-    var jid = new window.XMPP.JID(this.id);
+    jid = new window.XMPP.JID(this.id);
     jid.setDomain('google.com');
     connectOpts.jid = jid;
   }
@@ -332,8 +301,8 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
  * @param {String} msgs A batch of messages.
  */
 XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
-  var parsedMessages = JSON.parse(msgs);
-  for (var i = 0; i < parsedMessages.length; i++) {
+  var i, parsedMessages = JSON.parse(msgs);
+  for (i = 0; i < parsedMessages.length; i+=1) {
     this.dispatchEvent('onMessage', {
       from: this.vCardStore.getClient(from),
       to: this.vCardStore.getClient(this.id),
