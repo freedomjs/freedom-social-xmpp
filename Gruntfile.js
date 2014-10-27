@@ -164,7 +164,9 @@ module.exports = function(grunt) {
 
   // Compile into build/
   grunt.registerTask('build', [
-    'jshint',
+    'jshint:grunt',
+    'jshint:lib',
+    'jshint:spec',
     'browserify',
     'replace',
     'copy:dist'
