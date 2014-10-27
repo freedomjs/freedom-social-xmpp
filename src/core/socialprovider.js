@@ -70,9 +70,15 @@ XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
     this.view.close();
     this.login(null, continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
-    continuation(undefined, this.ERRCODE.LOGIN_FAILEDCONNECTION);
+    continuation(undefined, {
+      errcode: 'LOGIN_FAILEDCONNECTION',
+      message: this.ERRCODE.LOGIN_FAILEDCONNECTION
+    });
   } else {
-    continuation(undefined, this.ERRCODE.LOGIN_BADCREDENTIALS);
+    continuation(undefined, {
+      errcode: 'LOGIN_BADCREDENTIALS',
+      message: this.ERRCODE.LOGIN_BADCREDENTIALS
+    });
   }
 };
 
@@ -124,7 +130,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   } catch(e) {
     console.error(e.stack);
     continuation(undefined, {
-      errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
+      errcode: 'LOGIN_FAILEDCONNECTION',
       message: e.message
     });
     return;
@@ -133,7 +139,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   this.client.addListener('error', function(e) {
     console.error('client.error: ', e);
     continuation(undefined, {
-      errcode: this.ERRCODE.LOGIN_FAILEDCONNECTION.errcode,
+      errcode: 'LOGIN_FAILEDCONNECTION',
       message: e.message
     });
 
@@ -204,7 +210,10 @@ XMPPSocialProvider.prototype.getUsers = function(continuation) {
 XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   if (!this.client) {
     console.warn('No client available to send message to ' + to);
-    continuation(undefined, this.ERRCODE.OFFLINE);
+    continuation(undefined, {
+      errcode: 'OFFLINE'
+      message: this.ERRCODE.OFFLINE
+    });
     return;
   }
 
@@ -242,7 +251,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   } catch(e) {
     console.error(e.stack);
     continuation(undefined, {
-      errcode: this.ERRCODE.UNKNOWN,
+      errcode: 'UNKNOWN',
       message: e.message
     });
     return;
