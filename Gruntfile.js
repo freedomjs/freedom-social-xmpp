@@ -1,3 +1,4 @@
+/*jslint node:true*/
 var freedomPrefix = require.resolve('freedom').substr(0,
         require.resolve('freedom').lastIndexOf('freedom') + 8);
 
@@ -11,8 +12,18 @@ var FILES = {
 };
 
 module.exports = function(grunt) {
+  "use strict";
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    jshint: {
+      grunt: [ 'Gruntfile.js' ],
+      lib: [ 'lib/**/*.js' ],
+      spec: [ 'spec/**/*.js' ],
+      src: [ 'src/**/*.js' ],
+      options: {
+        jshintrc: true
+      }
+    },
     browserify: {
       dist: {
         files: {
@@ -147,11 +158,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jasmine-node');
   grunt.loadNpmTasks('grunt-text-replace');
 
   // Compile into build/
   grunt.registerTask('build', [
+    'jshint',
     'browserify',
     'replace',
     'copy:dist'
