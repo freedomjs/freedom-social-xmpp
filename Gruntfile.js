@@ -1,4 +1,4 @@
-/*jslint node:true*/
+/*jshint node:true*/
 var freedomPrefix = require.resolve('freedom').substr(0,
         require.resolve('freedom').lastIndexOf('freedom') + 8);
 
@@ -17,7 +17,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     jshint: {
       grunt: [ 'Gruntfile.js' ],
-      lib: [ 'lib/**/*.js' ],
+      lib: [ 'lib/**/*.js', '!lib/net.js'],
       spec: [ 'spec/**/*.js' ],
       src: [ 'src/**/*.js' ],
       options: {

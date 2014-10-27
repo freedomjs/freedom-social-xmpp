@@ -1,8 +1,12 @@
+/* global describe, it, beforeEach, afterEach, expect, spyOn*/
+/* global FreedomTCP*/
+
 describe("Tests for TCP Sockets", function() {
+  "use strict";
   var socket;
 
   beforeEach(function() {
-    socket = new freedomTCP();
+    socket = new FreedomTCP();
     spyOn(socket.fd, 'prepareSecure').and.callFake(function() {
       return Promise.resolve();
     });

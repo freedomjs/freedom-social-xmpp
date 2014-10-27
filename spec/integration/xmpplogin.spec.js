@@ -1,13 +1,20 @@
+/*jshint node:true*/
+/* global describe, it, beforeEach, afterEach, expect, spyOn*/
+/* global fdom*/
+
 var credentials = [];
 var CredentializingView = function(caller, dispatch) {
+  "use strict";
   this.dispatchEvent = dispatch;
 };
 
 CredentializingView.prototype.open = function(view, opts, continuation) {
+  "use strict";
   continuation();
 };
 
 CredentializingView.prototype.show = function(continuation) {
+  "use strict";
   continuation();
   if (credentials.length) {
     this.dispatchEvent('message', credentials.pop());
@@ -15,10 +22,12 @@ CredentializingView.prototype.show = function(continuation) {
 };
 
 CredentializingView.prototype.close = function(continuation) {
+  "use strict";
   continuation();
 };
 
 describe('Login integration', function() {
+  "use strict";
   var freedom, acct;
 
   beforeEach(function() {

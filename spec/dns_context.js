@@ -4,6 +4,7 @@ var freedom = {};
 // Some helper functions for hex strings and Array Buffers.
 var ArrayBuffers;
 (function (ArrayBuffers) {
+    "use strict";
     /**
     * Converts an ArrayBuffer to a string.
     *

@@ -1,4 +1,8 @@
+/* global describe, it, beforeEach, afterEach, expect, spyOn*/
+/* global isIP, ArrayBuffers, queryDNS, flattenDNS, DNSTypes, exports,*/
+
 describe("Tests for DNS lookup", function() {
+  "use strict";
 
   var family = 0;
   var dnsServer = '8.8.8.8';
@@ -28,6 +32,7 @@ describe("Tests for DNS lookup", function() {
            query2HexString.substring(7,query2HexString.length);
   }
 
+  var queryDNS; //defined in lib/dns.js
   var unSpiedQueryDNS = queryDNS;
 
   beforeEach(function() {
@@ -42,7 +47,7 @@ describe("Tests for DNS lookup", function() {
       } else if(equivalentDnsQueries(dnsQuery, googleDnsQuery)) {
         setTimeout(function(){callback(googleDnsResponse);}, 1);
       } else {
-        throw(new Error("unexpected query to fake: " + dnsQueryHexString));
+        throw(new Error("unexpected query to fake: " + dnsQuery));
       }
     });
     // Rebind to the spied version.
