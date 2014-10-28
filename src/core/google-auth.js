@@ -1,10 +1,11 @@
+/*globals freedom:true,setTimeout,console,VCardStore,XMPPSocialProvider */
+/*jslint indent:2,white:true,sloppy:true */
+
 XMPPSocialProvider.prototype.oAuthRedirectUris = [
-  'http://localhost',
+  'http://localhost/*',
   'http://freedomjs.org/',
 ];
 XMPPSocialProvider.prototype.oAuthClientId = "871734945364-oigtiha0jsda8bouc4n9rt2g7c0smhtj.apps.googleusercontent.com";
-/*globals freedom:true,setTimeout,console,VCardStore,XMPPSocialProvider */
-/*jslint indent:2,white:true,sloppy:true */
 
 /**
  * Begin the login view, potentially prompting for credentials.
@@ -38,21 +39,24 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       .then(this.view.show.bind(this.view))
       .then(this.oauth.initiateOAuth.bind(this.oauth, this.oAuthRedirectUris))
       .then(function(obj) {
+        console.log(obj);
         this.view.postMessage({
           url: "https://accounts.google.com/o/oauth2/auth?" +
                "client_id=" + this.oAuthClientId + "&" +
                "response_type=token&" +
                "scope=" + "email%20profile%20https://www.googleapis.com/auth/googletalk&" +
                "redirect_uri=" + encodeURIComponent(obj.redirect) + "&" +
-               "state=" + encodeURIComponent(obj.state);
+               "state=" + encodeURIComponent(obj.state)
         });
-      })
+      }.bind(this))
       .catch(function (err) {
+        console.error(err);
         continuation(undefined, {
           errcode: 'LOGIN_OAUTHERROR',
-          message: this.ERRCODE.LOGIN_OAUTHERROR
+          message: err.message
+          //message: this.ERRCODE.LOGIN_OAUTHERROR
         });
-      });
+      }.bind(this));
     return;
   } 
 

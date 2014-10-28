@@ -3,6 +3,7 @@ window.addEventListener('load', function () {
   //parent.postMessage({cmd: 'auth', message: credentials}, '*');
 
   window.addEventListener('message', function (msg) {
+    window.temp = msg;
     console.log("!!!!");
     console.log(msg);
   }, true);

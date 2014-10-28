@@ -211,7 +211,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   if (!this.client) {
     console.warn('No client available to send message to ' + to);
     continuation(undefined, {
-      errcode: 'OFFLINE'
+      errcode: 'OFFLINE',
       message: this.ERRCODE.OFFLINE
     });
     return;
@@ -236,8 +236,8 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
     if (!this.sendMessagesTimeout) {
       this.timeOfFirstMessageInBatch = Date.now();
     }
-    if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) 
-        || !this.sendMessagesTimeout) {
+    if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) ||
+        !this.sendMessagesTimeout) {
       clearTimeout(this.sendMessagesTimeout);
       this.sendMessagesTimeout = setTimeout(function() {
         this.client.send(new window.XMPP.Element('message', {
