@@ -182,7 +182,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     // or emit a new type of event, or invoke this.logout directly to
     // clean things up.
     this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
-  });
+  }.bind(this));
   this.client.addListener('close', function(e) {
     // This may indicate a broken connection to XMPP.
     // TODO: handle this.
