@@ -188,6 +188,7 @@ module.exports = function(grunt) {
     'compile',
     'copy:jasmine',
     'jasmine:dns',
+    'jasmine:tcp',
     'jasmine:social',
     'jasmine_node'
   ]);
