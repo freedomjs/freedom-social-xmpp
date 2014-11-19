@@ -105,6 +105,7 @@ describe("Tests for message batching in Social provider", function() {
   it('sets status to OFFLINE when client disconnected', function() {
     spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
     xmppSocialProvider.connect();
+    xmppSocialProvider.id = 'id'
     expect(xmppSocialProvider.client.events['offline']).toBeDefined();
     spyOn(xmppSocialProvider.vCardStore, 'updateProperty');
     xmppSocialProvider.client.events['offline']();
