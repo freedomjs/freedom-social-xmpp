@@ -131,7 +131,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     jid: this.id,
     disallowTLS: false,
     preferred: 'PLAIN', //TODO: why doesn't DIGEST-MD5 work?
-    reconnect: true,  // Automatically try reconnecting if disconnected.
+    reconnect: false,  // Automatically try reconnecting if disconnected.
     serialized: false  // Less messy writes.
   };
   for (key in this.credentials) {
@@ -181,8 +181,8 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     //   this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
     // or emit a new type of event, or invoke this.logout directly to
     // clean things up.
-    console.error('received unhandled offline event', e);
-  });
+    this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
+  }.bind(this));
   this.client.addListener('close', function(e) {
     // This may indicate a broken connection to XMPP.
     // TODO: handle this.
