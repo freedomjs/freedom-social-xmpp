@@ -131,7 +131,7 @@ module.exports = function(grunt) {
           ['dist/socialprovider.js', 'dist/vcardstore.js', 
            'dist/node-xmpp-browser.js']),
         options: {
-          specs: 'dist/socialprovider.spec.js',
+          specs: 'spec/socialprovider.spec.js',
           keepRunner: false
         }
       }
@@ -163,9 +163,7 @@ module.exports = function(grunt) {
 
   // Compile into build/
   grunt.registerTask('build', [
-    'jshint:grunt',
-    'jshint:lib',
-    'jshint:spec',
+    'jshint',
     'browserify',
     'replace',
     'copy:dist'
