@@ -40,14 +40,14 @@ module.exports = function(grunt) {
         dest: 'dist/',
         flatten: true, filter: 'isFile', expand: true
       },
-      demo_chrome_login: {
+      demo_chrome_xmpp: {
         src: [ 
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
-          'src/demo_chrome_login/**/*',
+          'src/demo_chrome_xmpp/**/*',
         ],
-        dest: 'build/demo_chrome_login/',
+        dest: 'build/demo_chrome_xmpp/',
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_google: {
@@ -170,9 +170,9 @@ module.exports = function(grunt) {
   ]);
 
   // Build the demos
-  grunt.registerTask('demo_chrome_login', [
+  grunt.registerTask('demo_chrome_xmpp', [
     'build',
-    'copy:demo_chrome_login'
+    'copy:demo_chrome_xmpp'
   ]);
   grunt.registerTask('demo_chrome_google', [
     'build',
@@ -193,7 +193,7 @@ module.exports = function(grunt) {
     'copy:demo_firefox_facebook_data',
   ]);
   grunt.registerTask('build_demos', [
-    'demo_chrome_login',
+    'demo_chrome_xmpp',
     'demo_chrome_google',
     'demo_chrome_facebook',
     'demo_firefox_google',

@@ -116,6 +116,11 @@ function start(instance) {
       chatClient.send(activeBuddylistEntry.userId, text);
     }
   };
+
+  // Just call boot when login is clicked
+  document.getElementById('log-in-or-out').onclick = function() {
+    chatClient.boot();
+  };
 }
 
 window.onload = function () {

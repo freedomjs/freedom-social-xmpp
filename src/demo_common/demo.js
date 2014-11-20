@@ -20,7 +20,7 @@ var Chat = function (dispatchEvent) {
   this.myClientState = null;
   this.social = freedom.socialprovider();
 
-  this.boot();
+  //this.boot();
 };
 
 /** 
@@ -31,13 +31,14 @@ Chat.prototype.send = function (to, message) {
 };
 
 Chat.prototype.boot = function () {
-  this.social.login({
+  var promise = this.social.login({
     agent: 'chatdemo',
     version: '0.1',
     url: '',
     interactive: true,
     rememberLogin: false
-  }).then(function (ret) {
+  });
+  promise.then(function (ret) {
     this.myClientState = ret;
     logger.log("onLogin", this.myClientState);
     if (ret.status === this.social.STATUS.ONLINE) {

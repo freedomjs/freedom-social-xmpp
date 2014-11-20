@@ -19,6 +19,9 @@
     "core.storage"
   ],
   "views": {
-    "XMPPLogin": ["xmpp-view.html", "xmpp-view.js"]
+    "xmpp-login": {
+      "main": "xmpp-view.html",
+      "files": [ "xmpp-view.js" ]
+    }
   }
 }

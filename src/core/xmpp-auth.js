@@ -22,7 +22,8 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     }
     this.view = freedom['core.view']();
     this.view.once('message', this.onCredentials.bind(this, continuation));
-    this.view.open('XMPPLogin', {file: 'xmpp-view.html'}).then(this.view.show.bind(this.view));
+    this.view.on('message', this.view.close.bind(this.view));
+    this.view.show('xmpp-login');
     return;
   }
 

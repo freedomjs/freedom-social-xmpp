@@ -2,7 +2,7 @@
   "name": "XMPP Chat",
   "description": "XMPP Chat Sample freedom.js application",
   "app": {
-    "script": "main.js"
+    "script": "demo.js"
   },
   "dependencies": {
     "socialprovider": {
@@ -14,6 +14,7 @@
   "default": "chat",
   "api": {
     "chat": {
+      "boot": {"type": "method", "value": []},
       "send": {"type": "method", "value": ["string", "string"]},
       "recv-status": {"type": "event", "value": "string"},
       "recv-err": {"type": "event", "value": {"message": "string"}},
