@@ -1,6 +1,3 @@
-/* global describe, it, beforeEach, afterEach, expect, spyOn*/
-/* global isIP, ArrayBuffers, queryDNS, flattenDNS, DNSTypes, exports,*/
-
 describe("Tests for DNS lookup", function() {
   "use strict";
 
@@ -32,7 +29,6 @@ describe("Tests for DNS lookup", function() {
            query2HexString.substring(7,query2HexString.length);
   }
 
-  var queryDNS; //defined in lib/dns.js
   var unSpiedQueryDNS = queryDNS;
 
   beforeEach(function() {

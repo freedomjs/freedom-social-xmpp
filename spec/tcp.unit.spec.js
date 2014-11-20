@@ -1,6 +1,3 @@
-/* global jasmine, describe, it, beforeEach, afterEach, expect, spyOn*/
-/* global events, FreedomTCP*/
-
 describe("Tests for TCP Sockets", function() {
   "use strict";
   var socket;

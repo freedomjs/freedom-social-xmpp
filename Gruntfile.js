@@ -18,7 +18,6 @@ module.exports = function(grunt) {
     jshint: {
       grunt: [ 'Gruntfile.js' ],
       lib: [ 'lib/**/*.js', '!lib/net.js'],
-      spec: [ 'spec/**/*.js' ],
       src: [ 'src/**/*.js' ],
       options: {
         jshintrc: true
