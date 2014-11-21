@@ -158,9 +158,9 @@ module.exports = function(grunt) {
   // Build the demos
   grunt.registerTask('build_demos', [
     'build',
-    'copy:demo_chrome_xmpp'
-    'copy:demo_chrome_google'
-    'copy:demo_chrome_facebook'
+    'copy:demo_chrome_xmpp',
+    'copy:demo_chrome_google',
+    'copy:demo_chrome_facebook',
     'copy:demo_firefox_google',
     'copy:demo_firefox_google_data',
     'copy:demo_firefox_facebook',
@@ -171,10 +171,7 @@ module.exports = function(grunt) {
   grunt.registerTask('test', [
     'build',
     'copy:jasmine',
-    'jasmine:dns',
-    'jasmine:tcp',
-    'jasmine:social',
-    'jasmine:tcp',
+    'jasmine',
     'jasmine_node'
   ]);
 
