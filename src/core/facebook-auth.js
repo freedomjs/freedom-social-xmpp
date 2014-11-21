@@ -26,10 +26,6 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   }
 
   if (!this.credentials) {
-    if (this.view) {
-      this.view.close();
-    }
-
     this.oauth = freedom["core.oauth"]();
     this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
       var url = "https://www.facebook.com/dialog/oauth?" + 

@@ -55,7 +55,13 @@ var XMPPSocialProvider = function(dispatchEvent) {
  * @method login
  * @param {Object} loginOpts Setup information about the desired network.
  */
-//XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {};
+XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
+  continuation(undefined, {
+    errcode: 'UNKNOWN',
+    message: 'No login function defined',
+    //message: this.ERRCODE.LOGIN_OAUTHERROR
+  });
+};
 
 /**
  * Get credentials back from the view.

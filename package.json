@@ -33,7 +33,6 @@
     "grunt-contrib-jasmine": "^0.6.1",
     "grunt-contrib-jshint": "^0.10.0",
     "grunt-jasmine-node": "~0.2.1",
-    "grunt-text-replace": "~0.3.12",
     "node-xmpp-client": "1.0.0-alpha15"
   },
   "peerDependencies": {

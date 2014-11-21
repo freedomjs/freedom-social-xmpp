@@ -25,10 +25,6 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   }
 
   if (!this.credentials) {
-    if (this.view) {
-      this.view.close();
-    }
-
     this.oauth = freedom["core.oauth"]();
     this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
       var url = "https://accounts.google.com/o/oauth2/auth?" +

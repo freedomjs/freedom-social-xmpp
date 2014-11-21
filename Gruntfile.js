@@ -138,18 +138,6 @@ module.exports = function(grunt) {
     },
     jasmine_node: {
       integration: ['spec/integration/']
-    },
-    // TODO: remove this after resolving
-    // https://github.com/freedomjs/freedom-social-xmpp/issues/54
-    replace: {
-      facebook: {
-        src: ['dist/node-xmpp-browser-raw.js'],
-        dest: 'dist/node-xmpp-browser.js',
-        replacements: [{
-          from: 'XFacebookPlatform.host',
-          to: 'XFacebookPlatform.prototype.host'
-        }]
-      }
     }
   });
 
@@ -159,45 +147,24 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jasmine-node');
-  grunt.loadNpmTasks('grunt-text-replace');
 
   // Compile into build/
   grunt.registerTask('build', [
     'jshint',
     'browserify',
-    'replace',
     'copy:dist'
   ]);
 
   // Build the demos
-  grunt.registerTask('demo_chrome_xmpp', [
+  grunt.registerTask('build_demos', [
     'build',
     'copy:demo_chrome_xmpp'
-  ]);
-  grunt.registerTask('demo_chrome_google', [
-    'build',
     'copy:demo_chrome_google'
-  ]);
-  grunt.registerTask('demo_chrome_facebook', [
-    'build',
     'copy:demo_chrome_facebook'
-  ]);
-  grunt.registerTask('demo_firefox_google', [
-    'build',
     'copy:demo_firefox_google',
     'copy:demo_firefox_google_data',
-  ]);
-  grunt.registerTask('demo_firefox_facebook', [
-    'build',
     'copy:demo_firefox_facebook',
     'copy:demo_firefox_facebook_data',
-  ]);
-  grunt.registerTask('build_demos', [
-    'demo_chrome_xmpp',
-    'demo_chrome_google',
-    'demo_chrome_facebook',
-    'demo_firefox_google',
-    'demo_firefox_facebook',
   ]);
   
   // Testing meta-task
