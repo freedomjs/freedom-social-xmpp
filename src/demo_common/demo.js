@@ -20,17 +20,10 @@ var Chat = function (dispatchEvent) {
   this.myClientState = null;
   this.social = freedom.socialprovider();
 
-  //this.boot();
+  this.boot();
 };
 
-/** 
- * sent messages should be forwarded to the Social provider.
- **/
-Chat.prototype.send = function (to, message) {
-  return this.social.sendMessage(to, message);
-};
-
-Chat.prototype.boot = function () {
+Chat.prototype.login = function() {
   var promise = this.social.login({
     agent: 'chatdemo',
     version: '0.1',
@@ -51,9 +44,18 @@ Chat.prototype.boot = function () {
     logger.log("Log In Failed", err);
     this.dispatchEvent("recv-err", err);
   }.bind(this));
+  return promise;
+};
 
+/** 
+ * sent messages should be forwarded to the Social provider.
+ **/
+Chat.prototype.send = function (to, message) {
+  return this.social.sendMessage(to, message);
+};
+
+Chat.prototype.boot = function (arg) {
   this.updateBuddyList();
-
   /**
   * on an 'onMessage' event from the Social provider
   * Just forward it to the outer page
@@ -95,6 +97,7 @@ Chat.prototype.boot = function () {
     
     this.updateBuddyList();
   }.bind(this));
+
 };
 
 Chat.prototype.updateBuddyList = function () {

@@ -119,7 +119,7 @@ function start(instance) {
 
   // Just call boot when login is clicked
   document.getElementById('log-in-or-out').onclick = function() {
-    chatClient.boot();
+    chatClient.login();
   };
 }
 

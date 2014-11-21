@@ -14,7 +14,7 @@
   "default": "chat",
   "api": {
     "chat": {
-      "boot": {"type": "method", "value": []},
+      "login": {"type": "method", "value": []},
       "send": {"type": "method", "value": ["string", "string"]},
       "recv-status": {"type": "event", "value": "string"},
       "recv-err": {"type": "event", "value": {"message": "string"}},

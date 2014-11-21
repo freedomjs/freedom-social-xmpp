@@ -2,7 +2,7 @@
   "name": "Google Chat",
   "description": "Google Chat Sample freedom.js application",
   "app": {
-    "script": "main.js"
+    "script": "demo.js"
   },
   "dependencies": {
     "socialprovider": {
@@ -14,6 +14,7 @@
   "default": "chat",
   "api": {
     "chat": {
+      "login": {"type": "method", "value": []},
       "send": {"type": "method", "value": ["string", "string"]},
       "recv-status": {"type": "event", "value": "string"},
       "recv-err": {"type": "event", "value": {"message": "string"}},
