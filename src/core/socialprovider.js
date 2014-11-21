@@ -67,7 +67,6 @@ var XMPPSocialProvider = function(dispatchEvent) {
 XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
   if (msg.cmd && msg.cmd === 'auth') {
     this.credentials = msg.message;
-    this.view.close();
     this.login(null, continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
     continuation(undefined, {
@@ -442,9 +441,6 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
     }));
     this.client.end();
     this.client = null;
-  }
-  if (this.view) {
-    this.view.postMessage('logout');
   }
   continuation();
 };

@@ -2,10 +2,11 @@
 /*jslint indent:2,white:true,sloppy:true */
 
 XMPPSocialProvider.prototype.oAuthRedirectUris = [
-  'http://localhost/*',
-  'http://freedomjs.org/',
+  "https://fmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org/",
+  //'http://localhost/*',
+  //'http://freedomjs.org/',
 ];
-XMPPSocialProvider.prototype.oAuthClientId = "871734945364-oigtiha0jsda8bouc4n9rt2g7c0smhtj.apps.googleusercontent.com";
+XMPPSocialProvider.prototype.oAuthClientId = "746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com";
 
 /**
  * Begin the login view, potentially prompting for credentials.
@@ -27,36 +28,41 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       this.view.close();
     }
 
-    this.view = freedom['core.view']();
-    //this.view.once('message', this.onCredentials.bind(this, continuation));
-    this.view.on('message', function(obj) {
-      console.warn('Unexpected from core.view: ' + JSON.stringify(obj));
-    });
-
-    this.oauth = freedom['core.oauth']();
-    this.oauth.on('oAuthEvent', this.onOAuthEvent.bind(this));
-    this.view.open('GoogleLogin', {file: 'google-view.html'})
-      .then(this.view.show.bind(this.view))
-      .then(this.oauth.initiateOAuth.bind(this.oauth, this.oAuthRedirectUris))
-      .then(function(obj) {
-        console.log(obj);
-        this.view.postMessage({
-          url: "https://accounts.google.com/o/oauth2/auth?" +
+    this.oauth = freedom["core.oauth"]();
+    this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
+      var url = "https://accounts.google.com/o/oauth2/auth?" +
                "client_id=" + this.oAuthClientId + "&" +
                "response_type=token&" +
                "scope=" + "email%20profile%20https://www.googleapis.com/auth/googletalk&" +
-               "redirect_uri=" + encodeURIComponent(obj.redirect) + "&" +
-               "state=" + encodeURIComponent(obj.state)
-        });
-      }.bind(this))
-      .catch(function (err) {
-        console.error(err);
-        continuation(undefined, {
-          errcode: 'LOGIN_OAUTHERROR',
-          message: err.message
-          //message: this.ERRCODE.LOGIN_OAUTHERROR
-        });
-      }.bind(this));
+               "redirect_uri=" + encodeURIComponent(stateObj.redirect) + "&" +
+               "state=" + encodeURIComponent(stateObj.state);
+      return this.oauth.launchAuthFlow(url, stateObj);
+    }.bind(this)).then(function(url) {
+      var query = url.substr(url.indexOf('#') + 1);
+      var param, params = {};
+      var keys = query.split('&');
+      for (var i = 0; i < keys.length; i += 1) {
+        param = keys[i].substr(0, keys[i].indexOf('='));
+        params[param] = keys[i].substr(keys[i].indexOf('=') + 1);
+      }
+      this.onCredentials(continuation, {
+        cmd: "auth",
+        message: {
+//          userId: "uproxy.uw@gmail.com",
+//          jid: "uproxy.uw@gmail.com",
+          oauth2_token: params.access_token,
+          oauth2_auth: 'http://www.google.com/talk/protocol/auth',
+          host: 'talk.google.com'
+        }
+      });
+    }.bind(this)).catch(function (err) {
+      console.error(err);
+      continuation(undefined, {
+        errcode: 'LOGIN_OAUTHERROR',
+        message: err.message
+        //message: this.ERRCODE.LOGIN_OAUTHERROR
+      });
+    }.bind(this));
     return;
   } 
 
@@ -64,31 +70,4 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     this.initializeState();
   }
   this.connect(continuation);
-};
-
-XMPPSocialProvider.prototype.onOAuthEvent = function(url) {
-  console.log("!!!");
-  console.log(url);
-  var query = url.substr(url.indexOf('#') + 1);
-  var param;
-  var params = {};
-  var keys = query.split('&');
-  var i = 0;
-  var xhr = new XMLHttpRequest();
-
-  for (i = 0; i < keys.length; i += 1) {
-    param = keys[i].substr(0, keys[i].indexOf('='));
-    params[param] = keys[i].substr(keys[i].indexOf('=') + 1);
-  }
-  console.log(params);
-  
-  // https://developers.google.com/api-client-library/javascript/features/cors
-  // claims that googleapis.com supports CORS Headers. This is a lie.
-  // However, undocumented everywere is the fact that the endpoint API does
-  // support JSONP, which can also be used (though not super gracefully)
-  // with freedom.js modules.
-  //importScripts("https://www.googleapis.com/userinfo/v2/me?" +
-  //              "callback=onProfile&" +
-  //              "access_token=" + params.access_token);
-
 };
