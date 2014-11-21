@@ -37,32 +37,32 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
                "redirect_uri=" + encodeURIComponent(stateObj.redirect) + "&" +
                "state=" + encodeURIComponent(stateObj.state);
       return this.oauth.launchAuthFlow(url, stateObj);
-    }.bind(this)).then(function(url) {
-      var query = url.substr(url.indexOf('#') + 1);
-      var param, params = {};
-      var keys = query.split('&');
-      for (var i = 0; i < keys.length; i += 1) {
-        param = keys[i].substr(0, keys[i].indexOf('='));
-        params[param] = keys[i].substr(keys[i].indexOf('=') + 1);
-      }
-      this.onCredentials(continuation, {
-        cmd: "auth",
-        message: {
-//          userId: "uproxy.uw@gmail.com",
-//          jid: "uproxy.uw@gmail.com",
-          oauth2_token: params.access_token,
+    }.bind(this)).then(function(continuation, responseUrl) {
+      var token = responseUrl.match(/access_token=([^&]+)/)[1];
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.onload = function(continuation, token, xhr) {
+        var response = JSON.parse(xhr.response);
+        var credentials = {
+          userId: response.email,
+          jid: response.email,
+          oauth2_token: token,
           oauth2_auth: 'http://www.google.com/talk/protocol/auth',
           host: 'talk.google.com'
-        }
-      });
-    }.bind(this)).catch(function (err) {
+        };
+        console.log('Got googletalk credentials: ' + JSON.stringify(credentials));
+        this.onCredentials(continuation, {cmd: 'auth', message: credentials});
+      }.bind(this, continuation, token, xhr);
+      xhr.send();
+    }.bind(this, continuation)).catch(function (continuation, err) {
       console.error(err);
       continuation(undefined, {
         errcode: 'LOGIN_OAUTHERROR',
         message: err.message
         //message: this.ERRCODE.LOGIN_OAUTHERROR
       });
-    }.bind(this));
+    }.bind(this, continuation));
     return;
   } 
 
