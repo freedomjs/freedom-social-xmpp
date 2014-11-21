@@ -1,6 +1,6 @@
 {
-  "name": "Google Social Demo Application",
-  "description": "Demonstrates functionality of the freedom Google social provider.",
+  "name": "Facebook Social Demo Application",
+  "description": "Demonstrates functionality of the freedom Facebook social provider.",
   "version": "0.1",
   "minimum_chrome_version": "38",
   "manifest_version": 2,

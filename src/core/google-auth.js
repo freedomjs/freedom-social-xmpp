@@ -7,6 +7,7 @@ XMPPSocialProvider.prototype.oAuthRedirectUris = [
   //'http://freedomjs.org/',
 ];
 XMPPSocialProvider.prototype.oAuthClientId = "746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com";
+XMPPSocialProvider.prototype.oAuthScope = "email%20profile%20https://www.googleapis.com/auth/googletalk&";
 
 /**
  * Begin the login view, potentially prompting for credentials.
@@ -31,11 +32,11 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     this.oauth = freedom["core.oauth"]();
     this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
       var url = "https://accounts.google.com/o/oauth2/auth?" +
-               "client_id=" + this.oAuthClientId + "&" +
-               "response_type=token&" +
-               "scope=" + "email%20profile%20https://www.googleapis.com/auth/googletalk&" +
-               "redirect_uri=" + encodeURIComponent(stateObj.redirect) + "&" +
-               "state=" + encodeURIComponent(stateObj.state);
+               "client_id=" + this.oAuthClientId +
+               "&scope=" + this.oAuthScope +
+               "&redirect_uri=" + encodeURIComponent(stateObj.redirect) + 
+               "&state=" + encodeURIComponent(stateObj.state) +
+               "&response_type=token";
       return this.oauth.launchAuthFlow(url, stateObj);
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
