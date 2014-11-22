@@ -17,6 +17,7 @@ var button = buttons.ActionButton({
 });
 
 var chat;
+var displayWorker;
 
 function handleClick(state) {
   if (!chat) {
@@ -33,7 +34,6 @@ function handleClick(state) {
           self.data.url("ux.js")
         ]
       });
-      displayWorker.port.emit("setUp");
       require("listen.js").setupListeners(chat, displayWorker);
     }
   });

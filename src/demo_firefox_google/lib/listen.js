@@ -2,15 +2,15 @@ function setupListeners(chat, displayWorker) {
   chat.on(displayWorker.port.emit.bind(displayWorker.port));
 
   displayWorker.port.on('login', function() {
-    chat.emit('login');
+    chat.login();
   });
 
   displayWorker.port.on('logout', function() {
-    chat.emit('logout');
+    chat.logout();
   });
 
-  displayWorker.port.on('send-message', function(message) {
-    chat.emit('send-message', message);
+  displayWorker.port.on('send', function(data) {
+    chat.send(data.to, data.msg);
   });
 }
 

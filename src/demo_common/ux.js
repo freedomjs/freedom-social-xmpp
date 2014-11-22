@@ -123,6 +123,31 @@ function start(instance) {
   };
 }
 
+/**
+ * In Firefox, window.freedom is not defined
+ * Instead, communicate with listener.js, which will forward the messages
+ * to the root freedom.js module
+ **/
 window.onload = function () {
-  freedom('demo.json').then(start);
+  if (typeof freedom !== 'undefined') {
+    freedom('demo.json').then(start);
+  } else if (typeof self !== 'undefined' &&
+            typeof self.port !== 'undefined') {
+    start(function() {
+      return {
+        send: function(to, msg) {
+          self.port.emit('send', {to: to, msg: msg});
+        },
+        login: function() {
+          self.port.emit('login');
+        },
+        logout: function() {
+          self.port.emit('logout');
+        },
+        on: self.port.on.bind(self.port)
+      };
+    });
+  } else {
+    console.error('Cannot detect environment');
+  }
 };
