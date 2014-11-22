@@ -79,9 +79,8 @@ module.exports = function(grunt) {
       demo_firefox_google_data: {
         src: [
           'dist/*',
-          'src/demo_common/main.js',
-          'src/demo_common/ux.js',
-          'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm',
+          'src/demo_common/**/*',
+          'node_modules/freedom-for-firefox/freedom-for-firefox.jsm',
           'src/demo_chrome_google/demo.json',
         ],
         dest: 'build/demo_firefox_google/data/',
@@ -96,9 +95,8 @@ module.exports = function(grunt) {
       demo_firefox_facebook_data: {
         src: [
           'dist/*',
-          'src/demo_common/main.js',
-          'src/demo_common/ux.js',
-          'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm',
+          'src/demo_common/**/*',
+          'node_modules/freedom-for-firefox/freedom-for-firefox.jsm',
           'src/demo_chrome_facebook/demo.json',
         ],
         dest: 'build/demo_firefox_facebook/data/',

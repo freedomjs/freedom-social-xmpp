@@ -9,30 +9,32 @@ var button = buttons.ActionButton({
   id: "google-demo",
   label: "Google demo",
   icon: {
-    "16": "./icon-16.png",
-    "32": "./icon-32.png",
-    "64": "./icon-64.png"
+    "16": "./demo-256.png",
+    "32": "./demo-256.png",
+    "64": "./demo-256.png"
   },
   onClick: handleClick
 });
 
+var chat;
+
 function handleClick(state) {
-  var manifest = self.data.url('demo.json');
-  var freedom =
-      setupFreedom(manifest, {
-        freedomcfg:function(register) {
-          register('core.view', require('view_googleauth.js').View_googleAuth);
-        }
-      });
+  if (!chat) {
+    freedom(self.data.url('demo.json')).then(function(constructor) {
+      chat = constructor(0);
+    });
+  }
+
   tabs.open({
-    url: self.data.url("../lib/tab.html"),
+    url: self.data.url("main.html"),
     onLoad: function onLoad(tab) {
       displayWorker = tab.attach({
         contentScriptFile : [
-          self.data.url("ux.js")]
+          self.data.url("ux.js")
+        ]
       });
       displayWorker.port.emit("setUp");
-      require("listen.js").setupListeners(freedom, displayWorker);
+      require("listen.js").setupListeners(chat, displayWorker);
     }
   });
 }

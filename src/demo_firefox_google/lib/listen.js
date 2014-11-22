@@ -1,16 +1,16 @@
-function setupListeners(freedom, displayWorker) {
-  freedom.on(displayWorker.port.emit.bind(displayWorker.port));
+function setupListeners(chat, displayWorker) {
+  chat.on(displayWorker.port.emit.bind(displayWorker.port));
 
   displayWorker.port.on('login', function() {
-    freedom.emit('login');
+    chat.emit('login');
   });
 
   displayWorker.port.on('logout', function() {
-    freedom.emit('logout');
+    chat.emit('logout');
   });
 
   displayWorker.port.on('send-message', function(message) {
-    freedom.emit('send-message', message);
+    chat.emit('send-message', message);
   });
 }
 
