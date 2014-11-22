@@ -1,10 +1,11 @@
-/*globals freedom:true,setTimeout,console,VCardStore,XMPPSocialProvider */
+/*globals freedom:true,setTimeout,VCardStore,XMPPSocialProvider */
 /*jslint indent:2,white:true,sloppy:true */
 
 XMPPSocialProvider.prototype.oAuthRedirectUris = [
   "https://fmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org/",
+  "https://www.uproxy.org/oauth-redirect-uri",
+  "http://freedomjs.org/",
   //'http://localhost/*',
-  //'http://freedomjs.org/',
 ];
 XMPPSocialProvider.prototype.oAuthClientId = '161927677344933';
 XMPPSocialProvider.prototype.oAuthScope = "email,xmpp_login,user_online_presence,friends_online_presence";
@@ -47,12 +48,12 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
           api_key: this.oAuthAppSecret,  // secret, not id!
           host: 'chat.facebook.com'
         };
-        console.log('Got facebook credentials: ' + JSON.stringify(credentials));
+        this.logger.log('Got facebook credentials: ' + JSON.stringify(credentials));
         this.onCredentials(continuation, {cmd: 'auth', message: credentials});
       }.bind(this, continuation, token, xhr);
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
-      console.error(err);
+      this.logger.error(err);
       continuation(undefined, {
         errcode: 'LOGIN_OAUTHERROR',
         message: err.message

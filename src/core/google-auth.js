@@ -1,10 +1,11 @@
-/*globals freedom:true,setTimeout,console,VCardStore,XMPPSocialProvider */
+/*globals freedom:true,setTimeout,VCardStore,XMPPSocialProvider */
 /*jslint indent:2,white:true,sloppy:true */
 
 XMPPSocialProvider.prototype.oAuthRedirectUris = [
   "https://fmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org/",
+  "https://www.uproxy.org/oauth-redirect-uri",
+  "http://freedomjs.org/",
   //'http://localhost/*',
-  //'http://freedomjs.org/',
 ];
 XMPPSocialProvider.prototype.oAuthClientId = "746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com";
 XMPPSocialProvider.prototype.oAuthScope = "email%20profile%20https://www.googleapis.com/auth/googletalk&";
@@ -48,12 +49,12 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
           oauth2_auth: 'http://www.google.com/talk/protocol/auth',
           host: 'talk.google.com'
         };
-        console.log('Got googletalk credentials: ' + JSON.stringify(credentials));
+        this.logger.log('Got googletalk credentials: ' + JSON.stringify(credentials));
         this.onCredentials(continuation, {cmd: 'auth', message: credentials});
       }.bind(this, continuation, token, xhr);
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
-      console.error(err);
+      this.logger.error(err);
       continuation(undefined, {
         errcode: 'LOGIN_OAUTHERROR',
         message: err.message

@@ -156,7 +156,7 @@ module.exports = function(grunt) {
   ]);
 
   // Build the demos
-  grunt.registerTask('build_demos', [
+  grunt.registerTask('demos', [
     'build',
     'copy:demo_chrome_xmpp',
     'copy:demo_chrome_google',

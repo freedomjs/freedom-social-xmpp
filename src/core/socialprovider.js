@@ -46,6 +46,17 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.sendMessagesTimeout = null;
   this.timeOfFirstMessageInBatch = 0;
   this.messages = [];
+
+  // Logger
+  this.logger = function() {};
+  if (typeof freedom !== 'undefined' &&
+      typeof freedom.core == 'function') {
+    freedom.core().getLogger('[XMPPSocialProvider]').then(function(log) { 
+      this.logger = log;
+    }.bind(this));
+  } else if (typeof console !== 'undefined') {
+    this.logger = console;
+  }
 };
 
 /**
@@ -130,10 +141,10 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
 
   try {
-    console.warn(JSON.stringify(connectOpts));
+    this.logger.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
-    console.error(e.stack);
+    this.logger.error(e.stack);
     continuation(undefined, {
       errcode: 'LOGIN_FAILEDCONNECTION',
       message: e.message
@@ -142,7 +153,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
   this.client.addListener('online', this.onOnline.bind(this, continuation));
   this.client.addListener('error', function(e) {
-    console.error('client.error: ', e);
+    this.logger.error('client.error: ', e);
     continuation(undefined, {
       errcode: 'LOGIN_FAILEDCONNECTION',
       message: e.message
@@ -165,11 +176,11 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   this.client.addListener('close', function(e) {
     // This may indicate a broken connection to XMPP.
     // TODO: handle this.
-    console.error('received unhandled close event', e);
+    this.logger.error('received unhandled close event', e);
   });
   this.client.addListener('end', function(e) {
     // TODO: figure out when this is fired and handle this.
-    console.error('received unhandled end event', e);
+    this.logger.error('received unhandled end event', e);
   });
   this.client.addListener('stanza', this.onMessage.bind(this));
 };
@@ -214,7 +225,7 @@ XMPPSocialProvider.prototype.getUsers = function(continuation) {
  */
 XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   if (!this.client) {
-    console.warn('No client available to send message to ' + to);
+    this.logger.warn('No client available to send message to ' + to);
     continuation(undefined, {
       errcode: 'OFFLINE',
       message: this.ERRCODE.OFFLINE
@@ -254,7 +265,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
       }.bind(this), 100);  
     }
   } catch(e) {
-    console.error(e.stack);
+    this.logger.error(e.stack);
     continuation(undefined, {
       errcode: 'UNKNOWN',
       message: e.message
@@ -281,7 +292,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
       this.receiveMessage(msg.attrs.from, msg.getChildText('body'));
     } else {
       // TODO: relay chat messages from other clients in some way.
-      console.warn('Ignoring Chat Message: ' + JSON.stringify(msg.attrs));
+      this.logger.warn('Ignoring Chat Message: ' + JSON.stringify(msg.attrs));
     }
     */
   // Is it a status request?
@@ -301,8 +312,8 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
     this.onPresence(msg);
   // Is it something we don't understand?
   } else {
-    console.warn('Dropped unknown XMPP message');
-    console.warn(msg);
+    this.logger.warn('Dropped unknown XMPP message');
+    this.logger.warn(msg);
   }
 };
 
@@ -453,7 +464,7 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
 
 XMPPSocialProvider.prototype.requestUserStatus = function(user) {
   if (!this.client) {
-    console.warn('User status request to ' + user + ' dropped, no client available.');
+    this.logger.warn('User status request to ' + user + ' dropped, no client available.');
     return;
   }
   this.client.send(new window.XMPP.Element('iq', {
