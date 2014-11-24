@@ -26,7 +26,7 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-          'dist/node-xmpp-browser-raw.js': ['./node_modules/node-xmpp-client/browserify.js'],
+          'dist/node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
           alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
