@@ -1,5 +1,5 @@
-/*globals freedom:true,setTimeout,console,VCardStore,global,window */
-/*jslint indent:2,white:true,sloppy:true */
+/*jslint white:true,sloppy:true */
+/*global window:true,freedom:true,setTimeout,console,VCardStore,global */
 
 /**
  * Implementation of a Social provider for freedom.js that
@@ -50,7 +50,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
   // Logger
   this.logger = function() {};
   if (typeof freedom !== 'undefined' &&
-      typeof freedom.core == 'function') {
+      typeof freedom.core === 'function') {
     freedom.core().getLogger('[XMPPSocialProvider]').then(function(log) { 
       this.logger = log;
     }.bind(this));

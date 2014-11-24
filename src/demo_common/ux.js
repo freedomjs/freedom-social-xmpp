@@ -1,5 +1,5 @@
+/*globals freedom, console, self*/
 /*jslint sloppy:true */
-/*globals freedom, console*/
 
 /**
  * Bind handlers on startup

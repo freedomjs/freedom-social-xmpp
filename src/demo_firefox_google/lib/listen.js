@@ -1,3 +1,5 @@
+/*jslint moz:true, node:true, sloppy:true */
+
 function setupListeners(chat, displayWorker) {
   chat.on(displayWorker.port.emit.bind(displayWorker.port));
 

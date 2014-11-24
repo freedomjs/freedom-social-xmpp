@@ -1,4 +1,4 @@
-/*jshint node:true*/
+/*jshint node:true, moz:true */
 var main = require("./main");
 
 exports["test main"] = function(assert) {
