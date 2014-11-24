@@ -128,26 +128,28 @@ function start(instance) {
  * Instead, communicate with listener.js, which will forward the messages
  * to the root freedom.js module
  **/
-window.onload = function () {
+
+//window.onload = function (port) {
+setTimeout(function(port) {
   if (typeof freedom !== 'undefined') {
     freedom('demo.json').then(start);
-  } else if (typeof self !== 'undefined' &&
-            typeof self.port !== 'undefined') {
+  } else { // Assume it's Firefox
     start(function() {
       return {
         send: function(to, msg) {
-          self.port.emit('send', {to: to, msg: msg});
+          port.emit('send', {to: to, msg: msg});
         },
         login: function() {
-          self.port.emit('login');
+          port.emit('login');
         },
         logout: function() {
-          self.port.emit('logout');
+          port.emit('logout');
         },
-        on: self.port.on.bind(self.port)
+        on: port.on.bind(port)
       };
     });
-  } else {
-    console.error('Cannot detect environment');
   }
-};
+//}.bind({}, self.port);
+}.bind({}, self.port), 10);
+
+self.port.emit('test', 'Initializing self.port');
