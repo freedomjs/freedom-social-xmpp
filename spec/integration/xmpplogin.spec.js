@@ -5,7 +5,6 @@ var credentials = [];
 var CredentializingView = function() {
   "use strict";
   this.onOpen = function(id, name, page, resources, postMessage) {
-    console.log('OPEN');
     if (credentials.length > 0) {
       postMessage(credentials.pop());
     }
@@ -40,7 +39,6 @@ describe('Login integration', function() {
     freedom('freedom.json', {view: CredentializingView}).then(function(SocialClient) {
       var socialClient = SocialClient();
       socialClient.emit('relay', 'onClientState');
-      console.log('Logging in');
       socialClient.emit('login', [{
         agent: 'integration',
         version: '0.1',
