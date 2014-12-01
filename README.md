@@ -1,4 +1,6 @@
-# freedom-social-xmpp
+freedom-social-xmpp
+===================
+[![Build Status](https://travis-ci.org/freedomjs/freedom-social-xmpp.svg?branch=master)](https://travis-ci.org/freedomjs/freedom-social-xmpp)
 
 XMPP Social provider for freedom.js
 

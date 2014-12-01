@@ -1,0 +1,27 @@
+{
+  "name": "XMPP Social Provider",
+  "description": "Social provider using XMPP chat protocols",
+  "app": {
+    "script": [ 
+      "socialprovider.js", 
+      "vcardstore.js", 
+      "node-xmpp-browser.js",
+      "xmpp-auth.js"
+    ]
+  },
+  "provides": [
+    "social"
+  ],
+  "permissions": [
+    "core.tcpsocket",
+    "core.udpsocket",
+    "core.view",
+    "core.storage"
+  ],
+  "views": {
+    "xmpp-login": {
+      "main": "xmpp-view.html",
+      "files": [ "xmpp-view.js" ]
+    }
+  }
+}

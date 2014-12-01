@@ -1,8 +1,9 @@
 describe("Tests for TCP Sockets", function() {
+  "use strict";
   var socket;
 
   beforeEach(function() {
-    socket = new freedomTCP();
+    socket = new FreedomTCP();
     socket.onread = jasmine.createSpy('on read');
     spyOn(socket.fd, 'prepareSecure').and.callFake(function() {
       return Promise.resolve();
@@ -27,8 +28,8 @@ describe("Tests for TCP Sockets", function() {
   });
 
   it('calls on read with negative -1 when socket is disconnected', function() {
-    expect(events['onDisconnect']).toBeDefined();
-    events['onDisconnect']();
+    expect(events.onDisconnect).toBeDefined();
+    events.onDisconnect();
     expect(socket.onread).toHaveBeenCalledWith(-1);
   });
 

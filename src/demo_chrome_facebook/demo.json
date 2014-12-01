@@ -1,0 +1,26 @@
+{
+  "name": "Facebook Chat",
+  "description": "Facebook Chat Sample freedom.js application",
+  "app": {
+    "script": "demo.js"
+  },
+  "dependencies": {
+    "socialprovider": {
+      "url": "social.facebook.json",
+      "api": "social"
+    }
+  },
+  "provides": ["chat"],
+  "default": "chat",
+  "api": {
+    "chat": {
+      "login": {"type": "method", "value": []},
+      "send": {"type": "method", "value": ["string", "string"]},
+      "recv-status": {"type": "event", "value": "string"},
+      "recv-err": {"type": "event", "value": {"message": "string"}},
+      "recv-message": {"type": "event", "value": {"message": "string", "from": {"userId": "string"}}},
+      "recv-buddylist": {"type": "event", "value": "object"},
+      "recv-uid": {"type": "event", "value": "string"}
+    }
+  }
+}
