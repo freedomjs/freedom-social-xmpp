@@ -136,7 +136,34 @@ module.exports = function(grunt) {
     },
     jasmine_node: {
       integration: ['spec/integration/']
-    }
+    },
+    bump: {
+      options: {
+        files: ['package.json'],
+        commit: true,
+        commitMessage: 'Release v%VERSION%',
+        commitFiles: ['package.json'],
+        createTag: true,
+        tagName: 'v%VERSION%',
+        tagMessage: 'Version %VERSION%',
+        push: true,
+        pushTo: 'origin'
+      }
+    },
+    'npm-publish': {
+      options: {
+        requires: [],
+        abortIfDirty: true,
+      }
+    },
+    prompt: { tagMessage: { options: { questions: [
+      {
+        config: 'bump.options.tagMessage',
+        type: 'input',
+        message: 'Enter a git tag message:',
+        default: 'v%VERSION%',
+      }
+    ]}}},
   });
 
   // Load tasks.
@@ -145,6 +172,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jasmine-node');
+  grunt.loadNpmTasks('grunt-prompt');
+  grunt.loadNpmTasks('grunt-bump');
+  grunt.loadNpmTasks('grunt-npm');
 
   // Compile into build/
   grunt.registerTask('build', [
@@ -172,6 +202,20 @@ module.exports = function(grunt) {
     'jasmine',
     'jasmine_node'
   ]);
+
+  // Tag, publish, release
+  grunt.registerTask('release', function(arg) {
+    if (arguments.length === 0) {
+      arg = 'patch';
+    }
+    grunt.task.run([
+      'default',
+      'prompt:tagMessage',
+      'bump:'+arg,
+      'npm-publish',
+    ]);
+  });
+
 
   // Default task
   grunt.registerTask('default', [ 'build' ]);

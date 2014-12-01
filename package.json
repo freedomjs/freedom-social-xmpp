@@ -29,10 +29,13 @@
     "freedom-for-node": "0.2.3",
     "grunt": "~0.4.2",
     "grunt-browserify": "~1.3.0",
+    "grunt-bump": "0.0.16",
     "grunt-contrib-copy": "~0.5.0",
     "grunt-contrib-jasmine": "^0.6.1",
     "grunt-contrib-jshint": "^0.10.0",
     "grunt-jasmine-node": "~0.2.1",
+    "grunt-npm": "0.0.2",
+    "grunt-prompt": "^1.3.0",
     "node-xmpp-client": "1.0.0-alpha15"
   },
   "peerDependencies": {
