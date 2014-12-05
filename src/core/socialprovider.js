@@ -177,11 +177,11 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     // This may indicate a broken connection to XMPP.
     // TODO: handle this.
     this.logger.error('received unhandled close event', e);
-  });
+  }.bind(this));
   this.client.addListener('end', function(e) {
     // TODO: figure out when this is fired and handle this.
     this.logger.error('received unhandled end event', e);
-  });
+  }.bind(this));
   this.client.addListener('stanza', this.onMessage.bind(this));
 };
 
