@@ -28,12 +28,14 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   if (!this.credentials) {
     this.oauth = freedom["core.oauth"]();
     this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
-      var url = "https://accounts.google.com/o/oauth2/auth?" +
+      var oauthUrl = "https://accounts.google.com/o/oauth2/auth?" +
                "client_id=" + this.oAuthClientId +
                "&scope=" + this.oAuthScope +
                "&redirect_uri=" + encodeURIComponent(stateObj.redirect) + 
                "&state=" + encodeURIComponent(stateObj.state) +
                "&response_type=token";
+      var url = 'https://accounts.google.com/accountchooser?continue=' +
+          encodeURIComponent(oauthUrl);
       return this.oauth.launchAuthFlow(url, stateObj);
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
