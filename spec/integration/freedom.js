@@ -1,9 +1,12 @@
+/* global freedom*/
 var social = freedom.socialprovider();
+var page = freedom();
 
-freedom.on(function(tag, msg) {
-  if (tag == 'relay') {
+page.on(function(tag, msg) {
+  "use strict";
+  if (tag === 'relay') {
     social.on(msg, function(tag, resp) {
-      freedom.emit(tag, resp);
+      page.emit(tag, resp);
     }.bind({}, msg));
   } else {
     social[tag].apply(social, msg).then(function(tag, resp) {

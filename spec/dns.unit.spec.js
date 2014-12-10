@@ -1,4 +1,5 @@
 describe("Tests for DNS lookup", function() {
+  "use strict";
 
   var family = 0;
   var dnsServer = '8.8.8.8';
@@ -42,7 +43,7 @@ describe("Tests for DNS lookup", function() {
       } else if(equivalentDnsQueries(dnsQuery, googleDnsQuery)) {
         setTimeout(function(){callback(googleDnsResponse);}, 1);
       } else {
-        throw(new Error("unexpected query to fake: " + dnsQueryHexString));
+        throw(new Error("unexpected query to fake: " + dnsQuery));
       }
     });
     // Rebind to the spied version.

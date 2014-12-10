@@ -1,0 +1,25 @@
+{
+  "name": "Google Social Provider",
+  "description": "Social provider using Google chat protocols",
+  "app": {
+    "script": [
+      "socialprovider.js",
+      "vcardstore.js",
+      "node-xmpp-browser.js",
+      "google-auth.js"
+   	]
+  },
+  "provides": [
+    "social"
+  ],
+  "permissions": [
+    "core.tcpsocket",
+    "core.udpsocket",
+    "core.view",
+    "core.oauth",
+    "core.storage"
+  ],
+  "views": {
+    "GoogleLogin": ["google-view.html", "google-view.js"]
+  }
+}

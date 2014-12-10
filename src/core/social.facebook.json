@@ -1,0 +1,25 @@
+{
+  "name": "Facebook Social Provider",
+  "description": "Social provider using Facebook chat protocols",
+  "app": {
+    "script": [
+      "socialprovider.js",
+      "vcardstore.js",
+      "node-xmpp-browser.js",
+      "facebook-auth.js"
+   	]
+  },
+  "provides": [
+    "social"
+  ],
+  "permissions": [
+    "core.tcpsocket",
+    "core.udpsocket",
+    "core.view",
+    "core.oauth",
+    "core.storage"
+  ],
+  "views": {
+    "FacebookLogin": ["facebook-view.html", "facebook-view.js"]
+  }
+}

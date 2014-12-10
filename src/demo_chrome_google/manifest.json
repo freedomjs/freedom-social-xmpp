@@ -1,0 +1,40 @@
+{
+  "name": "Google Social Demo Application",
+  "description": "Demonstrates functionality of the freedom Google social provider.",
+  "version": "0.1",
+  "minimum_chrome_version": "38",
+  "manifest_version": 2,
+  "app": {
+    "background": {
+       "scripts": ["background.js"]
+    }
+  },
+  "permissions": [
+    "identity",
+    "storage",
+    "https://www.googleapis.com/*",
+    "https://accounts.google.com/*",
+    "http://localhost/*"
+  ],
+  "sockets":{
+    "tcp": {
+      "connect": ["*"]
+    },
+    "tcpServer": {
+      "listen": ["*"]
+    },
+    "udp": {
+      "bind": ["*"],
+      "send": ["*"]
+    }
+  },
+  // This key is copied from the chrome the UProxy chrome app.
+  // It is needed so that chrome.identity.getRedirectURL returns
+  // the correct URL associated with our Cient ID
+  // (746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com)
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk6KrQptZchMYwQN8CsbRVmhV/COoR0lxansERcz+OrkPctUBSTQVYJw3t17+6JyMPnKYR2DMKCTeYQGrmXzm2U0KpujEKN3WSTtZI4ynTzKbGhWIYo6exaHufcslJngEG91ua/q1fJz3e5Mla8+tIsT9bVdVf4NLfODNbky/Uo0M6KpOLO9r2zJoiO0yg4ThBH+TkNwH8icvHJbt2LzZVRSZtQ1Wl1uT15vnwJPOEYVQkpnEMY5yMBPxyOZ1AmUx714YAas80pSZ7+BlM9ReIirYB7lxeY6hAqs4u8iP5SDh5bg6YFXeYecwQyvnKglLdHq6djy9QyVLKUKxFzMH/wIDAQAB",
+  "icons": {
+    "16": "demo-256.png",
+    "128": "demo-256.png"
+  }
+}

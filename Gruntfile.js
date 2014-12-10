@@ -1,3 +1,4 @@
+/*jshint node:true*/
 var freedomPrefix = require.resolve('freedom').substr(0,
         require.resolve('freedom').lastIndexOf('freedom') + 8);
 
@@ -11,89 +12,95 @@ var FILES = {
 };
 
 module.exports = function(grunt) {
-  var distFiles = [
-    'build/node-xmpp-browser.js',
-    'src/*',
-    'demo_common/*',
-    'node_modules/freedom-for-chrome/freedom-for-chrome.js'
-  ];
+  "use strict";
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    jshint: {
+      grunt: [ 'Gruntfile.js' ],
+      lib: [ 'lib/**/*.js', '!lib/net.js'],
+      src: [ 'src/**/*.js' ],
+      options: {
+        jshintrc: true
+      }
+    },
     browserify: {
       dist: {
         files: {
-          'build/node-xmpp-browser-raw.js': ['./node_modules/node-xmpp-client/browserify.js'],
+          'dist/node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
-          alias : ['browser-request:request', 'lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
-          ignore : ['faye-websocket', 'tls', './websockets']
+          alias : ['lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
+          ignore : ['faye-websocket', 'tls', './websockets', 'request']
         }
       }
     },
     copy: {
-      chrome_demo_login: {
-        src: distFiles,
-        dest: 'chrome_demo_login/xmpp/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
-      },
-      chrome_demo_google: {
-        src: distFiles,
-        dest: 'chrome_demo_google/xmpp/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
-      },
-      chrome_demo_facebook: {
-        src: distFiles,
-        dest: 'chrome_demo_facebook/xmpp/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
-      },
       dist: {
-        src: ['src/*'],
-        dest: 'build/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
+        src: ['src/core/*'],
+        dest: 'dist/',
+        flatten: true, filter: 'isFile', expand: true
+      },
+      demo_chrome_xmpp: {
+        src: [ 
+          'dist/*',
+          'src/demo_common/*',
+          'node_modules/freedom-for-chrome/freedom-for-chrome.js',
+          'src/demo_chrome_xmpp/**/*',
+        ],
+        dest: 'build/demo_chrome_xmpp/',
+        flatten: true, filter: 'isFile', expand: true
+      },
+      demo_chrome_google: {
+        src: [ 
+          'dist/*',
+          'src/demo_common/*',
+          'node_modules/freedom-for-chrome/freedom-for-chrome.js',
+          'src/demo_chrome_google/**/*',
+        ],
+        dest: 'build/demo_chrome_google/',
+        flatten: true, filter: 'isFile', expand: true
+      },
+      demo_chrome_facebook: {
+        src: [ 
+          'dist/*',
+          'src/demo_common/*',
+          'node_modules/freedom-for-chrome/freedom-for-chrome.js',
+          'src/demo_chrome_facebook/**/*',
+        ],
+        dest: 'build/demo_chrome_facebook/',
+        flatten: true, filter: 'isFile', expand: true
+      },
+      demo_firefox_google: { 
+        src: [ '**/*' ], 
+        dest: 'build/demo_firefox_google/',
+        cwd: 'src/demo_firefox_google/',
+        filter: 'isFile', expand: true,
       },
       demo_firefox_google_data: {
-        src: ['chrome_demo_google/demo.json',
-              'demo_common/ux.js',
-              'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm'],
-        dest: 'firefox_demo_google/data/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
+        src: [
+          'dist/*',
+          'src/demo_common/**/*',
+          'node_modules/freedom-for-firefox/freedom-for-firefox.jsm',
+          'src/demo_chrome_google/demo.json',
+        ],
+        dest: 'build/demo_firefox_google/data/',
+        flatten: true, filter: 'isFile', expand: true
       },
-      demo_firefox_google_data_xmpp: {
-        src: ['src/*',
-              'build/node-xmpp-browser.js',
-              'demo_common/main.js'],
-        dest: 'firefox_demo_google/data/xmpp/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
+      demo_firefox_facebook: {
+        src: [ '**/*' ], 
+        dest: 'build/demo_firefox_facebook/',
+        cwd: 'src/demo_firefox_facebook/',
+        filter: 'isFile', expand: true,
       },
       demo_firefox_facebook_data: {
-        src: ['chrome_demo_facebook/demo.json',
-              'demo_common/ux.js',
-              'node_modules/freedom-for-firefox/build/freedom-for-firefox.jsm'],
-        dest: 'firefox_demo_facebook/data/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
-      },
-      demo_firefox_facebook_data_xmpp: {
-        src: ['src/*',
-              'build/node-xmpp-browser.js',
-              'demo_common/main.js'],
-        dest: 'firefox_demo_facebook/data/xmpp/',
-        flatten: true,
-        filter: 'isFile',
-        expand: true
+        src: [
+          'dist/*',
+          'src/demo_common/**/*',
+          'node_modules/freedom-for-firefox/freedom-for-firefox.jsm',
+          'src/demo_chrome_facebook/demo.json',
+        ],
+        dest: 'build/demo_firefox_facebook/data/',
+        flatten: true, filter: 'isFile', expand: true
       },
       jasmine: {
         src: [freedomPrefix + '/freedom.js'],
@@ -119,10 +126,10 @@ module.exports = function(grunt) {
       },
       social: {
         src: FILES.jasmine_helpers.concat(
-          ['src/socialprovider.js', 'src/vcardstore.js', 
-           'build/node-xmpp-browser.js']),
+          ['dist/socialprovider.js', 'dist/vcardstore.js', 
+           'dist/node-xmpp-browser.js']),
         options: {
-          specs: 'src/socialprovider.spec.js',
+          specs: 'spec/socialprovider.spec.js',
           keepRunner: false
         }
       }
@@ -130,66 +137,86 @@ module.exports = function(grunt) {
     jasmine_node: {
       integration: ['spec/integration/']
     },
-    // TODO: remove this after resolving
-    // https://github.com/freedomjs/freedom-social-xmpp/issues/54
-    replace: {
-      facebook: {
-        src: ['build/node-xmpp-browser-raw.js'],
-        dest: 'build/node-xmpp-browser.js',
-        replacements: [{
-          from: 'XFacebookPlatform.host',
-          to: 'XFacebookPlatform.prototype.host'
-        }]
+    bump: {
+      options: {
+        files: ['package.json'],
+        commit: true,
+        commitMessage: 'Release v%VERSION%',
+        commitFiles: ['package.json'],
+        createTag: true,
+        tagName: 'v%VERSION%',
+        tagMessage: 'Version %VERSION%',
+        push: true,
+        pushTo: 'origin'
       }
-    }
+    },
+    'npm-publish': {
+      options: {
+        requires: [],
+        abortIfDirty: true,
+      }
+    },
+    prompt: { tagMessage: { options: { questions: [
+      {
+        config: 'bump.options.tagMessage',
+        type: 'input',
+        message: 'Enter a git tag message:',
+        default: 'v%VERSION%',
+      }
+    ]}}},
   });
 
   // Load tasks.
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jasmine-node');
-  grunt.loadNpmTasks('grunt-text-replace');
+  grunt.loadNpmTasks('grunt-prompt');
+  grunt.loadNpmTasks('grunt-bump');
+  grunt.loadNpmTasks('grunt-npm');
 
-  // Default tasks.
-  grunt.registerTask('compile', [
+  // Compile into build/
+  grunt.registerTask('build', [
+    'jshint',
     'browserify',
-    'replace',
     'copy:dist'
   ]);
-  grunt.registerTask('chrome_demo_login', [
-    'browserify',
-    'replace',
-    'copy:chrome_demo_login'
-  ]);
-  grunt.registerTask('chrome_demo_google', [
-    'browserify',
-    'replace',
-    'copy:chrome_demo_google'
-  ]);
-  grunt.registerTask('chrome_demo_facebook', [
-    'browserify',
-    'replace',
-    'copy:chrome_demo_facebook'
-  ]);
-  grunt.registerTask('firefox_demo_google', [
-    'browserify',
-    'replace',
+
+  // Build the demos
+  grunt.registerTask('demos', [
+    'build',
+    'copy:demo_chrome_xmpp',
+    'copy:demo_chrome_google',
+    'copy:demo_chrome_facebook',
+    'copy:demo_firefox_google',
     'copy:demo_firefox_google_data',
-    'copy:demo_firefox_google_data_xmpp'
-  ]);
-  grunt.registerTask('firefox_demo_facebook', [
-    'browserify',
-    'replace',
+    'copy:demo_firefox_facebook',
     'copy:demo_firefox_facebook_data',
-    'copy:demo_firefox_facebook_data_xmpp'
   ]);
+  
+  // Testing meta-task
   grunt.registerTask('test', [
-    'compile',
+    'build',
     'copy:jasmine',
-    'jasmine:dns',
-    'jasmine:social',
+    'jasmine',
     'jasmine_node'
   ]);
-  grunt.registerTask('default', ['compile']);
+
+  // Tag, publish, release
+  grunt.registerTask('release', function(arg) {
+    if (arguments.length === 0) {
+      arg = 'patch';
+    }
+    grunt.task.run([
+      'default',
+      'prompt:tagMessage',
+      'bump:'+arg,
+      'npm-publish',
+    ]);
+  });
+
+
+  // Default task
+  grunt.registerTask('default', [ 'build' ]);
 };
