@@ -15,11 +15,7 @@
   "permissions": [
     "core.tcpsocket",
     "core.udpsocket",
-    "core.view",
     "core.oauth",
     "core.storage"
-  ],
-  "views": {
-    "GoogleLogin": ["google-view.html", "google-view.js"]
-  }
+  ]
 }
