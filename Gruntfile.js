@@ -5,9 +5,7 @@ var freedomPrefix = require.resolve('freedom').substr(0,
 var FILES = {
   jasmine_helpers: [
     // Help Jasmine's PhantomJS understand promises.
-    'node_modules/es6-promise/dist/promise-*.js',
-    '!node_modules/es6-promise/dist/promise-*amd.js',
-    '!node_modules/es6-promise/dist/promise-*.min.js'
+    require.resolve('es6-promise')
   ]
 };
 
@@ -29,7 +27,7 @@ module.exports = function(grunt) {
           'dist/node-xmpp-browser.js': ['./node_modules/node-xmpp-client/browserify.js'],
         },
         options: {
-          alias : ['lib/dns.js:dns', 'lib/net.js:net', 'lib/stringprep.js:node-stringprep', 'lib/tlsconnect.js:tls-connect'],
+          alias : ['./lib/dns.js:dns', './lib/net.js:net', './lib/stringprep.js:node-stringprep', './lib/tlsconnect.js:tls-connect'],
           ignore : ['faye-websocket', 'tls', './websockets', 'request']
         }
       }
@@ -166,7 +164,7 @@ module.exports = function(grunt) {
     ]}}},
   });
 
-  // Load tasks.
+  // Load tasks. 
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');

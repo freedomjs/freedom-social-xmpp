@@ -1,6 +1,7 @@
 describe("Tests for TCP Sockets", function() {
   "use strict";
   var socket;
+  ES6Promise.polyfill();
 
   beforeEach(function() {
     socket = new FreedomTCP();
