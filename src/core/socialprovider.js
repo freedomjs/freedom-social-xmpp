@@ -419,7 +419,7 @@ XMPPSocialProvider.prototype.updateRoster = function(msg) {
 };
 
 XMPPSocialProvider.prototype.sawClient = function(client) {
-  this.vCardStore.updateProperty(client, 'timestamp', new Date());
+  this.vCardStore.updateProperty(client, 'lastSeen', new Date());
 };
 
 XMPPSocialProvider.prototype.onOnline = function(continuation) {
