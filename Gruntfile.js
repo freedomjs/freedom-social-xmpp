@@ -119,7 +119,7 @@ module.exports = function(grunt) {
           ['spec/tcp_context.js', 'lib/tcp.js']),
         options: {
           specs: 'spec/tcp.unit.spec.js',
-          keepRunner: true
+          keepRunner: false
         }
       },
       social: {
