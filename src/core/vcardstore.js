@@ -37,12 +37,14 @@ VCardStore.prototype.getClient = function(user) {
     userId: userid,
     clientId: user,
     status: 'OFFLINE',
-    timestamp: 0
+    lastSeen: 0,
+    lastUpdated: 0
   };
 
   if (this.clients[user]) {
     state.status = this.clients[user].status;
-    state.timestamp = this.clients[user].date;
+    state.lastSeen = this.clients[user].lastSeen;
+    state.lastUpdated = this.clients[user].lastUpdated;
   }
   
   return state;
@@ -64,7 +66,8 @@ VCardStore.prototype.getUser = function(user) {
   };
   
   if (this.users[user]) {
-    state.timestamp = this.users[user].timestamp;
+    state.lastSeen = this.clients[user].lastSeen;
+    state.lastUpdated = this.clients[user].lastUpdated;
     state.name = this.users[user].name;
     state.url = this.users[user].url;
     state.imageData = this.users[user].imageData;
@@ -126,8 +129,9 @@ VCardStore.prototype.updateVcard = function(from, message) {
     user.imageData = url;
   }
 
+  user.lastSeen = Date.now();
   if (changed) {
-    user.timestamp = Date.now();
+    user.lastUpdated = Date.now();
     this.users[userid] = user;
     this.onUserChange(user);
   }
@@ -151,7 +155,8 @@ VCardStore.prototype.updateProperty = function(user, property, value) {
     };
   }
   this.clients[user][property] = value;
-  this.clients[user].timestamp = Date.now();
+  this.clients[user].lastSeen = Date.now();
+  this.clients[user].lastUpdated = Date.now();
   this.onClientChange(this.clients[user]);
 };
 
@@ -162,7 +167,8 @@ VCardStore.prototype.updateUser = function(user, property, value) {
     };
   }
   this.users[user][property] = value;
-  this.users[user].timestamp = Date.now();
+  this.users[user].lastSeen = Date.now();
+  this.users[user].lastUpdated = Date.now();
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {
