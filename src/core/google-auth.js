@@ -5,7 +5,7 @@ XMPPSocialProvider.prototype.oAuthRedirectUris = [
   "https://fmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org/",
   "https://www.uproxy.org/oauth-redirect-uri",
   "http://freedomjs.org/",
-  //'http://localhost/*',
+  'http://localhost:8080/'
 ];
 XMPPSocialProvider.prototype.oAuthClientId = "746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com";
 XMPPSocialProvider.prototype.oAuthScope = "email%20profile%20https://www.googleapis.com/auth/googletalk&";
