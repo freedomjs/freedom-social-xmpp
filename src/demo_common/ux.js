@@ -133,7 +133,8 @@ function start(instance) {
 setTimeout(function(port) {
   if (typeof freedom !== 'undefined') {
     freedom('demo.json').then(start);
-  } else { // Assume it's Firefox
+  } else if (typeof port !== 'undefined') { // Firefox
+    port.emit('test', 'Initializing self.port');
     start(function() {
       return {
         send: function(to, msg) {
@@ -148,8 +149,9 @@ setTimeout(function(port) {
         on: port.on.bind(port)
       };
     });
+  } else {
+    console.error("Error initializing: cannot detect environment");
   }
 //}.bind({}, self.port);
 }.bind({}, self.port), 10);
 
-self.port.emit('test', 'Initializing self.port');
