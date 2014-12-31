@@ -2,7 +2,12 @@
   "name": "Google Chat",
   "description": "Google Chat Sample freedom.js application",
   "app": {
-    "script": "demo.js"
+    "script": "demo.js",
+    "index": "main.html",
+    "static": [
+      "style.css",
+      "ux.js"
+    ]
   },
   "dependencies": {
     "socialprovider": {
