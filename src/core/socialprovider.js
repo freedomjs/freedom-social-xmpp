@@ -242,7 +242,10 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   if (!this.messages[to]) {
     this.messages[to] = [];
   }
-  this.messages[to].push(msg);
+  this.messages[to].push({
+    message: msg,
+    continuation: continuation
+  });
   if (!this.sendMessagesTimeout) {
     this.timeOfFirstMessageInBatch = Date.now();
   }
@@ -257,17 +260,41 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         // Sending all messages as type 'normal' means we can't communicate
         // across different client types, but sending all as type 'chat'
         // means messages will be broadcast to all clients.
-        var messageType =
+        var i = 0,
+          messageType =
             (this.vCardStore.getClient(to).status === 'ONLINE') ?
-                'normal' : 'chat';
-
-        try {
-          this.client.send(new window.XMPP.Element('message', {
+                'normal' : 'chat',
+          message = new window.XMPP.Element('message', {
             to: to,
             type: messageType
-          }).c('body').t(JSON.stringify(this.messages[to])));
+          }).c('body'),
+          body;
+        if (messageType === 'normal') {
+          body = [];
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            body.push(this.messages[to][i].message);
+          }
+          message.t(JSON.stringify(body));
+        } else {
+          body = '';
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            body += this.messages[to][i].message + '\n';
+          }
+          message.t(body);
+        }
+
+        try {
+          this.client.send(message);
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            this.messages[to][i].continuation();
+          }
         } catch(e) {
-          this.logger.warn(e.message);
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            this.messages[to][i].continuation(null, {
+              errcode: 'UNKNOWN',
+              message: 'Send Failed: ' + e.message
+            });
+          }
         }
       }.bind(this));
 
@@ -275,7 +302,6 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
       this.sendMessagesTimeout = null;
     }.bind(this), 100);  
   }
-  continuation();
 };
 
 /**
