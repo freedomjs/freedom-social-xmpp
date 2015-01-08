@@ -233,51 +233,46 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
     return;
   }
 
-  try {
-    // After each message is received, reset the timeout to
-    // wait for at least 100ms to batch other messages received 
-    // in that window. However, if the oldest message in the batch 
-    // was received over 2s ago, don't reset the timeout, and 
-    // just allow the current timeout to execute.
-    if (!this.messages[to]) {
-      this.messages[to] = [];
-    }
-    this.messages[to].push(msg);
-    if (!this.sendMessagesTimeout) {
-      this.timeOfFirstMessageInBatch = Date.now();
-    }
-    if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) ||
-        !this.sendMessagesTimeout) {
-      clearTimeout(this.sendMessagesTimeout);
-      this.sendMessagesTimeout = setTimeout(function () {
-        Object.keys(this.messages).forEach(function (to) {
-          // If the destination client is ONLINE (i.e. using the same type of
-          // client) send this message with type 'normal' so it only reaches
-          // that client, otherwise use type 'chat' to send to all clients.
-          // Sending all messages as type 'normal' means we can't communicate
-          // across different client types, but sending all as type 'chat'
-          // means messages will be broadcast to all clients.
-          var messageType =
-              (this.vCardStore.getClient(to).status === 'ONLINE') ?
-                  'normal' : 'chat';
+  // After each message is received, reset the timeout to
+  // wait for at least 100ms to batch other messages received 
+  // in that window. However, if the oldest message in the batch 
+  // was received over 2s ago, don't reset the timeout, and 
+  // just allow the current timeout to execute.
+  if (!this.messages[to]) {
+    this.messages[to] = [];
+  }
+  this.messages[to].push(msg);
+  if (!this.sendMessagesTimeout) {
+    this.timeOfFirstMessageInBatch = Date.now();
+  }
+  if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) ||
+      !this.sendMessagesTimeout) {
+    clearTimeout(this.sendMessagesTimeout);
+    this.sendMessagesTimeout = setTimeout(function () {
+      Object.keys(this.messages).forEach(function (to) {
+        // If the destination client is ONLINE (i.e. using the same type of
+        // client) send this message with type 'normal' so it only reaches
+        // that client, otherwise use type 'chat' to send to all clients.
+        // Sending all messages as type 'normal' means we can't communicate
+        // across different client types, but sending all as type 'chat'
+        // means messages will be broadcast to all clients.
+        var messageType =
+            (this.vCardStore.getClient(to).status === 'ONLINE') ?
+                'normal' : 'chat';
 
+        try {
           this.client.send(new window.XMPP.Element('message', {
             to: to,
             type: messageType
           }).c('body').t(JSON.stringify(this.messages[to])));
-        }.bind(this));
+        } catch(e) {
+          this.logger.warn(e.message);
+        }
+      }.bind(this));
 
-        this.messages = {};
-        this.sendMessagesTimeout = null;
-      }.bind(this), 100);  
-    }
-  } catch(e) {
-    this.logger.error(e.stack);
-    continuation(undefined, {
-      errcode: 'UNKNOWN',
-      message: e.message
-    });
-    return;
+      this.messages = {};
+      this.sendMessagesTimeout = null;
+    }.bind(this), 100);  
   }
   continuation();
 };
