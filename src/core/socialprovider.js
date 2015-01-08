@@ -45,6 +45,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
   // rate limiting).
   this.sendMessagesTimeout = null;
   this.timeOfFirstMessageInBatch = 0;
+  // buffered outbound messages, arrays of messages keyed by recipient.
   this.messages = {};
 
   // Logger

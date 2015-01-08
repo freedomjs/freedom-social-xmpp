@@ -109,7 +109,15 @@ describe("Tests for message batching in Social provider", function() {
     jasmine.clock().tick(100);
     expect(xmppSocialProvider.client.send.calls.count()).toEqual(2);
     var dest = xmppSocialProvider.client.send.calls.first().args[0].parent.attrs.to;
-    if (dest !== 'Bob' && dest !== 'Alice') {
+    // Destination shold be either bob or alice.
+    if (dest === 'Bob') {
+      expect(xmppSocialProvider.client.send.calls.mostRecent().args[0].parent.attrs.to)
+          .toEqual('Alice');
+    } else if (dest === 'Alice') {
+      expect(xmppSocialProvider.client.send.calls.mostRecent().args[0].parent.attrs.to)
+          .toEqual('Bob');
+    } else {
+      // If it isn't either, this expectation will certainly fail.
       expect(dest).toEqual('Bob');
     }
   });
