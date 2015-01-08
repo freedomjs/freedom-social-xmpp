@@ -48,7 +48,7 @@ describe("Tests for message batching in Social provider", function() {
 
   it("add first message to batch and save time of message", function() {
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
-    expect(xmppSocialProvider.messages).toEqual(['Hi']);
+    expect(xmppSocialProvider.messages.Bob).toEqual(['Hi']);
     expect(xmppSocialProvider.timeOfFirstMessageInBatch).toEqual(500);
   });
 
@@ -72,7 +72,7 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.sendMessage('Bob', 'Hi again', function() {});
     jasmine.clock().tick(50);
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
-    expect(xmppSocialProvider.messages).toEqual(['Hi', 'Hi again']);
+    expect(xmppSocialProvider.messages.Bob).toEqual(['Hi', 'Hi again']);
     jasmine.clock().tick(50);
     expect(xmppSocialProvider.client.send).toHaveBeenCalled();
   });
@@ -102,6 +102,19 @@ describe("Tests for message batching in Social provider", function() {
     expect(xmppSocialProvider.client.send).toHaveBeenCalled();
   });
 
+  it("sends message to correct destinations", function() {
+    xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
+    xmppSocialProvider.sendMessage('Alice', 'Hi', function() {});
+    expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
+    jasmine.clock().tick(100);
+    expect(xmppSocialProvider.client.send.calls.count()).toEqual(2);
+    var dest = xmppSocialProvider.client.send.calls.first().args[0].parent.attrs.to;
+    if (dest !== 'Bob' && dest !== 'Alice') {
+      expect(dest).toEqual('Bob');
+    }
+  });
+
+  
   it('sets status to OFFLINE when client disconnected', function() {
     spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
     xmppSocialProvider.connect();
