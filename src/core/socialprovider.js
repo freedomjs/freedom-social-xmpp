@@ -45,7 +45,8 @@ var XMPPSocialProvider = function(dispatchEvent) {
   // rate limiting).
   this.sendMessagesTimeout = null;
   this.timeOfFirstMessageInBatch = 0;
-  // buffered outbound messages, arrays of messages keyed by recipient.
+  // buffered outbound messages. Arrays of of {message, callback} keyed by
+  // recipient.
   this.messages = {};
 
   // Logger
@@ -256,10 +257,12 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
       Object.keys(this.messages).forEach(function (to) {
         // If the destination client is ONLINE (i.e. using the same type of
         // client) send this message with type 'normal' so it only reaches
-        // that client, otherwise use type 'chat' to send to all clients.
-        // Sending all messages as type 'normal' means we can't communicate
-        // across different client types, but sending all as type 'chat'
-        // means messages will be broadcast to all clients.
+        // that client - and use JSON encoding, which this class on the other
+        // side will parse. otherwise use type 'chat' to send to all clients -
+        // in this later case, messages are sent directly, since the goal is to
+        // be human readable. Sending all messages as type 'normal' means we
+        // can't communicate across different client types, but sending all as
+        // type 'chat' means messages will be broadcast to all clients.
         var i = 0,
           messageType =
             (this.vCardStore.getClient(to).status === 'ONLINE') ?
@@ -269,6 +272,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
             type: messageType
           }).c('body'),
           body;
+
         if (messageType === 'normal') {
           body = [];
           for (i = 0; i < this.messages[to].length; i += 1) {
