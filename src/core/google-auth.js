@@ -40,8 +40,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
       var xhr = freedom["core.xhr"]();
-      xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json');
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', true);
       xhr.on("onload", function(continuation, token, xhr) {
         xhr.getResponseText().then(function(continuation, token, responseText) {
           var response = JSON.parse(responseText);
@@ -56,6 +55,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
           this.onCredentials(continuation, {cmd: 'auth', message: credentials});
         }.bind(this, continuation, token));
       }.bind(this, continuation, token, xhr));
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
       this.logger.error(err);

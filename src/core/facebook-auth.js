@@ -5,7 +5,7 @@ XMPPSocialProvider.prototype.oAuthRedirectUris = [
   "https://fmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org/",
   "https://www.uproxy.org/oauth-redirect-uri",
   "http://freedomjs.org/",
-  //'http://localhost/*',
+  'http://localhost:8080/'
 ];
 XMPPSocialProvider.prototype.oAuthClientId = '161927677344933';
 XMPPSocialProvider.prototype.oAuthScope = "email,xmpp_login,user_online_presence,friends_online_presence";
