@@ -45,7 +45,9 @@ var XMPPSocialProvider = function(dispatchEvent) {
   // rate limiting).
   this.sendMessagesTimeout = null;
   this.timeOfFirstMessageInBatch = 0;
-  this.messages = [];
+  // buffered outbound messages. Arrays of of {message, callback} keyed by
+  // recipient.
+  this.messages = {};
 
   // Logger
   this.logger = function() {};
@@ -69,7 +71,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
 XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   continuation(undefined, {
     errcode: 'UNKNOWN',
-    message: 'No login function defined',
+    message: 'No login function defined'
     //message: this.ERRCODE.LOGIN_OAUTHERROR
   });
 };
@@ -233,46 +235,77 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
     return;
   }
 
-  // If the destination client is ONLINE (i.e. using the same type of client)
-  // send this message with type 'normal' so it only reaches that client,
-  // otherwise use type 'chat' to send to all clients.
-  // Sending all messages as type 'normal' means we can't communicate across
-  // different client types, but sending all as type 'chat' means messages
-  // will be broadcast to all clients.
-  var messageType = (this.vCardStore.getClient(to).status === 'ONLINE') ?
-      'normal' : 'chat';
-  
-  try {
-    // After each message is received, reset the timeout to
-    // wait for at least 100ms to batch other messages received 
-    // in that window. However, if the oldest message in the batch 
-    // was received over 2s ago, don't reset the timeout, and 
-    // just allow the current timeout to execute.
-    this.messages.push(msg);
-    if (!this.sendMessagesTimeout) {
-      this.timeOfFirstMessageInBatch = Date.now();
-    }
-    if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) ||
-        !this.sendMessagesTimeout) {
-      clearTimeout(this.sendMessagesTimeout);
-      this.sendMessagesTimeout = setTimeout(function() {
-        this.client.send(new window.XMPP.Element('message', {
-          to: to,
-          type: messageType
-        }).c('body').t(JSON.stringify(this.messages)));
-        this.messages = [];
-        this.sendMessagesTimeout = null;
-      }.bind(this), 100);  
-    }
-  } catch(e) {
-    this.logger.error(e.stack);
-    continuation(undefined, {
-      errcode: 'UNKNOWN',
-      message: e.message
-    });
-    return;
+  // After each message is received, reset the timeout to
+  // wait for at least 100ms to batch other messages received 
+  // in that window. However, if the oldest message in the batch 
+  // was received over 2s ago, don't reset the timeout, and 
+  // just allow the current timeout to execute.
+  if (!this.messages[to]) {
+    this.messages[to] = [];
   }
-  continuation();
+  this.messages[to].push({
+    message: msg,
+    continuation: continuation
+  });
+  if (!this.sendMessagesTimeout) {
+    this.timeOfFirstMessageInBatch = Date.now();
+  }
+  if ((Date.now() - this.timeOfFirstMessageInBatch < 2000) ||
+      !this.sendMessagesTimeout) {
+    clearTimeout(this.sendMessagesTimeout);
+    this.sendMessagesTimeout = setTimeout(function () {
+      Object.keys(this.messages).forEach(function (to) {
+        // If the destination client is ONLINE (i.e. using the same type of
+        // client) send this message with type 'normal' so it only reaches
+        // that client - and use JSON encoding, which this class on the other
+        // side will parse. otherwise use type 'chat' to send to all clients -
+        // in this later case, messages are sent directly, since the goal is to
+        // be human readable. Sending all messages as type 'normal' means we
+        // can't communicate across different client types, but sending all as
+        // type 'chat' means messages will be broadcast to all clients.
+        var i = 0,
+          messageType =
+            (this.vCardStore.getClient(to).status === 'ONLINE') ?
+                'normal' : 'chat',
+          message = new window.XMPP.Element('message', {
+            to: to,
+            type: messageType
+          }).c('body'),
+          body;
+
+        if (messageType === 'normal') {
+          body = [];
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            body.push(this.messages[to][i].message);
+          }
+          message.t(JSON.stringify(body));
+        } else {
+          body = '';
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            body += this.messages[to][i].message + '\n';
+          }
+          message.t(body);
+        }
+
+        try {
+          this.client.send(message);
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            this.messages[to][i].continuation();
+          }
+        } catch(e) {
+          for (i = 0; i < this.messages[to].length; i += 1) {
+            this.messages[to][i].continuation(null, {
+              errcode: 'UNKNOWN',
+              message: 'Send Failed: ' + e.message
+            });
+          }
+        }
+      }.bind(this));
+
+      this.messages = {};
+      this.sendMessagesTimeout = null;
+    }.bind(this), 100);  
+  }
 };
 
 /**
