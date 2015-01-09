@@ -38,9 +38,9 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       return this.oauth.launchAuthFlow(url, stateObj);
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
-      var xhr = new XMLHttpRequest();
+      var xhr = freedom["core.xhr"]();
       xhr.open('GET', 'https://graph.facebook.com/me?access_token='+token);
-      xhr.onload = function(continuation, token, xhr) {
+      xhr.on("onload", function(continuation, token, xhr) {
         var response = JSON.parse(xhr.responseText);
         var credentials = {
           jid: '-'+response.id+'@chat.facebook.com',
@@ -50,7 +50,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
         };
         this.logger.log('Got facebook credentials: ' + JSON.stringify(credentials));
         this.onCredentials(continuation, {cmd: 'auth', message: credentials});
-      }.bind(this, continuation, token, xhr);
+      }.bind(this, continuation, token, xhr));
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
       this.logger.error(err);

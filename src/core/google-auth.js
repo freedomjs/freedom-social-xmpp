@@ -39,10 +39,10 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       return this.oauth.launchAuthFlow(url, stateObj);
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
-      var xhr = new XMLHttpRequest();
+      var xhr = freedom["core.xhr"]();
       xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json');
       xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-      xhr.onload = function(continuation, token, xhr) {
+      xhr.on("onload", function(continuation, token, xhr) {
         var response = JSON.parse(xhr.response);
         var credentials = {
           userId: response.email,
@@ -53,7 +53,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
         };
         this.logger.log('Got googletalk credentials: ' + JSON.stringify(credentials));
         this.onCredentials(continuation, {cmd: 'auth', message: credentials});
-      }.bind(this, continuation, token, xhr);
+      }.bind(this, continuation, token, xhr));
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
       this.logger.error(err);
