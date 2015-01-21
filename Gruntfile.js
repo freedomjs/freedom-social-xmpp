@@ -39,7 +39,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_xmpp: {
-        src: [ 
+        src: [
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
@@ -49,7 +49,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_google: {
-        src: [ 
+        src: [
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
@@ -59,7 +59,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_facebook: {
-        src: [ 
+        src: [
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
@@ -68,8 +68,8 @@ module.exports = function(grunt) {
         dest: 'build/demo_chrome_facebook/',
         flatten: true, filter: 'isFile', expand: true
       },
-      demo_firefox_google: { 
-        src: [ '**/*' ], 
+      demo_firefox_google: {
+        src: [ '**/*' ],
         dest: 'build/demo_firefox_google/',
         cwd: 'src/demo_firefox_google/',
         filter: 'isFile', expand: true,
@@ -85,7 +85,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_firefox_facebook: {
-        src: [ '**/*' ], 
+        src: [ '**/*' ],
         dest: 'build/demo_firefox_facebook/',
         cwd: 'src/demo_firefox_facebook/',
         filter: 'isFile', expand: true,
@@ -124,7 +124,7 @@ module.exports = function(grunt) {
       },
       social: {
         src: FILES.jasmine_helpers.concat(
-          ['dist/socialprovider.js', 'dist/vcardstore.js', 
+          ['dist/socialprovider.js', 'dist/vcardstore.js',
            'dist/node-xmpp-browser.js']),
         options: {
           specs: 'spec/socialprovider.spec.js',
@@ -134,6 +134,25 @@ module.exports = function(grunt) {
     },
     jasmine_node: {
       integration: ['spec/integration/']
+    },
+    integration: {
+      all: {
+        options: {
+          template: 'node_modules/freedom-for-chrome/spec/helper/',
+          spec: ['spec/integration/gtalk.spec.js'],
+          helper: [
+            // "include: true" is needed for dependencies that are used by
+            // the jasmine tests in the core environment.
+            {path: 'dist/social.google.json', include: false},
+            {path: 'dist/node-xmpp-browser.js', include: true},
+            {path: 'dist/vcardstore.js', include: true},
+            {path: 'dist/socialprovider.js', include: true},
+            {path: 'dist/google-auth.js', include: true},
+            {path: 'node_modules/freedom-for-chrome/freedom-for-chrome.*', include: true}
+          ],
+          keepBrowser: true
+        }
+      }
     },
     bump: {
       options: {
@@ -164,7 +183,7 @@ module.exports = function(grunt) {
     ]}}},
   });
 
-  // Load tasks. 
+  // Load tasks.
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
@@ -173,6 +192,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-prompt');
   grunt.loadNpmTasks('grunt-bump');
   grunt.loadNpmTasks('grunt-npm');
+  grunt.loadTasks('node_modules/freedom-for-chrome/tasks');
 
   // Compile into build/
   grunt.registerTask('build', [
@@ -192,7 +212,7 @@ module.exports = function(grunt) {
     'copy:demo_firefox_facebook',
     'copy:demo_firefox_facebook_data',
   ]);
-  
+
   // Testing meta-task
   grunt.registerTask('test', [
     'build',

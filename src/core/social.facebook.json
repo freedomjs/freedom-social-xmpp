@@ -9,6 +9,7 @@
       "facebook-auth.js"
    	]
   },
+  "default": "social",
   "provides": [
     "social"
   ],

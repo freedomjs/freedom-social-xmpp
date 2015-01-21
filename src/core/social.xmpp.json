@@ -2,13 +2,14 @@
   "name": "XMPP Social Provider",
   "description": "Social provider using XMPP chat protocols",
   "app": {
-    "script": [ 
-      "socialprovider.js", 
-      "vcardstore.js", 
+    "script": [
+      "socialprovider.js",
+      "vcardstore.js",
       "node-xmpp-browser.js",
       "xmpp-auth.js"
     ]
   },
+  "default": "social",
   "provides": [
     "social"
   ],
