@@ -1,22 +1,9 @@
-/*
-* GTalk integration tests use 2 test accounts, which should only be used in
-* these tests.  Possible flakiness in these tests may occur:
-* - If multiple users run the tests at the same time, they may send messages
-*   to each other, rather than between the 2 social clients running in the
-*   same test
-* - If tests are run too frequently, GTalk may throttle messages sooner
-*   (return 503 "service unavailable")
-* To prevent flakiness, these tests should only be run by 1 person at a time,
-* with some time (rough estimate 10 minutes) between each attempt.
- */
-
 var ALICE_EMAIL = 'alicefreedomxmpp@gmail.com';
 var BOB_EMAIL = 'bobfreedomxmpp@gmail.com';
 
-// GTalk gives alicefreedomxpp an anoymized id for bobfreedomxmpp
-// and vice-versa.
-var ALICE_ANONYMIZED_ID = '3bbk93gplwqcn3abf19ivuh6s5@public.talk.google.com';
-var BOB_ANONYMIZED_ID = '2s1np2b5ca5gg3tnbwbto4vscs@public.talk.google.com';
+// User names (case sensitive), used to match anonymized IDs to users.
+var ALICE_NAME = 'Alice Freedom';
+var BOB_NAME = 'Bob Freedom';
 
 /*
  * GTalk integration tests skip the interactive Google login step and instead
@@ -32,7 +19,7 @@ var BOB_ANONYMIZED_ID = '2s1np2b5ca5gg3tnbwbto4vscs@public.talk.google.com';
  * curl --data "code=$CODE&client_id=746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com&client_secret=h_hfPI4jvs9fgOgPweSBKnMu&redirect_uri=https%3A%2F%2Ffmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org%2F&grant_type=authorization_code" https://www.googleapis.com/oauth2/v3/token
  * 4. The refresh_token return from that POST request can be used to get new
  * access_tokens
-*/
+ */
 var REFRESH_TOKENS = {};
 REFRESH_TOKENS[ALICE_EMAIL] =
     '1/1BQUvs6QycWFn3CnL-JnmTP6OLl_eDBaIRVf4Kgky4AMEudVrK5jSpoR30zcRFq6';

@@ -1,3 +1,22 @@
+/*
+ * GTalk integration tests use 2 test accounts.  Credentials for these accounts
+ * are defined in gtalk_credentials.js.  To avoid flakiness, you should replace
+ * the account credentials in gtalk_credentials.js with credentials from
+ * accounts that only you are using.  See gtalk_credentials.js for more info.
+ *
+ * Possible flakiness in these tests may occur when using the default (shared)
+ * accounts if:
+ * - If multiple users run the tests at the same time, they may send messages
+ *   to each other, rather than between the 2 social clients running in the
+ *   same test
+ * - If tests are run too frequently, GTalk may throttle messages sooner
+ *   (return 503 "service unavailable")
+ * To prevent flakiness, these tests should only be run by 1 person at a time
+ * (per pair of tests accounts) with some time (rough estimate 10 minutes)
+ * between each attempt.
+ */
+
+
 var REDIRECT_URL = 'https://www.uproxy.org/oauth-redirect-uri';
 var CLIENT_ID =
     '746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com';
@@ -71,7 +90,8 @@ var Helper = {
       promises.push(socialClientsArray[i].logout());
     }
     Promise.all(promises).then(done);
-  }
+  },
+  mapNameToAnonymizedId: {}
 };  // end of Helper
 
 describe('GTalk', function() {
@@ -117,23 +137,52 @@ describe('GTalk', function() {
     });
   });
 
-  it('Can send messages', function(done) {
-    // 1st login as Alice.
+  // This test writes to Helper.mapNameToAnonymizedId.
+  it('Peers can detect each other', function(done) {
+    var aliceSawBob;
+    new Promise(function(fulfill, reject) { aliceSawBob = fulfill; });
     var aliceSocialClient = aliceSocialInterface();
+    aliceSocialClient.on('onUserProfile', function(userProfile) {
+      if (userProfile.name == BOB_NAME) {
+        Helper.mapNameToAnonymizedId[BOB_NAME] = userProfile.userId;
+        aliceSawBob();
+      }
+    });
+    Helper.loginAs(aliceSocialClient, ALICE_EMAIL);
+
+    var bobSawAlice;
+    new Promise(function(fulfill, reject) { bobSawAlice = fulfill; });
+    var bobSocialClient = bobSocialInterface();
+    aliceSocialClient.on('onUserProfile', function(userProfile) {
+      if (userProfile.name == ALICE_NAME) {
+        Helper.mapNameToAnonymizedId[ALICE_NAME] = userProfile.userId;
+        bobSawAlice();
+      }
+    });
+    Helper.loginAs(bobSocialClient, BOB_EMAIL);
+
+    Promise.all([aliceSawBob, bobSawAlice]).then(done);
+  });
+
+  it('Can send messages', function(done) {
+    var aliceSocialClient = aliceSocialInterface();
+
+    // Setup a listener to send Bob messages when he is online
+    Helper.onClientOnline(
+        aliceSocialClient, Helper.mapNameToAnonymizedId[BOB_NAME],
+        function(clientState) {
+      aliceSocialClient.sendMessage(clientState.clientId, uniqueMsg);
+    });
+
+    // Login as Alice.
     Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
         .then(function(aliceClientInfo) {
-      // Next setup a listener to send Bob messages when he is online
-      Helper.onClientOnline(
-          aliceSocialClient, BOB_ANONYMIZED_ID, function(clientState) {
-        aliceSocialClient.sendMessage(clientState.clientId, uniqueMsg);
-      });
-
-      // Next login as Bob and monitor for messages.
+      // Next login as Bob.
       var bobSocialClient = bobSocialInterface();
       Helper.loginAs(bobSocialClient, BOB_EMAIL).then(function(bobClientInfo) {
         bobSocialClient.on('onMessage', function(messageData) {
-          if (messageData.from.userId == ALICE_ANONYMIZED_ID &&
-              messageData.message == uniqueMsg) {
+          if (messageData.userId == Helper.mapNameToAnonymizedId[ALICE_NAME] &&
+              messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
             Helper.logoutThenDone([aliceSocialClient, bobSocialClient], done);
           }
         });  // end of bobSocialClient.on('onMessage', ...
@@ -149,34 +198,34 @@ describe('GTalk', function() {
     // We should wait 10ms longer than the message batching frequency (100ms)
     // to ensure that every message is sent individually.
     var MESSAGE_FREQUENCY = 110;
-
-    // 1st login as Alice.
     var aliceSocialClient = aliceSocialInterface();
+
+    // Setup a listener to send Bob messages when he is online
+    Helper.onClientOnline(
+        aliceSocialClient, Helper.mapNameToAnonymizedId[BOB_NAME],
+        function(clientState) {
+      var sentMessageCount = 0;
+      for (var i = 1; i <= TOTAL_MESSAGES; ++i) {
+        setTimeout(function() {
+          aliceSocialClient.sendMessage(
+              clientState.clientId, uniqueMsg + ':' + sentMessageCount);
+          ++sentMessageCount;
+        }, MESSAGE_FREQUENCY * i);
+      }
+    });
+
+    // Login as Alice.
     Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
         .then(function(aliceClientInfo) {
-      // Next setup a listener to send Bob messages when he is online
-      Helper.onClientOnline(
-          aliceSocialClient, BOB_ANONYMIZED_ID, function(clientState) {
-        var sentMessageCount = 0;
-        for (var i = 1; i <= TOTAL_MESSAGES; ++i) {
-          setTimeout(function() {
-            aliceSocialClient.sendMessage(
-                clientState.clientId, uniqueMsg + ':' + sentMessageCount);
-            ++sentMessageCount;
-          }, MESSAGE_FREQUENCY * i);
-        }
-      });
-
       // Next login as Bob and monitor for messages.
       var bobSocialClient = bobSocialInterface();
       Helper.loginAs(bobSocialClient, BOB_EMAIL).then(function(bobClientInfo) {
         var receivedMessageCount = 0;
         bobSocialClient.on('onMessage', function(messageData) {
-          if (messageData.from.userId == ALICE_ANONYMIZED_ID &&
+          if (messageData.userId == Helper.mapNameToAnonymizedId[ALICE_NAME] &&
               messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
             // Keep this trace so we know how many messages are received
             // in case of failure.
-            console.log('received message: ' + messageData.message);
             expect(messageData.message).toEqual(
                 uniqueMsg + ':' + receivedMessageCount);
             ++receivedMessageCount;
