@@ -139,7 +139,7 @@ module.exports = function(grunt) {
       all: {
         options: {
           template: 'node_modules/freedom-for-chrome/spec/helper/',
-          spec: ['spec/integration/gtalk.spec.js'],
+          spec: ['spec/chrome_integration/gtalk.spec.js'],
           helper: [
             // "include: true" is needed for dependencies that are used by
             // the jasmine tests in the core environment.
