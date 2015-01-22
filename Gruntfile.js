@@ -144,6 +144,7 @@ module.exports = function(grunt) {
             // "include: true" is needed for dependencies that are used by
             // the jasmine tests in the core environment.
             {path: 'dist/social.google.json', include: false},
+            {path: 'spec/chrome_integration/gtalk_credentials.js', include: true},
             {path: 'dist/node-xmpp-browser.js', include: true},
             {path: 'dist/vcardstore.js', include: true},
             {path: 'dist/socialprovider.js', include: true},
