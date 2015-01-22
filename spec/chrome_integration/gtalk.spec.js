@@ -176,7 +176,7 @@ describe('GTalk', function() {
               messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
             // Keep this trace so we know how many messages are received
             // in case of failure.
-            console.log('received message');
+            console.log('received message: ' + messageData.message);
             expect(messageData.message).toEqual(
                 uniqueMsg + ':' + receivedMessageCount);
             ++receivedMessageCount;
