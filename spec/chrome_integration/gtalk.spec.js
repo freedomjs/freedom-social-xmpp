@@ -32,7 +32,9 @@ var Helper = {
       var xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://www.googleapis.com/oauth2/v3/token', true);
       xhr.setRequestHeader('content-type', 'application/x-www-form-urlencoded');
-      xhr.onload = function() { fulfill(JSON.parse(this.response)); };
+      xhr.onload = function() {
+        fulfill(JSON.parse(this.response).access_token);
+      };
       xhr.send(data);
     });
   },
@@ -40,7 +42,9 @@ var Helper = {
   // using the loginEmail address.  loginEmail must have an associated
   // refresh token.
   loginAs: function(socialClient, loginEmail) {
+    console.log('loginAs: ' + loginEmail);
     var refreshToken = REFRESH_TOKENS[loginEmail.toLowerCase()];
+    console.log('refreshToken: ' + refreshToken);
     if (!refreshToken) {
       return Promise.reject('No refresh token found for ' + loginEmail);
     } else if (pendingAccessToken) {
@@ -50,6 +54,7 @@ var Helper = {
     return Helper.getAccessToken(refreshToken).then(function(accessToken) {
       // Set the accessToken to pendingAccessToken so that it can be used by
       // our OAuthView.
+      console.log('got accessToken: ' + accessToken);
       pendingAccessToken = accessToken;
       return socialClient.login({
           agent: 'integration',
@@ -112,7 +117,7 @@ describe('GTalk', function() {
       expect(clientInfo.userId).toEqual(ALICE_EMAIL);
       expect(clientInfo.clientId).toEqual(ALICE_EMAIL + '/integration');
       expect(clientInfo.status).toEqual('ONLINE');
-      logoutThenDone([socialClient], done);
+      Helper.logoutThenDone([socialClient], done);
     });
   });
 
@@ -133,7 +138,7 @@ describe('GTalk', function() {
         bobSocialClient.on('onMessage', function(messageData) {
           if (messageData.from.userId == ALICE_ANONYMIZED_ID &&
               messageData.message == uniqueMsg) {
-            logoutThenDone([aliceSocialClient, bobSocialClient], done);
+            Helper.logoutThenDone([aliceSocialClient, bobSocialClient], done);
           }
         });  // end of bobSocialClient.on('onMessage', ...
       });  // end of Helper.loginAs(bob...)
@@ -169,13 +174,13 @@ describe('GTalk', function() {
         var receivedMessageCount = 0;
         bobSocialClient.on('onMessage', function(messageData) {
           if (messageData.from.userId == ALICE_ANONYMIZED_ID &&
-              messageData.message == uniqueMsg) {
+              messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
             // Keep this trace so we know how many messages are received
             // in case of failure.
             console.log('received message');
             ++receivedMessageCount;
             if (receivedMessageCount == TOTAL_MESSAGES) {
-              logoutThenDone([aliceSocialClient, bobSocialClient], done);
+              Helper.logoutThenDone([aliceSocialClient, bobSocialClient], done);
             }
           }
         });  // end of bobSocialClient.on('onMessage', ...
