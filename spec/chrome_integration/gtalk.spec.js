@@ -65,16 +65,19 @@ var Helper = {
         });
     });
   },
-  // Sets up an onClientState listener and fulfills the returned Promise
-  // when the given userId appears as ONLINE.
-  waitForUser: function(socialClient, userId) {
-    return new Promise(function(fulfill, reject) {
-      socialClient.on('onClientState', function(clientState) {
-        if (clientState.userId == userId &&
-            clientState.status == 'ONLINE') {
-          fulfill(clientState);
-        }
-      });
+  // Sets up an onClientState listener and invokes the callback function
+  // anytime a new client for the given userId appears as ONLINE.
+  onClientOnline: function(socialClient, userId, callback) {
+    var onlineClientIds = {};
+    socialClient.on('onClientState', function(clientState) {
+      if (clientState.userId == userId &&
+          clientState.status == 'ONLINE' &&
+          !onlineClientIds[clientState.clientId]) {
+        // Mark this client as online so we don't re-invoke the callback
+        // extra times (e.g. when only lastUpdated has changed.)
+        onlineClientIds[clientState.clientId] = true;
+        callback(clientState);
+      }
     });
   },
   // Calls logout on each social client in the array, then calls done
@@ -127,8 +130,8 @@ describe('GTalk', function() {
     Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
         .then(function(aliceClientInfo) {
       // Next setup a listener to send Bob messages when he is online
-      Helper.waitForUser(aliceSocialClient, BOB_ANONYMIZED_ID)
-          .then(function(clientState) {
+      Helper.onClientOnline(
+          aliceSocialClient, BOB_ANONYMIZED_ID, function(clientState) {
         aliceSocialClient.sendMessage(clientState.clientId, uniqueMsg);
       });
 
@@ -159,11 +162,14 @@ describe('GTalk', function() {
     Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
         .then(function(aliceClientInfo) {
       // Next setup a listener to send Bob messages when he is online
-      Helper.waitForUser(aliceSocialClient, BOB_ANONYMIZED_ID)
-          .then(function(clientState) {
+      Helper.onClientOnline(
+          aliceSocialClient, BOB_ANONYMIZED_ID, function(clientState) {
+        var sentMessageCount = 0;
         for (var i = 1; i <= TOTAL_MESSAGES; ++i) {
           setTimeout(function() {
-            aliceSocialClient.sendMessage(clientState.clientId, uniqueMsg);
+            aliceSocialClient.sendMessage(
+                clientState.clientId, uniqueMsg + ':' + sentMessageCount);
+            ++sentMessageCount;
           }, MESSAGE_FREQUENCY * i);
         }
       });
@@ -178,6 +184,8 @@ describe('GTalk', function() {
             // Keep this trace so we know how many messages are received
             // in case of failure.
             console.log('received message');
+            expect(messageData.message).toEqual(
+                uniqueMsg + ':' + receivedMessageCount);
             ++receivedMessageCount;
             if (receivedMessageCount == TOTAL_MESSAGES) {
               Helper.logoutThenDone([aliceSocialClient, bobSocialClient], done);
