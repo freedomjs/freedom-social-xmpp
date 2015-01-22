@@ -2,23 +2,21 @@ var REDIRECT_URL = 'https://www.uproxy.org/oauth-redirect-uri';
 var CLIENT_ID =
     '746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com';
 
-// Next access token to be returned by OAuthView.launchAuthFlow
-var pendingAccessToken = null;
-
-// Replace default OAuthView with a view that sets the access_token to
-// pendingAccessToken
 var OAuthView = function() {};
 OAuthView.prototype.initiateOAuth = function(redirectURIs, continuation) {
   continuation({redirect: REDIRECT_URL, state: ''});
   return true;
 };
 OAuthView.prototype.launchAuthFlow = function(authUrl, stateObj, continuation) {
-  if (!pendingAccessToken) {
-    continuation(undefined, 'No access token found');
-  } else {
-    continuation(REDIRECT_URL + '?access_token=' + pendingAccessToken);
-    pendingAccessToken = null;
+  if (!this.refreshToken) {
+    continuation(undefined, 'No refreshToken set.');
+    return;
   }
+  return Helper.getAccessToken(this.refreshToken).then(function(accessToken) {
+    continuation(REDIRECT_URL + '?access_token=' + accessToken);
+  }).catch(function(e) {
+    continuation(undefined, 'Failed to get access token');
+  });
 };
 
 var Helper = {
@@ -42,28 +40,13 @@ var Helper = {
   // using the loginEmail address.  loginEmail must have an associated
   // refresh token.
   loginAs: function(socialClient, loginEmail) {
-    console.log('loginAs: ' + loginEmail);
-    var refreshToken = REFRESH_TOKENS[loginEmail.toLowerCase()];
-    console.log('refreshToken: ' + refreshToken);
-    if (!refreshToken) {
-      return Promise.reject('No refresh token found for ' + loginEmail);
-    } else if (pendingAccessToken) {
-      return Promise.reject('Helper.loginAs cannot be called concurrently.' +
-          '  Please wait until previous login completes');
-    }
-    return Helper.getAccessToken(refreshToken).then(function(accessToken) {
-      // Set the accessToken to pendingAccessToken so that it can be used by
-      // our OAuthView.
-      console.log('got accessToken: ' + accessToken);
-      pendingAccessToken = accessToken;
-      return socialClient.login({
-          agent: 'integration',
-          version: '0.1',
-          url: '',
-          interactive: false,
-          rememberLogin: false
-        });
-    });
+    return socialClient.login({
+        agent: 'integration',
+        version: '0.1',
+        url: '',
+        interactive: false,
+        rememberLogin: false
+      });
   },
   // Sets up an onClientState listener and invokes the callback function
   // anytime a new client for the given userId appears as ONLINE.
@@ -92,7 +75,8 @@ var Helper = {
 };  // end of Helper
 
 describe('GTalk', function() {
-  var socialInterface;
+  var aliceSocialInterface;
+  var bobSocialInterface;
 
   // Message to be sent between peers.  If a unique message is not used,
   // messages from one persons test might interfere with another person who
@@ -100,22 +84,31 @@ describe('GTalk', function() {
   var uniqueMsg = Math.random().toString();
 
   beforeEach(function(done) {
-    if (!socialInterface) {
-      freedom('scripts/dist/social.google.json',
-          {oauth: [OAuthView], debug: 'log'})
+    if (!aliceSocialInterface || !bobSocialInterface) {
+      AliceOAuthView = function() {};
+      AliceOAuthView.prototype = new OAuthView();
+      AliceOAuthView.prototype.refreshToken = REFRESH_TOKENS[ALICE_EMAIL];
+      BobOAuthView = function() {};
+      BobOAuthView.prototype = new OAuthView();
+      BobOAuthView.prototype.refreshToken = REFRESH_TOKENS[BOB_EMAIL];
+      var alicePromise = freedom('scripts/dist/social.google.json',
+          {oauth: [AliceOAuthView], debug: 'log'})
           .then(function(interface) {
-        // Store socialInterface so we don't have to reload freedom
-        // before each test.
-        socialInterface = interface;
-        done();
+        aliceSocialInterface = interface;
       }.bind(this));
+      var bobPromise = freedom('scripts/dist/social.google.json',
+          {oauth: [BobOAuthView], debug: 'log'})
+          .then(function(interface) {
+        bobSocialInterface = interface;
+      }.bind(this));
+      Promise.all([alicePromise, bobPromise]).then(done);
     } else {
       done();
     }
   }.bind(this));
 
   it('Can login and logout', function(done) {
-    var socialClient = socialInterface();
+    var socialClient = aliceSocialInterface();
     Helper.loginAs(socialClient, ALICE_EMAIL).then(function(clientInfo) {
       expect(clientInfo.userId).toEqual(ALICE_EMAIL);
       expect(clientInfo.clientId).toEqual(ALICE_EMAIL + '/integration');
@@ -126,7 +119,7 @@ describe('GTalk', function() {
 
   it('Can send messages', function(done) {
     // 1st login as Alice.
-    var aliceSocialClient = socialInterface();
+    var aliceSocialClient = aliceSocialInterface();
     Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
         .then(function(aliceClientInfo) {
       // Next setup a listener to send Bob messages when he is online
@@ -136,7 +129,7 @@ describe('GTalk', function() {
       });
 
       // Next login as Bob and monitor for messages.
-      var bobSocialClient = socialInterface();
+      var bobSocialClient = bobSocialInterface();
       Helper.loginAs(bobSocialClient, BOB_EMAIL).then(function(bobClientInfo) {
         bobSocialClient.on('onMessage', function(messageData) {
           if (messageData.from.userId == ALICE_ANONYMIZED_ID &&
@@ -158,7 +151,7 @@ describe('GTalk', function() {
     var MESSAGE_FREQUENCY = 110;
 
     // 1st login as Alice.
-    var aliceSocialClient = socialInterface();
+    var aliceSocialClient = aliceSocialInterface();
     Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
         .then(function(aliceClientInfo) {
       // Next setup a listener to send Bob messages when he is online
@@ -175,7 +168,7 @@ describe('GTalk', function() {
       });
 
       // Next login as Bob and monitor for messages.
-      var bobSocialClient = socialInterface();
+      var bobSocialClient = bobSocialInterface();
       Helper.loginAs(bobSocialClient, BOB_EMAIL).then(function(bobClientInfo) {
         var receivedMessageCount = 0;
         bobSocialClient.on('onMessage', function(messageData) {
