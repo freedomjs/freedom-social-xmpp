@@ -1,3 +1,4 @@
+// Test accounts should already be established as contacts on GTalk.
 var ALICE_EMAIL = 'alicefreedomxmpp@gmail.com';
 var BOB_EMAIL = 'bobfreedomxmpp@gmail.com';
 

@@ -139,27 +139,27 @@ describe('GTalk', function() {
 
   // This test writes to Helper.mapNameToAnonymizedId.
   it('Peers can detect each other', function(done) {
-    var aliceSawBob;
-    new Promise(function(fulfill, reject) { aliceSawBob = fulfill; });
-    var aliceSocialClient = aliceSocialInterface();
-    aliceSocialClient.on('onUserProfile', function(userProfile) {
-      if (userProfile.name == BOB_NAME) {
-        Helper.mapNameToAnonymizedId[BOB_NAME] = userProfile.userId;
-        aliceSawBob();
-      }
+    var aliceSawBob = new Promise(function(fulfill, reject) {
+      var aliceSocialClient = aliceSocialInterface();
+      aliceSocialClient.on('onUserProfile', function(userProfile) {
+        if (userProfile.name == BOB_NAME) {
+          Helper.mapNameToAnonymizedId[BOB_NAME] = userProfile.userId;
+          fulfill();
+        }
+      });
+      Helper.loginAs(aliceSocialClient, ALICE_EMAIL);
     });
-    Helper.loginAs(aliceSocialClient, ALICE_EMAIL);
 
-    var bobSawAlice;
-    new Promise(function(fulfill, reject) { bobSawAlice = fulfill; });
-    var bobSocialClient = bobSocialInterface();
-    aliceSocialClient.on('onUserProfile', function(userProfile) {
-      if (userProfile.name == ALICE_NAME) {
-        Helper.mapNameToAnonymizedId[ALICE_NAME] = userProfile.userId;
-        bobSawAlice();
-      }
+    var bobSawAlice = new Promise(function(fulfill, reject) {
+      var bobSocialClient = bobSocialInterface();
+      bobSocialClient.on('onUserProfile', function(userProfile) {
+        if (userProfile.name == ALICE_NAME) {
+          Helper.mapNameToAnonymizedId[ALICE_NAME] = userProfile.userId;
+          fulfill();
+        }
+      });
+      Helper.loginAs(bobSocialClient, BOB_EMAIL);
     });
-    Helper.loginAs(bobSocialClient, BOB_EMAIL);
 
     Promise.all([aliceSawBob, bobSawAlice]).then(done);
   });
