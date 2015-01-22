@@ -346,7 +346,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
   // Is it something we don't understand?
   } else {
     this.logger.warn('Dropped unknown XMPP message');
-    this.logger.warn(msg);
+    this.logger.warn(msg.toString());
   }
 };
 
