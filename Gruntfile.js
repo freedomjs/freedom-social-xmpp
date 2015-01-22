@@ -150,7 +150,7 @@ module.exports = function(grunt) {
             {path: 'dist/google-auth.js', include: true},
             {path: 'node_modules/freedom-for-chrome/freedom-for-chrome.*', include: true}
           ],
-          keepBrowser: true
+          keepBrowser: false
         }
       }
     },
