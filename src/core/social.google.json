@@ -9,6 +9,7 @@
       "google-auth.js"
    	]
   },
+  "default": "social",
   "provides": [
     "social"
   ],

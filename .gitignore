@@ -1,9 +1,8 @@
 node_modules/
 /freedom.js
-
+.build/
 build/
 dist/
-
 /npm-debug.log
 .grunt/
 .*.swp
