@@ -16,7 +16,7 @@
     "url": "https://github.com/freedomjs/freedom-social-xmpp"
   },
   "scripts": {
-    "test": "grunt test --verbose",
+    "test": "grunt ci --verbose",
     "prepublish": "grunt test"
   },
   "devDependencies": {
