@@ -128,7 +128,7 @@ module.exports = function(grunt) {
            'dist/node-xmpp-browser.js']),
         options: {
           specs: 'spec/socialprovider.spec.js',
-          keepRunner: false
+          keepRunner: true
         }
       }
     },

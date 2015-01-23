@@ -17,9 +17,10 @@
  */
 
 
-var REDIRECT_URL = 'https://www.uproxy.org/oauth-redirect-uri';
+var REDIRECT_URL = 'http://localhost';
 var CLIENT_ID =
-    '746567772449-jkm5q5hjqtpq5m9htg9kn0os8qphra4d.apps.googleusercontent.com';
+    '746567772449-mv4h0e34orsf6t6kkbbht22t9otijip0.apps.googleusercontent.com';
+var CLIENT_SECRET = 'M-EGTuFRaWLS5q_hygpJZMBu';
 
 var OAuthView = function() {};
 OAuthView.prototype.initiateOAuth = function(redirectURIs, continuation) {
@@ -44,7 +45,7 @@ var Helper = {
     return new Promise(function(fulfill, resolve) {
       var data = 'refresh_token=' + refreshToken +
           '&client_id=' + CLIENT_ID +
-          '&client_secret=h_hfPI4jvs9fgOgPweSBKnMu' +
+          '&client_secret=' + CLIENT_SECRET +
           '&grant_type=refresh_token';
       var xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://www.googleapis.com/oauth2/v3/token', true);
