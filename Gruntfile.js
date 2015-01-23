@@ -135,20 +135,16 @@ module.exports = function(grunt) {
     jasmine_node: {
       integration: ['spec/integration/']
     },
-    integration: {
+    jasmine_chromeapp: {
       all: {
+        src: [
+          'node_modules/freedom-for-chrome/freedom-for-chrome.*',
+          'spec/chrome_integration/gtalk_credentials.js',
+          'spec/chrome_integration/gtalk.spec.js'
+        ],
         options: {
-          template: 'node_modules/freedom-for-chrome/spec/helper/',
-          spec: ['spec/chrome_integration/gtalk.spec.js'],
-          helper: [
-            // "include: true" is needed for dependencies that are used by
-            // the jasmine tests in the core environment.
-            {path: 'spec/chrome_integration/gtalk_credentials.js', include: true},
-            {path: 'node_modules/freedom-for-chrome/freedom-for-chrome.*', include: true},
-            {path: 'dist/*.js', include: false},
-            {path: 'dist/*.json', include: false}
-          ],
-          keepBrowser: false
+          helpers: ['dist/*.js', 'dist/*.json'],
+          keepRunner: false
         }
       }
     },
@@ -186,11 +182,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-jasmine-node');
+  grunt.loadNpmTasks('grunt-jasmine-chromeapp');
+  grunt.loadNpmTasks('grunt-jasmine-node2');
   grunt.loadNpmTasks('grunt-prompt');
   grunt.loadNpmTasks('grunt-bump');
   grunt.loadNpmTasks('grunt-npm');
-  grunt.loadTasks('node_modules/freedom-for-chrome/tasks');
 
   // Compile into build/
   grunt.registerTask('build', [
