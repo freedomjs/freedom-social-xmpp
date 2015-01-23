@@ -55,18 +55,6 @@ var Helper = {
       xhr.send(data);
     });
   },
-  // Returns a promise that fulfills when socialClient has been logged in
-  // using the loginEmail address.  loginEmail must have an associated
-  // refresh token.
-  loginAs: function(socialClient, loginEmail) {
-    return socialClient.login({
-        agent: 'integration',
-        version: '0.1',
-        url: '',
-        interactive: false,
-        rememberLogin: false
-      });
-  },
   // Sets up an onClientState listener and invokes the callback function
   // anytime a new client for the given userId appears as ONLINE.
   onClientOnline: function(socialClient, userId, callback) {
@@ -82,21 +70,28 @@ var Helper = {
       }
     });
   },
-  // Calls logout on each social client in the array, then calls done
-  // after all logouts have completed.
-  logoutThenDone: function(socialClientsArray, done) {
+  // Returns a Promise that fulfills when each social client in the array has
+  // been logged out.
+  logoutAll: function(socialClientsArray) {
     var promises = [];
     for (var i = 0; i < socialClientsArray.length; ++i) {
       promises.push(socialClientsArray[i].logout());
     }
-    Promise.all(promises).then(done);
-  },
-  mapNameToAnonymizedId: {}
+    return Promise.all(promises);
+  }
 };  // end of Helper
 
 describe('GTalk', function() {
   var aliceSocialInterface;
   var bobSocialInterface;
+
+  var loginOpts = {
+    agent: 'integration',
+    version: '0.1',
+    url: '',
+    interactive: false,
+    rememberLogin: false
+  };
 
   // Message to be sent between peers.  If a unique message is not used,
   // messages from one persons test might interfere with another person who
@@ -104,13 +99,14 @@ describe('GTalk', function() {
   var uniqueMsg = Math.random().toString();
 
   beforeEach(function(done) {
+    // Ensure that aliceSocialInterface and bobSocialInterface are set.
     if (!aliceSocialInterface || !bobSocialInterface) {
       AliceOAuthView = function() {};
       AliceOAuthView.prototype = new OAuthView();
-      AliceOAuthView.prototype.refreshToken = REFRESH_TOKENS[ALICE_EMAIL];
+      AliceOAuthView.prototype.refreshToken = ALICE.REFRESH_TOKEN;
       BobOAuthView = function() {};
       BobOAuthView.prototype = new OAuthView();
-      BobOAuthView.prototype.refreshToken = REFRESH_TOKENS[BOB_EMAIL];
+      BobOAuthView.prototype.refreshToken = BOB.REFRESH_TOKEN;
       var alicePromise = freedom('scripts/dist/social.google.json',
           {oauth: [AliceOAuthView], debug: 'log'})
           .then(function(interface) {
@@ -129,39 +125,39 @@ describe('GTalk', function() {
 
   it('Can login and logout', function(done) {
     var socialClient = aliceSocialInterface();
-    Helper.loginAs(socialClient, ALICE_EMAIL).then(function(clientInfo) {
-      expect(clientInfo.userId).toEqual(ALICE_EMAIL);
-      expect(clientInfo.clientId).toEqual(ALICE_EMAIL + '/integration');
+    socialClient.login(loginOpts).then(function(clientInfo) {
+      expect(clientInfo.userId).toEqual(ALICE.EMAIL);
+      expect(clientInfo.clientId).toEqual(ALICE.EMAIL + '/integration');
       expect(clientInfo.status).toEqual('ONLINE');
-      Helper.logoutThenDone([socialClient], done);
+      Helper.logoutAll([socialClient]).then(done);
     });
   });
 
-  // This test writes to Helper.mapNameToAnonymizedId.
+  // This test writes to ALICE.ANONYMIZED_ID and BOB.ANONYMIZED_ID.
   it('Peers can detect each other', function(done) {
+    var aliceSocialClient = aliceSocialInterface();
+    var bobSocialClient = bobSocialInterface();
     var aliceSawBob = new Promise(function(fulfill, reject) {
-      var aliceSocialClient = aliceSocialInterface();
       aliceSocialClient.on('onUserProfile', function(userProfile) {
-        if (userProfile.name == BOB_NAME) {
-          Helper.mapNameToAnonymizedId[BOB_NAME] = userProfile.userId;
+        if (userProfile.name == BOB.NAME) {
+          BOB.ANONYMIZED_ID = userProfile.userId;
           fulfill();
         }
       });
-      Helper.loginAs(aliceSocialClient, ALICE_EMAIL);
+      aliceSocialClient.login(loginOpts);
     });
-
     var bobSawAlice = new Promise(function(fulfill, reject) {
-      var bobSocialClient = bobSocialInterface();
       bobSocialClient.on('onUserProfile', function(userProfile) {
-        if (userProfile.name == ALICE_NAME) {
-          Helper.mapNameToAnonymizedId[ALICE_NAME] = userProfile.userId;
+        if (userProfile.name == ALICE.NAME) {
+          ALICE.ANONYMIZED_ID = userProfile.userId;
           fulfill();
         }
       });
-      Helper.loginAs(bobSocialClient, BOB_EMAIL);
+      bobSocialClient.login(loginOpts);
     });
-
-    Promise.all([aliceSawBob, bobSawAlice]).then(done);
+    Promise.all([aliceSawBob, bobSawAlice]).then(function() {
+      Helper.logoutAll([aliceSocialClient, bobSocialClient]).then(done);
+    });
   });
 
   it('Can send messages', function(done) {
@@ -169,25 +165,23 @@ describe('GTalk', function() {
 
     // Setup a listener to send Bob messages when he is online
     Helper.onClientOnline(
-        aliceSocialClient, Helper.mapNameToAnonymizedId[BOB_NAME],
+        aliceSocialClient, BOB.ANONYMIZED_ID,
         function(clientState) {
       aliceSocialClient.sendMessage(clientState.clientId, uniqueMsg);
     });
 
     // Login as Alice.
-    Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
-        .then(function(aliceClientInfo) {
+    aliceSocialClient.login(loginOpts).then(function(aliceClientInfo) {
       // Next login as Bob.
       var bobSocialClient = bobSocialInterface();
-      Helper.loginAs(bobSocialClient, BOB_EMAIL).then(function(bobClientInfo) {
-        bobSocialClient.on('onMessage', function(messageData) {
-          if (messageData.userId == Helper.mapNameToAnonymizedId[ALICE_NAME] &&
-              messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
-            Helper.logoutThenDone([aliceSocialClient, bobSocialClient], done);
-          }
-        });  // end of bobSocialClient.on('onMessage', ...
-      });  // end of Helper.loginAs(bob...)
-    });  // end of Helper.loginAs(alice...)
+      bobSocialClient.on('onMessage', function(messageData) {
+        if (messageData.userId == ALICE.ANONYMIZED_ID &&
+            messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
+          Helper.logoutAll([aliceSocialClient, bobSocialClient]).then(done);
+        }
+      });
+      bobSocialClient.login(loginOpts);
+    });
   });
 
   // We should be able to send 8 messages per second from one peer to another
@@ -202,7 +196,7 @@ describe('GTalk', function() {
 
     // Setup a listener to send Bob messages when he is online
     Helper.onClientOnline(
-        aliceSocialClient, Helper.mapNameToAnonymizedId[BOB_NAME],
+        aliceSocialClient, BOB.ANONYMIZED_ID,
         function(clientState) {
       var sentMessageCount = 0;
       for (var i = 1; i <= TOTAL_MESSAGES; ++i) {
@@ -215,26 +209,24 @@ describe('GTalk', function() {
     });
 
     // Login as Alice.
-    Helper.loginAs(aliceSocialClient, ALICE_EMAIL)
-        .then(function(aliceClientInfo) {
+    aliceSocialClient.login(loginOpts).then(function(aliceClientInfo) {
       // Next login as Bob and monitor for messages.
       var bobSocialClient = bobSocialInterface();
-      Helper.loginAs(bobSocialClient, BOB_EMAIL).then(function(bobClientInfo) {
-        var receivedMessageCount = 0;
-        bobSocialClient.on('onMessage', function(messageData) {
-          if (messageData.userId == Helper.mapNameToAnonymizedId[ALICE_NAME] &&
-              messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
-            // Keep this trace so we know how many messages are received
-            // in case of failure.
-            expect(messageData.message).toEqual(
-                uniqueMsg + ':' + receivedMessageCount);
-            ++receivedMessageCount;
-            if (receivedMessageCount == TOTAL_MESSAGES) {
-              Helper.logoutThenDone([aliceSocialClient, bobSocialClient], done);
-            }
+      var receivedMessageCount = 0;
+      bobSocialClient.on('onMessage', function(messageData) {
+        if (messageData.userId == ALICE.ANONYMIZED_ID &&
+            messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
+          // Keep this trace so we know how many messages are received
+          // in case of failure.
+          expect(messageData.message).toEqual(
+              uniqueMsg + ':' + receivedMessageCount);
+          ++receivedMessageCount;
+          if (receivedMessageCount == TOTAL_MESSAGES) {
+            Helper.logoutAll([aliceSocialClient, bobSocialClient]).then(done);
           }
-        });  // end of bobSocialClient.on('onMessage', ...
-      });  // end of Helper.loginAs(bob...)
-    });  // end of Helper.loginAs(alice...)
+        }
+      });
+      bobSocialClient.login(loginOpts);
+    });
   });
 });

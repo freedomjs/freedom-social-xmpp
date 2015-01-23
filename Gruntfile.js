@@ -143,13 +143,10 @@ module.exports = function(grunt) {
           helper: [
             // "include: true" is needed for dependencies that are used by
             // the jasmine tests in the core environment.
-            {path: 'dist/social.google.json', include: false},
             {path: 'spec/chrome_integration/gtalk_credentials.js', include: true},
-            {path: 'dist/node-xmpp-browser.js', include: true},
-            {path: 'dist/vcardstore.js', include: true},
-            {path: 'dist/socialprovider.js', include: true},
-            {path: 'dist/google-auth.js', include: true},
-            {path: 'node_modules/freedom-for-chrome/freedom-for-chrome.*', include: true}
+            {path: 'node_modules/freedom-for-chrome/freedom-for-chrome.*', include: true},
+            {path: 'dist/*.js', include: false},
+            {path: 'dist/*.json', include: false}
           ],
           keepBrowser: false
         }

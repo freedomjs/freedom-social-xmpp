@@ -1,12 +1,6 @@
-// Test accounts should already be established as contacts on GTalk.
-var ALICE_EMAIL = 'alicefreedomxmpp@gmail.com';
-var BOB_EMAIL = 'bobfreedomxmpp@gmail.com';
-
-// User names (case sensitive), used to match anonymized IDs to users.
-var ALICE_NAME = 'Alice Freedom';
-var BOB_NAME = 'Bob Freedom';
-
 /*
+ * Test accounts should already be established as contacts on GTalk.
+ *
  * GTalk integration tests skip the interactive Google login step and instead
  * supply an access_token that we generate using a refresh_token.
  * To get a refresh_token permissioned for the uProxy app:
@@ -21,8 +15,17 @@ var BOB_NAME = 'Bob Freedom';
  * 4. The refresh_token return from that POST request can be used to get new
  * access_tokens
  */
-var REFRESH_TOKENS = {};
-REFRESH_TOKENS[ALICE_EMAIL] =
-    '1/1BQUvs6QycWFn3CnL-JnmTP6OLl_eDBaIRVf4Kgky4AMEudVrK5jSpoR30zcRFq6';
-REFRESH_TOKENS[BOB_EMAIL] =
-    '1/ZjOcjJskQWyR6mp8L1VpuaR72p4-qVUfJFVfqNlwBc4';
+var ALICE = {
+  EMAIL: 'alicefreedomxmpp@gmail.com',
+  NAME: 'Alice Freedom',
+  REFRESH_TOKEN:
+      '1/1BQUvs6QycWFn3CnL-JnmTP6OLl_eDBaIRVf4Kgky4AMEudVrK5jSpoR30zcRFq6',
+  ANONYMIZED_ID: null  // Needs to be detected through an onUserProfile event.
+};
+var BOB = {
+  EMAIL: 'bobfreedomxmpp@gmail.com',
+  NAME: 'Bob Freedom',
+  REFRESH_TOKEN:
+      '1/ZjOcjJskQWyR6mp8L1VpuaR72p4-qVUfJFVfqNlwBc4',
+  ANONYMIZED_ID: null  // Needs to be detected through an onUserProfile event.
+};
