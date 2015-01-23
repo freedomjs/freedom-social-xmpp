@@ -481,8 +481,6 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
 };
 
 XMPPSocialProvider.prototype.logout = function(continuation) {
-  var userId = this.credentials? this.credentials.userId : null;
-
   this.status = 'offline';
   this.credentials = null;
   if (this.client) {
