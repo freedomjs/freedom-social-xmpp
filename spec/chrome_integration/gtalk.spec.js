@@ -144,7 +144,6 @@ describe('GTalk', function() {
   it('Peers can detect each other', function(done) {
     var aliceSawBob = new Promise(function(fulfill, reject) {
       aliceSocialClient.on('onUserProfile', function(userProfile) {
-        console.log('alice got onUserProfile: ' + JSON.stringify(userProfile));
         if (userProfile.name == BOB.NAME) {
           BOB.ANONYMIZED_ID = userProfile.userId;
           fulfill();
@@ -154,7 +153,6 @@ describe('GTalk', function() {
     });
     var bobSawAlice = new Promise(function(fulfill, reject) {
       bobSocialClient.on('onUserProfile', function(userProfile) {
-        console.log('bob got onUserProfile: ' + JSON.stringify(userProfile));
         if (userProfile.name == ALICE.NAME) {
           ALICE.ANONYMIZED_ID = userProfile.userId;
           fulfill();
@@ -177,14 +175,14 @@ describe('GTalk', function() {
     aliceSocialClient.login(loginOpts).then(function(aliceClientInfo) {
       // Next login as Bob and monitor for message.
       bobSocialClient.on('onMessage', function(messageData) {
-        if (messageData.userId == ALICE.ANONYMIZED_ID &&
+        if (messageData.from.userId == ALICE.ANONYMIZED_ID &&
             messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
           done();
         }
       });
       bobSocialClient.login(loginOpts);
     });
-  });
+  }, 10000);
 
   // We should be able to send 8 messages per second from one peer to another
   // without being throttled by GTalk (i.e. we should not get 503 "service
@@ -214,7 +212,7 @@ describe('GTalk', function() {
       // Next login as Bob and monitor for messages.
       var receivedMessageCount = 0;
       bobSocialClient.on('onMessage', function(messageData) {
-        if (messageData.userId == ALICE.ANONYMIZED_ID &&
+        if (messageData.from.userId == ALICE.ANONYMIZED_ID &&
             messageData.message.substr(0, uniqueMsg.length) == uniqueMsg) {
           // Keep this trace so we know how many messages are received
           // in case of failure.
