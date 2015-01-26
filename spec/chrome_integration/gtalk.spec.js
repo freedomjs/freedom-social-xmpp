@@ -182,7 +182,7 @@ describe('GTalk', function() {
       });
       bobSocialClient.login(loginOpts);
     });
-  }, 10000);
+  });
 
   // We should be able to send 8 messages per second from one peer to another
   // without being throttled by GTalk (i.e. we should not get 503 "service
