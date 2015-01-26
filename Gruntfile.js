@@ -216,14 +216,6 @@ module.exports = function(grunt) {
     'jasmine_chromeapp'
   ]);
 
-  // Testing meta-task
-  grunt.registerTask('ci', [
-    'build',
-    'copy:jasmine',
-    'jasmine',
-    'jasmine_node'
-  ]);
-
   // Tag, publish, release
   grunt.registerTask('release', function(arg) {
     if (arguments.length === 0) {
