@@ -26,7 +26,7 @@ if (typeof global !== 'undefined') {
  */
 var XMPPSocialProvider = function(dispatchEvent) {
   this.dispatchEvent = dispatchEvent;
-  var social = freedom.social();
+  var social = freedom.social ? freedom.social() : freedom();
   this.STATUS = social.STATUS;
   this.ERRCODE = social.ERRCODE;
 
@@ -53,7 +53,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.logger = function() {};
   if (typeof freedom !== 'undefined' &&
       typeof freedom.core === 'function') {
-    freedom.core().getLogger('[XMPPSocialProvider]').then(function(log) { 
+    freedom.core().getLogger('[XMPPSocialProvider]').then(function(log) {
       this.logger = log;
     }.bind(this));
   } else if (typeof console !== 'undefined') {
@@ -199,9 +199,9 @@ XMPPSocialProvider.prototype.clearCachedCredentials  = function(continuation) {
  * Returns all the <client_state>s that we've seen so far (from any 'onClientState' event)
  * Note: this instance's own <client_state> will be somewhere in this list
  * Use the clientId returned from social.login() to extract your element
- * 
+ *
  * @method getClients
- * @return {Object} { 
+ * @return {Object} {
  *    'clientId1': <client_state>,
  *    'clientId2': <client_state>,
  *     ...
@@ -235,9 +235,9 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
   }
 
   // After each message is received, reset the timeout to
-  // wait for at least 100ms to batch other messages received 
-  // in that window. However, if the oldest message in the batch 
-  // was received over 2s ago, don't reset the timeout, and 
+  // wait for at least 100ms to batch other messages received
+  // in that window. However, if the oldest message in the batch
+  // was received over 2s ago, don't reset the timeout, and
   // just allow the current timeout to execute.
   if (!this.messages[to]) {
     this.messages[to] = [];
@@ -303,7 +303,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
 
       this.messages = {};
       this.sendMessagesTimeout = null;
-    }.bind(this), 100);  
+    }.bind(this), 100);
   }
 };
 
@@ -333,7 +333,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
         'http://jabber.org/protocol/disco#info') {
       this.sawClient(msg.attrs.from);
 
-      this.sendCapabilities(msg.attrs.from, msg);      
+      this.sendCapabilities(msg.attrs.from, msg);
     }
   // Is it a staus response?
   } else if (msg.is('iq') && (msg.attrs.type === 'result' ||
@@ -345,7 +345,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
   // Is it something we don't understand?
   } else {
     this.logger.warn('Dropped unknown XMPP message');
-    this.logger.warn(msg);
+    this.logger.warn(msg.toString());
   }
 };
 
@@ -377,7 +377,7 @@ XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
  */
 XMPPSocialProvider.prototype.sendCapabilities = function(to, msg) {
   var query = msg.getChild('query');
-  
+
   msg.attrs.to = msg.attrs.from;
   delete msg.attrs.from;
   msg.attrs.type = 'result';
@@ -410,7 +410,7 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   if (msg.getChild('x') && msg.getChild('x').getChildText('photo')) {
     hash = msg.getChild('x').getChildText('photo');
   }
-  
+
   if (status === 'unavailable') {
     this.vCardStore.updateProperty(user, 'status', 'OFFLINE');
   } else {
@@ -420,7 +420,7 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
       this.vCardStore.updateProperty(user, 'status', 'ONLINE_WITH_OTHER_APP');
     }
   }
-  
+
   this.vCardStore.updateProperty(user, 'xmppStatus', status);
 
   this.vCardStore.refreshContact(user, hash);
@@ -465,23 +465,21 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
         hash: 'fixed'
       }).up());
 
-  this.status = 'ONLINE';  
+  this.status = 'ONLINE';
   // Get roster.
   this.client.send(new window.XMPP.Element('iq', {type: 'get'})
       .c('query', {
         xmlns: 'jabber:iq:roster'
       }).up());
-  
+
   // Update status.
   this.vCardStore.updateProperty(this.id, 'status', 'ONLINE');
   this.vCardStore.refreshContact(this.id, null);
-  
+
   continuation(this.vCardStore.getClient(this.id));
 };
 
 XMPPSocialProvider.prototype.logout = function(continuation) {
-  var userId = this.credentials? this.credentials.userId : null;
-
   this.status = 'offline';
   this.credentials = null;
   if (this.client) {
@@ -515,5 +513,9 @@ XMPPSocialProvider.prototype.onClientChange = function(card) {
 
 // Register provider when in a module context.
 if (typeof freedom !== 'undefined') {
-  freedom.social().provideAsynchronous(XMPPSocialProvider);
+  if (!freedom.social) {
+    freedom().provideAsynchronous(XMPPSocialProvider);
+  } else {
+    freedom.social().provideAsynchronous(XMPPSocialProvider);
+  }
 }

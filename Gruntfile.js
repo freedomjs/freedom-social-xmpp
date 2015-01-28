@@ -39,7 +39,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_xmpp: {
-        src: [ 
+        src: [
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
@@ -49,7 +49,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_google: {
-        src: [ 
+        src: [
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
@@ -59,7 +59,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_chrome_facebook: {
-        src: [ 
+        src: [
           'dist/*',
           'src/demo_common/*',
           'node_modules/freedom-for-chrome/freedom-for-chrome.js',
@@ -68,8 +68,8 @@ module.exports = function(grunt) {
         dest: 'build/demo_chrome_facebook/',
         flatten: true, filter: 'isFile', expand: true
       },
-      demo_firefox_google: { 
-        src: [ '**/*' ], 
+      demo_firefox_google: {
+        src: [ '**/*' ],
         dest: 'build/demo_firefox_google/',
         cwd: 'src/demo_firefox_google/',
         filter: 'isFile', expand: true,
@@ -85,7 +85,7 @@ module.exports = function(grunt) {
         flatten: true, filter: 'isFile', expand: true
       },
       demo_firefox_facebook: {
-        src: [ '**/*' ], 
+        src: [ '**/*' ],
         dest: 'build/demo_firefox_facebook/',
         cwd: 'src/demo_firefox_facebook/',
         filter: 'isFile', expand: true,
@@ -124,16 +124,29 @@ module.exports = function(grunt) {
       },
       social: {
         src: FILES.jasmine_helpers.concat(
-          ['dist/socialprovider.js', 'dist/vcardstore.js', 
+          ['dist/socialprovider.js', 'dist/vcardstore.js',
            'dist/node-xmpp-browser.js']),
         options: {
           specs: 'spec/socialprovider.spec.js',
-          keepRunner: false
+          keepRunner: true
         }
       }
     },
     jasmine_node: {
       integration: ['spec/integration/']
+    },
+    jasmine_chromeapp: {
+      all: {
+        src: [
+          'node_modules/freedom-for-chrome/freedom-for-chrome.*',
+          'spec/chrome_integration/gtalk_credentials.js',
+          'spec/chrome_integration/gtalk.spec.js'
+        ],
+        options: {
+          helpers: ['dist/*.js', 'dist/*.json'],
+          keepRunner: false
+        }
+      }
     },
     bump: {
       options: {
@@ -164,12 +177,13 @@ module.exports = function(grunt) {
     ]}}},
   });
 
-  // Load tasks. 
+  // Load tasks.
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-jasmine-node');
+  grunt.loadNpmTasks('grunt-jasmine-chromeapp');
+  grunt.loadNpmTasks('grunt-jasmine-node2');
   grunt.loadNpmTasks('grunt-prompt');
   grunt.loadNpmTasks('grunt-bump');
   grunt.loadNpmTasks('grunt-npm');
@@ -192,7 +206,7 @@ module.exports = function(grunt) {
     'copy:demo_firefox_facebook',
     'copy:demo_firefox_facebook_data',
   ]);
-  
+
   // Testing meta-task
   grunt.registerTask('test', [
     'build',
