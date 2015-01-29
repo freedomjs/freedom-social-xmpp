@@ -143,7 +143,6 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
 
   try {
-    this.logger.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
     this.logger.error(e.stack);
