@@ -314,6 +314,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
  * @private
  */
 XMPPSocialProvider.prototype.onMessage = function(msg) {
+  this.lastMessageDate_ = new Date();
   // Is it a message?
   if (msg.is('message') && msg.getChildText('body') && msg.attrs.type !== 'error') {
     this.sawClient(msg.attrs.from);
@@ -477,12 +478,67 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
   this.vCardStore.updateProperty(this.id, 'status', 'ONLINE');
   this.vCardStore.refreshContact(this.id, null);
 
+  this.pollForDisconnect_();
+
   continuation(this.vCardStore.getClient(this.id));
+};
+
+XMPPSocialProvider.prototype.ping_ = function() {
+  console.log('sending ping');
+  var pingDate = new Date();
+  var ping = new window.XMPP.Element('iq', {type: 'get'})
+      .c('ping', {'xmlns': 'urn:xmpp:ping'}).up();
+  this.client.send(ping);
+
+  // Check that we got a response from the server after the ping was sent.
+  setTimeout(function() {
+    if (!this.lastMessageDate_ || this.lastMessageDate_ < pingDate) {
+      // No response to ping, we are disconnected.
+      console.warn('No ping response from server, logging out');
+      this.logout();
+    } else {
+      console.log('got ping response');  // TODO: remove
+    }
+  }.bind(this), 10000);
+};
+
+XMPPSocialProvider.prototype.pollForDisconnect_ = function() {
+  if (this.pollForDisconnectInterval_) {
+    clearInterval(this.pollForDisconnectInterval_);
+  }
+
+  setTimeout(function() {}, 1000);  // TODO: remove
+
+  var MAX_MS_WITHOUT_COMMUNICATION = 60000;
+  var lastAwakeDate = new Date();
+  this.pollForDisconnectInterval_ = setInterval(function() {
+    // Check if the computer had gone to sleep
+    var nowDate = new Date();
+    if (nowDate - lastAwakeDate > 2000) {
+      // Timeout expected to run every 1000 ms didn't run for over 2000 ms,
+      // probably because the computer went to sleep.  Send a ping to check
+      // that we are still connected to the XMPP server.
+      console.log('Detected sleep for ' + (nowDate - lastAwakeDate) + 'ms');
+      this.ping_();  // TODO: test.
+    }
+    lastAwakeDate = nowDate;
+
+    // Check that we are still receiving data from the XMPP server, about
+    // once per minute (randomized).
+    if (nowDate.getSeconds() === Math.floor(Math.random() * 60) &&
+        (!this.lastMessageDate_ ||
+         nowDate - this.lastMessageDate_ > MAX_MS_WITHOUT_COMMUNICATION)) {
+      this.ping_();
+    }
+  }.bind(this), 1000);
 };
 
 XMPPSocialProvider.prototype.logout = function(continuation) {
   this.status = 'offline';
   this.credentials = null;
+  if (this.pollForDisconnectInterval_) {
+    clearInterval(this.pollForDisconnectInterval_);
+  }
   if (this.client) {
     this.client.send(new window.XMPP.Element('presence', {
       type: 'unavailable'
@@ -490,7 +546,9 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
     this.client.end();
     this.client = null;
   }
-  continuation();
+  if (continuation) {
+    continuation();
+  }
 };
 
 XMPPSocialProvider.prototype.requestUserStatus = function(user) {
@@ -498,10 +556,12 @@ XMPPSocialProvider.prototype.requestUserStatus = function(user) {
     this.logger.warn('User status request to ' + user + ' dropped, no client available.');
     return;
   }
-  this.client.send(new window.XMPP.Element('iq', {
+  var request = new window.XMPP.Element('iq', {
     type: 'get',
     to: user
-  }).c('vCard', {'xmlns': 'vcard-temp'}).up());
+  }).c('vCard', {'xmlns': 'vcard-temp'}).up();
+  console.log('requestUserStatus: ' + request);
+  this.client.send(request);
 };
 
 XMPPSocialProvider.prototype.onUserChange = function(card) {
