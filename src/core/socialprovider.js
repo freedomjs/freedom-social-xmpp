@@ -34,6 +34,10 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.credentials = null;
   this.id = null;
   this.loginOpts = null;
+  this.lastMessageDate_ = null;
+  this.pollForDisconnectInterval_ = null;
+  this.MAX_MS_WITHOUT_COMMUNICATION_ = 60000;
+  this.MAX_MS_PING_REPSONSE_ = 10000;
 
   // Metadata about the roster
   this.vCardStore = new VCardStore();
@@ -478,7 +482,7 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
   this.vCardStore.updateProperty(this.id, 'status', 'ONLINE');
   this.vCardStore.refreshContact(this.id, null);
 
-  this.pollForDisconnect_();
+  this.startPollingForDisconnect_();
 
   continuation(this.vCardStore.getClient(this.id));
 };
@@ -497,16 +501,15 @@ XMPPSocialProvider.prototype.ping_ = function() {
       console.warn('No ping response from server, logging out');
       this.logout();
     }
-  }.bind(this), 10000);
+  }.bind(this), this.MAX_MS_PING_REPSONSE_);
 };
 
-XMPPSocialProvider.prototype.pollForDisconnect_ = function() {
+XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
   if (this.pollForDisconnectInterval_) {
-    console.error('pollForDisconnect_ called while already polling');
+    console.error('startPollingForDisconnect_ called while already polling');
     return;
   }
 
-  var MAX_MS_WITHOUT_COMMUNICATION = 60000;
   var lastAwakeDate = new Date();
   this.pollForDisconnectInterval_ = setInterval(function() {
     // Check if the computer had gone to sleep
@@ -524,7 +527,8 @@ XMPPSocialProvider.prototype.pollForDisconnect_ = function() {
     // once per minute (randomized).
     if (nowDate.getSeconds() === Math.floor(Math.random() * 60) &&
         (!this.lastMessageDate_ ||
-         nowDate - this.lastMessageDate_ > MAX_MS_WITHOUT_COMMUNICATION)) {
+         nowDate - this.lastMessageDate_ >
+         this.MAX_MS_WITHOUT_COMMUNICATION_)) {
       this.ping_();
     }
   }.bind(this), 1000);
@@ -533,8 +537,10 @@ XMPPSocialProvider.prototype.pollForDisconnect_ = function() {
 XMPPSocialProvider.prototype.logout = function(continuation) {
   this.status = 'offline';
   this.credentials = null;
+  this.lastMessageDate_ = null;
   if (this.pollForDisconnectInterval_) {
     clearInterval(this.pollForDisconnectInterval_);
+    this.pollForDisconnectInterval_ = null;
   }
   if (this.client) {
     this.client.send(new window.XMPP.Element('presence', {

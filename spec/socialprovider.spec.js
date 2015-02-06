@@ -159,7 +159,7 @@ describe("Tests for message batching in Social provider", function() {
     spyOn(xmppSocialProvider, 'logout');
     xmppSocialProvider.connect();
     xmppSocialProvider.ping_();
-    jasmine.clock().tick(10010);
+    jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
     expect(xmppSocialProvider.logout).toHaveBeenCalled();
   });
 
@@ -170,7 +170,7 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.ping_();
     xmppSocialProvider.onMessage(
         new window.XMPP.Element('iq', {type: 'result'}));
-    jasmine.clock().tick(10010);
+    jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
     expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
   });
 

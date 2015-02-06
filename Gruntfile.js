@@ -144,7 +144,7 @@ module.exports = function(grunt) {
         ],
         options: {
           helpers: ['dist/*.js', 'dist/*.json'],
-          keepRunner: false
+          keepRunner: true
         }
       }
     },
