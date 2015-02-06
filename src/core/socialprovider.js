@@ -484,7 +484,6 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
 };
 
 XMPPSocialProvider.prototype.ping_ = function() {
-  console.log('sending ping');
   var pingDate = new Date();
   var ping = new window.XMPP.Element('iq', {type: 'get'})
       .c('ping', {'xmlns': 'urn:xmpp:ping'}).up();
@@ -492,22 +491,20 @@ XMPPSocialProvider.prototype.ping_ = function() {
 
   // Check that we got a response from the server after the ping was sent.
   setTimeout(function() {
-    if (!this.lastMessageDate_ || this.lastMessageDate_ < pingDate) {
+    if (this.client &&  // check this.client to be sure logout wasn't called.
+        (!this.lastMessageDate_ || this.lastMessageDate_ < pingDate)) {
       // No response to ping, we are disconnected.
       console.warn('No ping response from server, logging out');
       this.logout();
-    } else {
-      console.log('got ping response');  // TODO: remove
     }
   }.bind(this), 10000);
 };
 
 XMPPSocialProvider.prototype.pollForDisconnect_ = function() {
   if (this.pollForDisconnectInterval_) {
-    clearInterval(this.pollForDisconnectInterval_);
+    console.error('pollForDisconnect_ called while already polling');
+    return;
   }
-
-  setTimeout(function() {}, 1000);  // TODO: remove
 
   var MAX_MS_WITHOUT_COMMUNICATION = 60000;
   var lastAwakeDate = new Date();
@@ -519,7 +516,7 @@ XMPPSocialProvider.prototype.pollForDisconnect_ = function() {
       // probably because the computer went to sleep.  Send a ping to check
       // that we are still connected to the XMPP server.
       console.log('Detected sleep for ' + (nowDate - lastAwakeDate) + 'ms');
-      this.ping_();  // TODO: test.
+      this.ping_();
     }
     lastAwakeDate = nowDate;
 
