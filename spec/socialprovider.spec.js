@@ -28,7 +28,6 @@ describe("Tests for message batching in Social provider", function() {
       updateProperty: function() {},
       refreshContact: function() {},
       getClient: function(clientId) {
-        console.error('getClient called');  // TODO: remove
         return {
           status: "ONLINE"
         };
