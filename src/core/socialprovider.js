@@ -553,12 +553,10 @@ XMPPSocialProvider.prototype.requestUserStatus = function(user) {
     this.logger.warn('User status request to ' + user + ' dropped, no client available.');
     return;
   }
-  var request = new window.XMPP.Element('iq', {
+  this.client.send(new window.XMPP.Element('iq', {
     type: 'get',
     to: user
-  }).c('vCard', {'xmlns': 'vcard-temp'}).up();
-  console.log('requestUserStatus: ' + request);
-  this.client.send(request);
+  }).c('vCard', {'xmlns': 'vcard-temp'}).up());
 };
 
 XMPPSocialProvider.prototype.onUserChange = function(card) {
