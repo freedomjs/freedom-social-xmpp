@@ -8,7 +8,8 @@ describe("Tests for message batching in Social provider", function() {
     send: function() {},
     addListener: function(eventName, handler) {
       xmppSocialProvider.client.events[eventName] = handler;
-    }
+    },
+    end: function() {}
   };
   freedom = {
     social: function() {
@@ -25,6 +26,7 @@ describe("Tests for message batching in Social provider", function() {
       onUserChange: function() {},
       onClientChange: function() {},
       updateProperty: function() {},
+      refreshContact: function() {},
       getClient: function(clientId) {
         return {
           status: "ONLINE"
@@ -35,9 +37,8 @@ describe("Tests for message batching in Social provider", function() {
     // Mock VCardStore, Date and the client.
     xmppSocialProvider = new XMPPSocialProvider(null);
     xmppSocialProvider.client = xmppClient;
+    xmppSocialProvider.loginOpts = {};
     spyOn(xmppSocialProvider.client, 'send');
-
-    dateSpy = spyOn(Date, "now").and.returnValue(500);
 
     jasmine.clock().install();
   });
@@ -47,6 +48,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("add first message to batch and save time of message", function() {
+    dateSpy = spyOn(Date, "now").and.returnValue(500);
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.messages.Bob[0].message).toEqual('Hi');
     expect(xmppSocialProvider.timeOfFirstMessageInBatch).toEqual(500);
@@ -65,7 +67,7 @@ describe("Tests for message batching in Social provider", function() {
     expect(xmppSocialProvider.client.send).toHaveBeenCalled();
   });
 
-  
+
   it("calls callback after send", function() {
     var spy = jasmine.createSpy('callback');
     xmppSocialProvider.sendMessage('Bob', 'Hi', spy);
@@ -96,6 +98,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("do not reset timeout if oldest message is from >=2s ago", function() {
+    dateSpy = spyOn(Date, "now").and.returnValue(500);
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
     // First message sent at 500ms.
@@ -140,7 +143,6 @@ describe("Tests for message batching in Social provider", function() {
     }
   });
 
-  
   it('sets status to OFFLINE when client disconnected', function() {
     spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
     xmppSocialProvider.connect();
@@ -150,5 +152,81 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.client.events['offline']();
     expect(xmppSocialProvider.vCardStore.updateProperty)
         .toHaveBeenCalledWith('id', 'status', 'OFFLINE');
+  });
+
+  it('disconnects when no reply to ping', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    spyOn(xmppSocialProvider, 'logout');
+    xmppSocialProvider.connect();
+    xmppSocialProvider.ping_();
+    jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
+    expect(xmppSocialProvider.logout).toHaveBeenCalled();
+  });
+
+  it('stays online when ping response received', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    spyOn(xmppSocialProvider, 'logout');
+    xmppSocialProvider.connect();
+    xmppSocialProvider.ping_();
+    xmppSocialProvider.onMessage(
+        new window.XMPP.Element('iq', {type: 'result'}));
+    jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
+    expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
+  });
+
+  it('pings once per minute if no message received', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    // Set Math.random so that we immediately hit the once-per-minute ping case.
+    spyOn(Math, 'random').and.returnValue((new Date()).getSeconds() / 60);
+    spyOn(xmppSocialProvider, 'ping_')
+    xmppSocialProvider.connect(function() {});
+    // Emit online event to start polling loop.
+    xmppSocialProvider.client.events['online']();
+    jasmine.clock().tick(1001);
+    expect(xmppSocialProvider.ping_).toHaveBeenCalled();
+    // logout must be called to clearInterval on the polling loop
+    xmppSocialProvider.logout();
+  });
+
+  it('does not ping once per minute if a message is received', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    // Set Math.random so that we immediately hit the once-per-minute ping case.
+    spyOn(Math, 'random').and.returnValue((new Date()).getSeconds() / 60);
+    spyOn(xmppSocialProvider, 'ping_')
+    xmppSocialProvider.connect(function() {});
+    // Emit online event to start polling loop.
+    xmppSocialProvider.client.events['online']();
+    // Send a message before the next polling loop.
+    xmppSocialProvider.onMessage(
+        new window.XMPP.Element('iq', {type: 'result'}));
+    jasmine.clock().tick(1001);
+    expect(xmppSocialProvider.ping_).not.toHaveBeenCalled();
+    // logout must be called to clearInterval on the polling loop
+    xmppSocialProvider.logout();
+  });
+
+  it('detects sleep and pings immediately', function() {
+    var nowMs = 0;
+    dateSpy = spyOn(Date, "now").and.callFake(function() { return nowMs; });
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    var setIntervalCallbacks = [];
+    spyOn(window, 'setInterval').and.callFake(function(callback, intervalMs) {
+      setIntervalCallbacks.push(callback);
+    });
+    spyOn(xmppSocialProvider, 'ping_');
+
+    // Connect and emit online event to start polling loop.
+    xmppSocialProvider.connect(function() {});
+    xmppSocialProvider.client.events['online']();
+
+    // Advance the clock by 2010 ms and invoke callbacks.
+    nowMs = 2010;
+    jasmine.clock().tick(2010);
+    setIntervalCallbacks.map(function(callback) { callback(); });
+
+    // Expect sleep to have been detected and ping to be invoked.
+    expect(xmppSocialProvider.ping_).toHaveBeenCalled();
+    // logout must be called to clearInterval on the polling loop
+    xmppSocialProvider.logout();
   });
 });
