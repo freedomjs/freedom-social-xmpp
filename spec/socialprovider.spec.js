@@ -40,8 +40,6 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.loginOpts = {};
     spyOn(xmppSocialProvider.client, 'send');
 
-    dateSpy = spyOn(Date, "now").and.returnValue(500);
-
     jasmine.clock().install();
   });
 
@@ -50,6 +48,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("add first message to batch and save time of message", function() {
+    dateSpy = spyOn(Date, "now").and.returnValue(500);
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.messages.Bob[0].message).toEqual('Hi');
     expect(xmppSocialProvider.timeOfFirstMessageInBatch).toEqual(500);
@@ -99,6 +98,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("do not reset timeout if oldest message is from >=2s ago", function() {
+    dateSpy = spyOn(Date, "now").and.returnValue(500);
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
     // First message sent at 500ms.
@@ -201,6 +201,31 @@ describe("Tests for message batching in Social provider", function() {
         new window.XMPP.Element('iq', {type: 'result'}));
     jasmine.clock().tick(1001);
     expect(xmppSocialProvider.ping_).not.toHaveBeenCalled();
+    // logout must be called to clearInterval on the polling loop
+    xmppSocialProvider.logout();
+  });
+
+  it('detects sleep and pings immediately', function() {
+    var nowMs = 0;
+    dateSpy = spyOn(Date, "now").and.callFake(function() { return nowMs; });
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    var setIntervalCallbacks = [];
+    spyOn(window, 'setInterval').and.callFake(function(callback, intervalMs) {
+      setIntervalCallbacks.push(callback);
+    });
+    spyOn(xmppSocialProvider, 'ping_');
+
+    // Connect and emit online event to start polling loop.
+    xmppSocialProvider.connect(function() {});
+    xmppSocialProvider.client.events['online']();
+
+    // Advance the clock by 2010 ms and invoke callbacks.
+    nowMs = 2010;
+    jasmine.clock().tick(2010);
+    setIntervalCallbacks.map(function(callback) { callback(); });
+
+    // Expect sleep to have been detected and ping to be invoked.
+    expect(xmppSocialProvider.ping_).toHaveBeenCalled();
     // logout must be called to clearInterval on the polling loop
     xmppSocialProvider.logout();
   });
