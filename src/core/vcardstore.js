@@ -136,14 +136,14 @@ VCardStore.prototype.updateVcard = function(from, message) {
     this.onUserChange(user);
   }
 
-  this.storage.set('vcard-' + from, JSON.stringify(user));
+  this.storage.set('vcard-' + userid, JSON.stringify(user));
 };
 
 /**
  * Update a property about a client.
  * @method updateProperty
  * @param {String} user The client identifier to update.
- * @param {Stirng} property The property to set
+ * @param {String} property The property to set
  * @param {Object} value The value to set.
  */
 VCardStore.prototype.updateProperty = function(user, property, value) {
@@ -169,18 +169,13 @@ VCardStore.prototype.updateUser = function(user, property, value) {
   this.users[user][property] = value;
   this.users[user].lastSeen = Date.now();
   this.users[user].lastUpdated = Date.now();
+  this.onUserChange(this.users[user]);
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {
-  if (!this.storage) {
-    return false;
-  }
+  var userid = new window.XMPP.JID(user).bare().toString();
 
-  if (this.users[user] && (!hash || this.users[user].hash === hash)) {
-    return this.users[user];
-  }
-  
-  this.storage.get('vcard-' + user).then(function(result) {
+  this.storage.get('vcard-' + userid).then(function(result) {
     if (result === null || result === undefined) {
       this.fetchVcard(user);
     } else if (hash && hash !== result.hash) {

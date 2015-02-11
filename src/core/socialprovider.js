@@ -421,14 +421,13 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   } else {
     if (msg.getChild('c') && msg.getChild('c').attrs.node === this.loginOpts.url) {
       this.vCardStore.updateProperty(user, 'status', 'ONLINE');
+      this.vCardStore.refreshContact(user, hash);
     } else {
       this.vCardStore.updateProperty(user, 'status', 'ONLINE_WITH_OTHER_APP');
     }
   }
 
   this.vCardStore.updateProperty(user, 'xmppStatus', status);
-
-  this.vCardStore.refreshContact(user, hash);
 };
 
 XMPPSocialProvider.prototype.updateRoster = function(msg) {
@@ -437,14 +436,14 @@ XMPPSocialProvider.prototype.updateRoster = function(msg) {
       vCard = msg.getChild('vCard'),
       items, i;
 
-  // Response to Query
+  // Response to roster query
   if (query && query.attrs.xmlns === 'jabber:iq:roster') {
     items = query.getChildren('item');
     for (i = 0; i < items.length; i += 1) {
       if(items[i].attrs.jid && items[i].attrs.name) {
         this.vCardStore.updateUser(items[i].attrs.jid, 'name',
             items[i].attrs.name);
-        this.vCardStore.refreshContact(items[i].attrs.jid);
+        //this.vCardStore.refreshContact(items[i].attrs.jid);
       }
     }
   }
