@@ -267,16 +267,15 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         // can't communicate across different client types, but sending all as
         // type 'chat' means messages will be broadcast to all clients.
         var i = 0,
-          messageType =
-            (this.vCardStore.getClient(to).status === 'ONLINE') ?
-                'normal' : 'chat',
+          status = this.vCardStore.getClient(to).status,
+          messageType = status === 'ONLINE_WITH_OTHER_APP' ? 'chat' : 'normal',
           message = new window.XMPP.Element('message', {
             to: to,
             type: messageType
           }).c('body'),
           body;
 
-        if (messageType === 'normal') {
+        if (status === 'ONLINE') {
           body = [];
           for (i = 0; i < this.messages[to].length; i += 1) {
             body.push(this.messages[to][i].message);
@@ -285,7 +284,10 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         } else {
           body = '';
           for (i = 0; i < this.messages[to].length; i += 1) {
-            body += this.messages[to][i].message + '\n';
+            if (i > 0) {
+              body += '\n';
+            }
+            body += this.messages[to][i].message;
           }
           message.t(body);
         }
@@ -363,8 +365,18 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
  * @param {String} msgs A batch of messages.
  */
 XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
-  var i, parsedMessages = JSON.parse(msgs);
-  for (i = 0; i < parsedMessages.length; i+=1) {
+  var parsedMessages;
+  try {
+    // Split msgs into an array only if it is a JSON formatted array.
+    parsedMessages = JSON.parse(msgs);
+    if (!XMPPSocialProvider.isArray(parsedMessages)) {
+      parsedMessages = [msgs];
+    }
+  } catch(e) {
+    // msgs is not valid JSON, just emit one onMessage with that string.
+    parsedMessages = [msgs];
+  }
+  for (var i = 0; i < parsedMessages.length; i+=1) {
     this.dispatchEvent('onMessage', {
       from: this.vCardStore.getClient(from),
       to: this.vCardStore.getClient(this.id),
@@ -572,6 +584,10 @@ XMPPSocialProvider.prototype.onUserChange = function(card) {
 
 XMPPSocialProvider.prototype.onClientChange = function(card) {
   this.dispatchEvent('onClientState', card);
+};
+
+XMPPSocialProvider.isArray = function(a) {
+  return Array.isArray ? Array.isArray(a) : (a instanceof Array);
 };
 
 // Register provider when in a module context.
