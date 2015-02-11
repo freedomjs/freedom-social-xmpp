@@ -284,7 +284,10 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         } else {
           body = '';
           for (i = 0; i < this.messages[to].length; i += 1) {
-            body += this.messages[to][i].message + '\n';
+            if (i > 0) {
+              body += '\n';
+            }
+            body += this.messages[to][i].message;
           }
           message.t(body);
         }
