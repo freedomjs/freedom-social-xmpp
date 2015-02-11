@@ -212,7 +212,8 @@ module.exports = function(grunt) {
     'build',
     'copy:jasmine',
     'jasmine',
-    'jasmine_node'
+    'jasmine_node',
+    'jasmine_chromeapp'
   ]);
 
   // Tag, publish, release
