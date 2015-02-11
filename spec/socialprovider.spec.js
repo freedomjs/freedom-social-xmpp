@@ -231,7 +231,7 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.logout();
   });
 
-  it('parses JSON messages', function() {
+  it('parses JSON encoded arrays', function() {
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
     var toClient = xmppSocialProvider.vCardStore.getClient('toId');
@@ -241,6 +241,16 @@ describe("Tests for message batching in Social provider", function() {
         'onMessage', {from: fromClient, to: toClient, message: 'abc'});
     expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
         'onMessage', {from: fromClient, to: toClient, message: 'def'});
+  });
+
+  it('does not parse JSON that is not an array', function() {
+    spyOn(xmppSocialProvider, 'dispatchEvent');
+    var jsonString = '{key: "value"}';
+    var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
+    var toClient = xmppSocialProvider.vCardStore.getClient('toId');
+    xmppSocialProvider.receiveMessage(fromClient, jsonString);
+    expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
+        'onMessage', {from: fromClient, to: toClient, message:jsonString});
   });
 
   it('does not parse non-JSON messages', function() {

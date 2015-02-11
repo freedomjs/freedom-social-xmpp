@@ -367,7 +367,11 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
 XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
   var parsedMessages;
   try {
+    // Split msgs into an array only if it is a JSON formatted array.
     parsedMessages = JSON.parse(msgs);
+    if (!XMPPSocialProvider.isArray(parsedMessages)) {
+      parsedMessages = [msgs];
+    }
   } catch(e) {
     // msgs is not valid JSON, just emit one onMessage with that string.
     parsedMessages = [msgs];
@@ -580,6 +584,10 @@ XMPPSocialProvider.prototype.onUserChange = function(card) {
 
 XMPPSocialProvider.prototype.onClientChange = function(card) {
   this.dispatchEvent('onClientState', card);
+};
+
+XMPPSocialProvider.isArray = function(a) {
+  return Array.isArray ? Array.isArray(a) : (a instanceof Array);
 };
 
 // Register provider when in a module context.
