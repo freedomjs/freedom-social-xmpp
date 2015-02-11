@@ -35,7 +35,8 @@ describe("Tests for message batching in Social provider", function() {
     });
 
     // Mock VCardStore, Date and the client.
-    xmppSocialProvider = new XMPPSocialProvider(null);
+    function dispatchEvent(eventType, data) {};
+    xmppSocialProvider = new XMPPSocialProvider(dispatchEvent);
     xmppSocialProvider.client = xmppClient;
     xmppSocialProvider.loginOpts = {};
     spyOn(xmppSocialProvider.client, 'send');
@@ -228,5 +229,26 @@ describe("Tests for message batching in Social provider", function() {
     expect(xmppSocialProvider.ping_).toHaveBeenCalled();
     // logout must be called to clearInterval on the polling loop
     xmppSocialProvider.logout();
+  });
+
+  it('parses JSON messages', function() {
+    spyOn(xmppSocialProvider, 'dispatchEvent');
+    var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
+    var toClient = xmppSocialProvider.vCardStore.getClient('toId');
+    xmppSocialProvider.receiveMessage(
+        fromClient, JSON.stringify(['abc', 'def']));
+    expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
+        'onMessage', {from: fromClient, to: toClient, message: 'abc'});
+    expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
+        'onMessage', {from: fromClient, to: toClient, message: 'def'});
+  });
+
+  it('does not parse non-JSON messages', function() {
+    spyOn(xmppSocialProvider, 'dispatchEvent');
+    var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
+    var toClient = xmppSocialProvider.vCardStore.getClient('toId');
+    xmppSocialProvider.receiveMessage(fromClient, 'hello');
+    expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
+        'onMessage', {from: fromClient, to: toClient, message: 'hello'});
   });
 });
