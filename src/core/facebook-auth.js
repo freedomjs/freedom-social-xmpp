@@ -29,10 +29,10 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   if (!this.credentials) {
     this.oauth = freedom["core.oauth"]();
     this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
-      var url = "https://www.facebook.com/dialog/oauth?" + 
-                  "client_id=" + encodeURIComponent(this.oAuthClientId) + 
-                  "&scope=" + encodeURIComponent(this.oAuthScope) + 
-                  "&redirect_uri=" + encodeURIComponent(stateObj.redirect) + 
+      var url = "https://www.facebook.com/dialog/oauth?" +
+                  "client_id=" + encodeURIComponent(this.oAuthClientId) +
+                  "&scope=" + encodeURIComponent(this.oAuthScope) +
+                  "&redirect_uri=" + encodeURIComponent(stateObj.redirect) +
                   "&state=" + encodeURIComponent(stateObj.state) +
                   "&response_type=token";
       return this.oauth.launchAuthFlow(url, stateObj);
@@ -49,7 +49,6 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
             api_key: this.oAuthAppSecret,  // secret, not id!
             host: 'chat.facebook.com'
           };
-          this.logger.log('Got facebook credentials: ' + JSON.stringify(credentials));
           this.onCredentials(continuation, {cmd: 'auth', message: credentials});
         }.bind(this, continuation, token));
       }.bind(this, continuation, token, xhr));
@@ -63,7 +62,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       });
     }.bind(this, continuation));
     return;
-  } 
+  }
 
   if (!this.client) {
     this.initializeState();
