@@ -31,7 +31,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       var oauthUrl = "https://accounts.google.com/o/oauth2/auth?" +
                "client_id=" + this.oAuthClientId +
                "&scope=" + this.oAuthScope +
-               "&redirect_uri=" + encodeURIComponent(stateObj.redirect) + 
+               "&redirect_uri=" + encodeURIComponent(stateObj.redirect) +
                "&state=" + encodeURIComponent(stateObj.state) +
                "&response_type=token";
       var url = 'https://accounts.google.com/accountchooser?continue=' +
@@ -51,7 +51,6 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
             oauth2_auth: 'http://www.google.com/talk/protocol/auth',
             host: 'talk.google.com'
           };
-          this.logger.log('Got googletalk credentials: ' + JSON.stringify(credentials));
           this.onCredentials(continuation, {cmd: 'auth', message: credentials});
         }.bind(this, continuation, token));
       }.bind(this, continuation, token, xhr));
@@ -66,7 +65,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       });
     }.bind(this, continuation));
     return;
-  } 
+  }
 
   if (!this.client) {
     this.initializeState();

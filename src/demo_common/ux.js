@@ -67,7 +67,7 @@ function start(instance) {
     }
 
   }
-  
+
   // on changes to the buddylist, redraw entire buddylist
   chatClient.on('recv-buddylist', function (val) {
     buddylist = val;
@@ -82,7 +82,7 @@ function start(instance) {
       message = displayName + ": " + data.message;
     appendLog(document.createTextNode(message));
   });
-  
+
   // On new messages, append it to our message log
   chatClient.on('recv-err', function (data) {
     document.getElementById('uid').textContent = "Error: " + data.message;
@@ -118,7 +118,7 @@ function start(instance) {
   };
 
   // Just call boot when login is clicked
-  document.getElementById('log-in-or-out').onclick = function() {
+  document.getElementById('uid').onclick = function() {
     chatClient.login();
   };
 }
