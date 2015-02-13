@@ -184,8 +184,16 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     this.logger.error('received unhandled close event', e);
   }.bind(this));
   this.client.addListener('end', function(e) {
-    // TODO: figure out when this is fired and handle this.
-    this.logger.error('received unhandled end event', e);
+    this.logger.error('received end event, status: ' + this.status, e);
+    if (this.status !== 'ONLINE') {
+      // Reject login promise.
+      continuation(undefined, {
+        errcode: 'LOGIN_FAILEDCONNECTION',
+        message: 'Received end event'
+      });
+    } else {
+      this.logout();
+    }
   }.bind(this));
   this.client.addListener('stanza', this.onMessage.bind(this));
 };

@@ -261,4 +261,24 @@ describe("Tests for message batching in Social provider", function() {
     expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
         'onMessage', {from: fromClient, to: toClient, message: 'hello'});
   });
+
+  it('end event rejects connect if not online', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    var continuationSpy = jasmine.createSpy('spy');
+    xmppSocialProvider.connect(continuationSpy);
+    spyOn(xmppSocialProvider, 'logout');
+    xmppSocialProvider.client.events['end']();
+    expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
+    expect(continuationSpy).toHaveBeenCalledWith(undefined,
+        {errcode: 'LOGIN_FAILEDCONNECTION', message: 'Received end event'});
+  });
+
+  it('end event calls logout if online', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    xmppSocialProvider.connect(function() {});
+    spyOn(xmppSocialProvider, 'logout');
+    xmppSocialProvider.client.events['online']();
+    xmppSocialProvider.client.events['end']();
+    expect(xmppSocialProvider.logout).toHaveBeenCalled();
+  });
 });
