@@ -262,7 +262,7 @@ describe("Tests for message batching in Social provider", function() {
         'onMessage', {from: fromClient, to: toClient, message: 'hello'});
   });
 
-  it('end event rejects connect if not online', function() {
+  it('end event rejects connect if logging in', function() {
     spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
     var continuationSpy = jasmine.createSpy('spy');
     xmppSocialProvider.connect(continuationSpy);
@@ -280,5 +280,17 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.client.events['online']();
     xmppSocialProvider.client.events['end']();
     expect(xmppSocialProvider.logout).toHaveBeenCalled();
+  });
+
+  it('end event is ignored when user has logged out', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    var continuationSpy = jasmine.createSpy('spy');
+    xmppSocialProvider.connect(continuationSpy);
+    spyOn(xmppSocialProvider, 'logout');
+    xmppSocialProvider.client.events['online']();
+    expect(continuationSpy.calls.count()).toBe(1);
+    xmppSocialProvider.logout();
+    expect(xmppSocialProvider.logout.calls.count()).toBe(1);
+    expect(continuationSpy.calls.count()).toBe(1);
   });
 });
