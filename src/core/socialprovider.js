@@ -179,10 +179,9 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
   }.bind(this));
   this.client.addListener('close', function(e) {
-    // This may indicate a broken connection to XMPP.
-    // TODO: handle this.
-    this.logger.error('received unhandled close event', e);
+    this.logger.error('received close event', e);
     if (this.status === 'ONLINE') {
+      // Check if we are still online, otherwise log out.
       this.ping_();
     }
   }.bind(this));
