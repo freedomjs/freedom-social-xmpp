@@ -334,6 +334,17 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
   this.lastMessageTimestampMs_ = Date.now();
   // Is it a message?
   if (msg.is('message') && msg.getChildText('body') && msg.attrs.type !== 'error') {
+    if (!this.vCardStore.hasClient(msg.attrs.from)) {
+      // If we don't already have a client for the message sender, create a
+      // client with ONLINE_WITH_OTHER_APP.  If we don't do this, we may emit
+      // onClientState events without any status field.
+      // See https://github.com/uProxy/uproxy/issues/892 for more info.
+      // TODO: periodically re-sync the roster so we don't keep this client
+      // ONLINE_WITH_OTHER_APP forever.
+      // https://github.com/freedomjs/freedom-social-xmpp/issues/107
+      this.vCardStore.updateProperty(
+          msg.attrs.from, 'status', 'ONLINE_WITH_OTHER_APP');
+    }
     this.sawClient(msg.attrs.from);
     // TODO: check the agent matches our resource Id so we don't pick up chats not directed
     // at this client.

@@ -32,6 +32,10 @@ VCardStore.prototype.REQUEST_TIMEOUT = 3000;
 
 VCardStore.prototype.THROTTLE_TIMEOUT = 500;
 
+VCardStore.prototype.hasClient = function(user) {
+  return this.clients[user] ? true : false;
+};
+
 VCardStore.prototype.getClient = function(user) {
   var userid = new window.XMPP.JID(user).bare().toString(), state = {
     userId: userid,
@@ -46,7 +50,7 @@ VCardStore.prototype.getClient = function(user) {
     state.lastSeen = this.clients[user].lastSeen;
     state.lastUpdated = this.clients[user].lastUpdated;
   }
-  
+
   return state;
 };
 
@@ -54,7 +58,7 @@ VCardStore.prototype.getClients = function() {
   var client, cards = {};
   for (client in this.clients) {
     if (this.clients.hasOwnProperty(client)) {
-      cards[client] = this.getClient(client); 
+      cards[client] = this.getClient(client);
     }
   }
   return cards;
@@ -64,7 +68,7 @@ VCardStore.prototype.getUser = function(user) {
   var state = {
     userId: user
   };
-  
+
   if (this.users[user]) {
     state.lastSeen = this.clients[user].lastSeen;
     state.lastUpdated = this.clients[user].lastUpdated;
