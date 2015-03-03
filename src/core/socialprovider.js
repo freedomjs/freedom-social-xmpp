@@ -37,7 +37,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.lastMessageTimestampMs_ = null;
   this.pollForDisconnectInterval_ = null;
   this.MAX_MS_WITHOUT_COMMUNICATION_ = 60000;
-  this.MAX_MS_PING_REPSONSE_ = 10000;
+  this.MAX_MS_PING_REPSONSE_ = 5000;
 
   // Metadata about the roster
   this.vCardStore = new VCardStore();
@@ -179,19 +179,23 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
   }.bind(this));
   this.client.addListener('close', function(e) {
-    // This may indicate a broken connection to XMPP.
-    // TODO: handle this.
-    this.logger.error('received unhandled close event', e);
+    this.logger.error('received close event', e);
+    if (this.status === 'ONLINE') {
+      // Check if we are still online, otherwise log out.
+      this.ping_();
+    }
   }.bind(this));
   this.client.addListener('end', function(e) {
-    this.logger.error('received end event, status: ' + this.status, e);
-    if (this.status !== 'ONLINE') {
-      // Reject login promise.
+    if (this.status !== 'ONLINE' && this.client) {
+      // Login is still pending, reject the login promise.
+      this.logger.error('Received end event while logging in');
       continuation(undefined, {
         errcode: 'LOGIN_FAILEDCONNECTION',
         message: 'Received end event'
       });
-    } else {
+    } else if (this.client) {
+      // Got an 'end' event without logout having been called, call logout.
+      this.logger.error('Received unexpected end event');
       this.logout();
     }
   }.bind(this));
@@ -202,7 +206,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
  * Clear any credentials / state in the app.
  * @method clearCachedCredentials
  */
-XMPPSocialProvider.prototype.clearCachedCredentials  = function(continuation) {
+XMPPSocialProvider.prototype.clearCachedCredentials = function(continuation) {
   delete this.credentials;
   continuation();
 };
