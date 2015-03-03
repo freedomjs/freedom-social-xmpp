@@ -341,6 +341,7 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
       // See https://github.com/uProxy/uproxy/issues/892 for more info.
       // TODO: periodically re-sync the roster so we don't keep this client
       // ONLINE_WITH_OTHER_APP forever.
+      // https://github.com/freedomjs/freedom-social-xmpp/issues/107
       this.vCardStore.updateProperty(
           msg.attrs.from, 'status', 'ONLINE_WITH_OTHER_APP');
     }
