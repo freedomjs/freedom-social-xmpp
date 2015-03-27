@@ -267,10 +267,11 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
           messageType =
             (this.vCardStore.getClient(to).status === 'ONLINE') ?
                 'normal' : 'chat',
-          message = new window.XMPP.Element('message', {
+          stanza = new window.XMPP.Element('message', {
             to: to,
             type: messageType
-          }).c('body'),
+          }),
+          message = stanza.c('body'),
           body;
 
         if (messageType === 'normal') {
@@ -285,6 +286,12 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
             body += this.messages[to][i].message + '\n';
           }
           message.t(body);
+          
+          stanza.c('nos:skiparchive', {
+            value: 'true',
+            'xmlns:nos' : 'google:nosave'
+          });
+          
         }
 
         try {
