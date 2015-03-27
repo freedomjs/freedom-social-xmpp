@@ -24,14 +24,13 @@ var Chat = function (dispatchEvent) {
 };
 
 Chat.prototype.login = function() {
-  var promise = this.social.login({
+  return this.social.login({
     agent: 'chatdemo',
     version: '0.1',
     url: '',
     interactive: true,
     rememberLogin: false
-  });
-  promise.then(function (ret) {
+  }).then(function (ret) {
     this.myClientState = ret;
     logger.log("onLogin", this.myClientState);
     if (ret.status === this.social.STATUS.ONLINE) {
@@ -44,10 +43,9 @@ Chat.prototype.login = function() {
     logger.log("Log In Failed", err);
     this.dispatchEvent("recv-err", err);
   }.bind(this));
-  return promise;
 };
 
-/** 
+/**
  * sent messages should be forwarded to the Social provider.
  **/
 Chat.prototype.send = function (to, message) {
@@ -64,7 +62,7 @@ Chat.prototype.boot = function (arg) {
     logger.info("Message Received", data);
     this.dispatchEvent('recv-message', data);
   }.bind(this));
-  
+
   /**
   * On user profile changes, let's keep track of them
   **/
@@ -73,7 +71,7 @@ Chat.prototype.boot = function (arg) {
     this.userList[data.userId] = data;
     this.updateBuddyList();
   }.bind(this));
-  
+
   /**
   * On newly online or offline clients, let's update the roster
   **/
@@ -94,7 +92,7 @@ Chat.prototype.boot = function (arg) {
         this.dispatchEvent('recv-status', "offline");
       }
     }
-    
+
     this.updateBuddyList();
   }.bind(this));
 

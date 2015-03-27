@@ -34,6 +34,10 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.credentials = null;
   this.id = null;
   this.loginOpts = null;
+  this.lastMessageTimestampMs_ = null;
+  this.pollForDisconnectInterval_ = null;
+  this.MAX_MS_WITHOUT_COMMUNICATION_ = 60000;
+  this.MAX_MS_PING_REPSONSE_ = 5000;
 
   // Metadata about the roster
   this.vCardStore = new VCardStore();
@@ -143,7 +147,6 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
   }
 
   try {
-    this.logger.warn(JSON.stringify(connectOpts));
     this.client = new window.XMPP.Client(connectOpts);
   } catch(e) {
     this.logger.error(e.stack);
@@ -176,13 +179,25 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
   }.bind(this));
   this.client.addListener('close', function(e) {
-    // This may indicate a broken connection to XMPP.
-    // TODO: handle this.
-    this.logger.error('received unhandled close event', e);
+    this.logger.error('received close event', e);
+    if (this.status === 'ONLINE') {
+      // Check if we are still online, otherwise log out.
+      this.ping_();
+    }
   }.bind(this));
   this.client.addListener('end', function(e) {
-    // TODO: figure out when this is fired and handle this.
-    this.logger.error('received unhandled end event', e);
+    if (this.status !== 'ONLINE' && this.client) {
+      // Login is still pending, reject the login promise.
+      this.logger.error('Received end event while logging in');
+      continuation(undefined, {
+        errcode: 'LOGIN_FAILEDCONNECTION',
+        message: 'Received end event'
+      });
+    } else if (this.client) {
+      // Got an 'end' event without logout having been called, call logout.
+      this.logger.error('Received unexpected end event');
+      this.logout();
+    }
   }.bind(this));
   this.client.addListener('stanza', this.onMessage.bind(this));
 };
@@ -191,7 +206,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
  * Clear any credentials / state in the app.
  * @method clearCachedCredentials
  */
-XMPPSocialProvider.prototype.clearCachedCredentials  = function(continuation) {
+XMPPSocialProvider.prototype.clearCachedCredentials = function(continuation) {
   delete this.credentials;
   continuation();
 };
@@ -264,9 +279,8 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         // can't communicate across different client types, but sending all as
         // type 'chat' means messages will be broadcast to all clients.
         var i = 0,
-          messageType =
-            (this.vCardStore.getClient(to).status === 'ONLINE') ?
-                'normal' : 'chat',
+          status = this.vCardStore.getClient(to).status,
+          messageType = status === 'ONLINE_WITH_OTHER_APP' ? 'chat' : 'normal',
           stanza = new window.XMPP.Element('message', {
             to: to,
             type: messageType
@@ -274,7 +288,7 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
           message = stanza.c('body'),
           body;
 
-        if (messageType === 'normal') {
+        if (status === 'ONLINE') {
           body = [];
           for (i = 0; i < this.messages[to].length; i += 1) {
             body.push(this.messages[to][i].message);
@@ -283,15 +297,18 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         } else {
           body = '';
           for (i = 0; i < this.messages[to].length; i += 1) {
-            body += this.messages[to][i].message + '\n';
+            if (i > 0) {
+              body += '\n';
+            }
+            body += this.messages[to][i].message;
           }
           message.t(body);
-          
+
           stanza.c('nos:skiparchive', {
             value: 'true',
             'xmlns:nos' : 'google:nosave'
           });
-          
+
         }
 
         try {
@@ -321,8 +338,20 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
  * @private
  */
 XMPPSocialProvider.prototype.onMessage = function(msg) {
+  this.lastMessageTimestampMs_ = Date.now();
   // Is it a message?
   if (msg.is('message') && msg.getChildText('body') && msg.attrs.type !== 'error') {
+    if (!this.vCardStore.hasClient(msg.attrs.from)) {
+      // If we don't already have a client for the message sender, create a
+      // client with ONLINE_WITH_OTHER_APP.  If we don't do this, we may emit
+      // onClientState events without any status field.
+      // See https://github.com/uProxy/uproxy/issues/892 for more info.
+      // TODO: periodically re-sync the roster so we don't keep this client
+      // ONLINE_WITH_OTHER_APP forever.
+      // https://github.com/freedomjs/freedom-social-xmpp/issues/107
+      this.vCardStore.updateProperty(
+          msg.attrs.from, 'status', 'ONLINE_WITH_OTHER_APP');
+    }
     this.sawClient(msg.attrs.from);
     // TODO: check the agent matches our resource Id so we don't pick up chats not directed
     // at this client.
@@ -366,8 +395,18 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
  * @param {String} msgs A batch of messages.
  */
 XMPPSocialProvider.prototype.receiveMessage = function(from, msgs) {
-  var i, parsedMessages = JSON.parse(msgs);
-  for (i = 0; i < parsedMessages.length; i+=1) {
+  var parsedMessages;
+  try {
+    // Split msgs into an array only if it is a JSON formatted array.
+    parsedMessages = JSON.parse(msgs);
+    if (!XMPPSocialProvider.isArray(parsedMessages)) {
+      parsedMessages = [msgs];
+    }
+  } catch(e) {
+    // msgs is not valid JSON, just emit one onMessage with that string.
+    parsedMessages = [msgs];
+  }
+  for (var i = 0; i < parsedMessages.length; i+=1) {
     this.dispatchEvent('onMessage', {
       from: this.vCardStore.getClient(from),
       to: this.vCardStore.getClient(this.id),
@@ -424,14 +463,13 @@ XMPPSocialProvider.prototype.onPresence = function(msg) {
   } else {
     if (msg.getChild('c') && msg.getChild('c').attrs.node === this.loginOpts.url) {
       this.vCardStore.updateProperty(user, 'status', 'ONLINE');
+      this.vCardStore.refreshContact(user, hash);
     } else {
       this.vCardStore.updateProperty(user, 'status', 'ONLINE_WITH_OTHER_APP');
     }
   }
 
   this.vCardStore.updateProperty(user, 'xmppStatus', status);
-
-  this.vCardStore.refreshContact(user, hash);
 };
 
 XMPPSocialProvider.prototype.updateRoster = function(msg) {
@@ -440,14 +478,14 @@ XMPPSocialProvider.prototype.updateRoster = function(msg) {
       vCard = msg.getChild('vCard'),
       items, i;
 
-  // Response to Query
+  // Response to roster query
   if (query && query.attrs.xmlns === 'jabber:iq:roster') {
     items = query.getChildren('item');
     for (i = 0; i < items.length; i += 1) {
       if(items[i].attrs.jid && items[i].attrs.name) {
         this.vCardStore.updateUser(items[i].attrs.jid, 'name',
             items[i].attrs.name);
-        this.vCardStore.refreshContact(items[i].attrs.jid);
+        //this.vCardStore.refreshContact(items[i].attrs.jid);
       }
     }
   }
@@ -484,12 +522,69 @@ XMPPSocialProvider.prototype.onOnline = function(continuation) {
   this.vCardStore.updateProperty(this.id, 'status', 'ONLINE');
   this.vCardStore.refreshContact(this.id, null);
 
+  this.startPollingForDisconnect_();
+
   continuation(this.vCardStore.getClient(this.id));
+};
+
+XMPPSocialProvider.prototype.ping_ = function() {
+  var pingTimestampMs = Date.now();
+  var ping = new window.XMPP.Element('iq', {type: 'get'})
+      .c('ping', {'xmlns': 'urn:xmpp:ping'}).up();
+  this.client.send(ping);
+
+  // Check that we got a response from the server after the ping was sent.
+  setTimeout(function() {
+    if (this.client &&  // check this.client to be sure logout wasn't called.
+        (!this.lastMessageTimestampMs_ ||
+         this.lastMessageTimestampMs_ < pingTimestampMs)) {
+      // No response to ping, we are disconnected.
+      console.warn('No ping response from server, logging out');
+      this.logout();
+    }
+  }.bind(this), this.MAX_MS_PING_REPSONSE_);
+};
+
+XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
+  if (this.pollForDisconnectInterval_) {
+    console.error('startPollingForDisconnect_ called while already polling');
+    return;
+  }
+
+  var lastAwakeTimestampMs = Date.now();
+  this.pollForDisconnectInterval_ = setInterval(function() {
+    // Check if the computer had gone to sleep
+    var nowTimestampMs = Date.now();
+    if (nowTimestampMs - lastAwakeTimestampMs > 2000) {
+      // Timeout expected to run every 1000 ms didn't run for over 2000 ms,
+      // probably because the computer went to sleep.  Send a ping to check
+      // that we are still connected to the XMPP server.
+      console.log('Detected sleep for ' +
+          (nowTimestampMs - lastAwakeTimestampMs) + 'ms');
+      this.ping_();
+    }
+    lastAwakeTimestampMs = nowTimestampMs;
+
+    // Check that we are still receiving data from the XMPP server, about
+    // once per minute (randomized).
+    var seconds = Math.floor((nowTimestampMs / 1000) % 60);
+    if (seconds === Math.floor(Math.random() * 60) &&
+        (!this.lastMessageTimestampMs_ ||
+         nowTimestampMs - this.lastMessageTimestampMs_ >
+         this.MAX_MS_WITHOUT_COMMUNICATION_)) {
+      this.ping_();
+    }
+  }.bind(this), 1000);
 };
 
 XMPPSocialProvider.prototype.logout = function(continuation) {
   this.status = 'offline';
   this.credentials = null;
+  this.lastMessageTimestampMs_ = null;
+  if (this.pollForDisconnectInterval_) {
+    clearInterval(this.pollForDisconnectInterval_);
+    this.pollForDisconnectInterval_ = null;
+  }
   if (this.client) {
     this.client.send(new window.XMPP.Element('presence', {
       type: 'unavailable'
@@ -497,7 +592,9 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
     this.client.end();
     this.client = null;
   }
-  continuation();
+  if (continuation) {
+    continuation();
+  }
 };
 
 XMPPSocialProvider.prototype.requestUserStatus = function(user) {
@@ -517,6 +614,10 @@ XMPPSocialProvider.prototype.onUserChange = function(card) {
 
 XMPPSocialProvider.prototype.onClientChange = function(card) {
   this.dispatchEvent('onClientState', card);
+};
+
+XMPPSocialProvider.isArray = function(a) {
+  return Array.isArray ? Array.isArray(a) : (a instanceof Array);
 };
 
 // Register provider when in a module context.

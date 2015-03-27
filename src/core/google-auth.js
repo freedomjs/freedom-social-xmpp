@@ -31,7 +31,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       var oauthUrl = "https://accounts.google.com/o/oauth2/auth?" +
                "client_id=" + this.oAuthClientId +
                "&scope=" + this.oAuthScope +
-               "&redirect_uri=" + encodeURIComponent(stateObj.redirect) + 
+               "&redirect_uri=" + encodeURIComponent(stateObj.redirect) +
                "&state=" + encodeURIComponent(stateObj.state) +
                "&response_type=token";
       var url = 'https://accounts.google.com/accountchooser?continue=' +
@@ -39,21 +39,22 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       return this.oauth.launchAuthFlow(url, stateObj);
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json');
+      var xhr = freedom["core.xhr"]();
+      xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', true);
+      xhr.on("onload", function(continuation, token, xhr) {
+        xhr.getResponseText().then(function(continuation, token, responseText) {
+          var response = JSON.parse(responseText);
+          var credentials = {
+            userId: response.email,
+            jid: response.email,
+            oauth2_token: token,
+            oauth2_auth: 'http://www.google.com/talk/protocol/auth',
+            host: 'talk.google.com'
+          };
+          this.onCredentials(continuation, {cmd: 'auth', message: credentials});
+        }.bind(this, continuation, token));
+      }.bind(this, continuation, token, xhr));
       xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-      xhr.onload = function(continuation, token, xhr) {
-        var response = JSON.parse(xhr.response);
-        var credentials = {
-          userId: response.email,
-          jid: response.email,
-          oauth2_token: token,
-          oauth2_auth: 'http://www.google.com/talk/protocol/auth',
-          host: 'talk.google.com'
-        };
-        this.logger.log('Got googletalk credentials: ' + JSON.stringify(credentials));
-        this.onCredentials(continuation, {cmd: 'auth', message: credentials});
-      }.bind(this, continuation, token, xhr);
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
       this.logger.error(err);
@@ -64,7 +65,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       });
     }.bind(this, continuation));
     return;
-  } 
+  }
 
   if (!this.client) {
     this.initializeState();

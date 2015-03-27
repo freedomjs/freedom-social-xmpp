@@ -5,7 +5,7 @@ XMPPSocialProvider.prototype.oAuthRedirectUris = [
   "https://fmdppkkepalnkeommjadgbhiohihdhii.chromiumapp.org/",
   "https://www.uproxy.org/oauth-redirect-uri",
   "http://freedomjs.org/",
-  //'http://localhost/*',
+  'http://localhost:8080/'
 ];
 XMPPSocialProvider.prototype.oAuthClientId = '161927677344933';
 XMPPSocialProvider.prototype.oAuthScope = "email,xmpp_login,user_online_presence,friends_online_presence";
@@ -29,28 +29,29 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   if (!this.credentials) {
     this.oauth = freedom["core.oauth"]();
     this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
-      var url = "https://www.facebook.com/dialog/oauth?" + 
-                  "client_id=" + encodeURIComponent(this.oAuthClientId) + 
-                  "&scope=" + encodeURIComponent(this.oAuthScope) + 
-                  "&redirect_uri=" + encodeURIComponent(stateObj.redirect) + 
+      var url = "https://www.facebook.com/dialog/oauth?" +
+                  "client_id=" + encodeURIComponent(this.oAuthClientId) +
+                  "&scope=" + encodeURIComponent(this.oAuthScope) +
+                  "&redirect_uri=" + encodeURIComponent(stateObj.redirect) +
                   "&state=" + encodeURIComponent(stateObj.state) +
                   "&response_type=token";
       return this.oauth.launchAuthFlow(url, stateObj);
     }.bind(this)).then(function(continuation, responseUrl) {
       var token = responseUrl.match(/access_token=([^&]+)/)[1];
-      var xhr = new XMLHttpRequest();
+      var xhr = freedom["core.xhr"]();
       xhr.open('GET', 'https://graph.facebook.com/me?access_token='+token);
-      xhr.onload = function(continuation, token, xhr) {
-        var response = JSON.parse(xhr.responseText);
-        var credentials = {
-          jid: '-'+response.id+'@chat.facebook.com',
-          access_token: token,
-          api_key: this.oAuthAppSecret,  // secret, not id!
-          host: 'chat.facebook.com'
-        };
-        this.logger.log('Got facebook credentials: ' + JSON.stringify(credentials));
-        this.onCredentials(continuation, {cmd: 'auth', message: credentials});
-      }.bind(this, continuation, token, xhr);
+      xhr.on("onload", function(continuation, token, xhr) {
+        xhr.getResponseText().then(function(continuation, token, responseText) {
+          var response = JSON.parse(responseText);
+          var credentials = {
+            jid: '-'+response.id+'@chat.facebook.com',
+            access_token: token,
+            api_key: this.oAuthAppSecret,  // secret, not id!
+            host: 'chat.facebook.com'
+          };
+          this.onCredentials(continuation, {cmd: 'auth', message: credentials});
+        }.bind(this, continuation, token));
+      }.bind(this, continuation, token, xhr));
       xhr.send();
     }.bind(this, continuation)).catch(function (continuation, err) {
       this.logger.error(err);
@@ -61,7 +62,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
       });
     }.bind(this, continuation));
     return;
-  } 
+  }
 
   if (!this.client) {
     this.initializeState();

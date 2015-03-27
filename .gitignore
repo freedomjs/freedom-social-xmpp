@@ -6,3 +6,4 @@ dist/
 /npm-debug.log
 .grunt/
 .*.swp
+_SpecRunner.html
