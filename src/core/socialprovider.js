@@ -303,13 +303,12 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
             body += this.messages[to][i].message;
           }
           message.t(body);
-
-          stanza.c('nos:skiparchive', {
-            value: 'true',
-            'xmlns:nos' : 'google:nosave'
-          });
-
         }
+
+        stanza.c('nos:skiparchive', {
+          value: 'true',
+          'xmlns:nos' : 'google:nosave'
+        });
 
         try {
           this.client.send(message);
