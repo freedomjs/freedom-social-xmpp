@@ -294,6 +294,10 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
             body.push(this.messages[to][i].message);
           }
           message.t(JSON.stringify(body));
+          stanza.c('nos:skiparchive', {
+            value: 'true',
+            'xmlns:nos' : 'google:nosave'
+          });
         } else {
           body = '';
           for (i = 0; i < this.messages[to].length; i += 1) {
@@ -305,10 +309,6 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
           message.t(body);
         }
 
-        stanza.c('nos:skiparchive', {
-          value: 'true',
-          'xmlns:nos' : 'google:nosave'
-        });
 
         try {
           this.client.send(message);

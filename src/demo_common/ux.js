@@ -33,8 +33,8 @@ function start(instance) {
 
   function makeDisplayString(buddylistEntry) {
     return buddylistEntry.name && buddylistEntry.name !== buddylistEntry.userId ?
-        buddylistEntry.name + ' (' + buddylistEntry.userId + ')' :
-        buddylistEntry.userId;
+        buddylistEntry.name + ' (' + buddylistEntry.clientId + ')' :
+        buddylistEntry.clientId;
   }
 
   function redrawBuddylist() {
@@ -77,8 +77,8 @@ function start(instance) {
   // On new messages, append it to our message log
   chatClient.on('recv-message', function (data) {
     // Show the name instead of the userId, if it's available.
-    var userId = data.from.userId,
-      displayName = buddylist[userId].name || userId,
+    var clientId = data.from.clientId,
+      displayName = buddylist[clientId].name || clientId,
       message = displayName + ": " + data.message;
     appendLog(document.createTextNode(message));
   });
@@ -113,7 +113,7 @@ function start(instance) {
       var text = input.value;
       input.value = "";
       appendLog(document.createTextNode("You: " + text));
-      chatClient.send(activeBuddylistEntry.userId, text);
+      chatClient.send(activeBuddylistEntry.clientId, text);
     }
   };
 
