@@ -105,7 +105,8 @@ Chat.prototype.updateBuddyList = function () {
     if (this.clientList.hasOwnProperty(k)) {
       userId = this.clientList[k].userId;
       if (this.userList[userId]) {
-        buddylist[userId] = this.userList[userId];
+        buddylist[k] = this.clientList[k];
+        buddylist[k].name = this.userList[userId].name;
       }
     }
   }
