@@ -91,56 +91,30 @@ VCardStore.prototype.getUsers = function() {
 };
 
 VCardStore.prototype.updateVcard = function(from, message) {
-  var userid = new window.XMPP.JID(from).bare().toString(),
-      user = this.users[userid] || {},
-      name, url, photo,
-      changed = false;
+  var userid = new window.XMPP.JID(from).bare().toString();
+
   if (message.attr('xmlns') !== 'vcard-temp' ||
      !this.storage) {
     return;
   }
 
-  user.userId = userid;
-  name = message.getChildText('FN');
-  url = message.getChildText('URL');
-  photo = message.getChild('PHOTO');
+  if (message.getChildText("FN")) {
+    this.updateUser(userid, "name", message.getChildText("FN"));
+  }
+  if (message.getChildText("URL")) {
+    this.updateUser(userid, "url", message.getChildText("URL"));
+  }
 
-  if (name) {
-    if (name !== user.name) {
-      changed = true;
-    }
-    user.name = name;
-  }
-  if (url) {
-    if (url !== user.url) {
-      changed = true;
-    }
-    user.url = url;
-  }
+  var photo = message.getChild('PHOTO');
   if (photo && photo.getChildText('EXTVAL')) {
-    if (user.imageData !== photo.getChildText('EXTVAL')) {
-      changed = true;
-    }
-    user.imageData = photo.getChildText('EXTVAL');
+    this.updateUser(userid, "imageData", photo.getChildText("EXTVAL"));
   } else if (photo && photo.getChildText('TYPE') &&
             photo.getChildText('BINVAL')) {
-    url = 'data:' +
+    this.updateUser(userid, "imageData", 'data:' +
       photo.getChildText('TYPE') + ';base64,' +
       photo.getChildText('BINVAL');
-    if (user.imageData !== url) {
-      changed = true;
-    }
-    user.imageData = url;
+    );
   }
-
-  user.lastSeen = Date.now();
-  if (changed) {
-    user.lastUpdated = Date.now();
-    this.users[userid] = user;
-    this.onUserChange(user);
-  }
-
-  this.storage.set('vcard-' + userid, JSON.stringify(user));
 };
 
 /**
@@ -174,6 +148,7 @@ VCardStore.prototype.updateUser = function(user, property, value) {
   this.users[user].lastSeen = Date.now();
   this.users[user].lastUpdated = Date.now();
   this.onUserChange(this.users[user]);
+  this.storage.set('vcard-' + userid, JSON.stringify(this.users[user]));
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {
