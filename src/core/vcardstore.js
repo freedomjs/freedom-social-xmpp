@@ -3,13 +3,15 @@
 
 VCardStore = function () {
   if (freedom && freedom['core.storage']) {
-    this.storage = freedom['core.storage']();
+    this._storage = freedom['core.storage']();
   }
   this.clients = {};
   this.users = {};
-  this.requestTime = {};
-  this.requestQueue = [];
-  this.fetchTime = new Date();
+  this._requestTime = {};
+  this._requestQueue = [];
+  this._fetchTime = new Date();
+
+  this._init();
 };
 
 /**
@@ -31,6 +33,8 @@ VCardStore.prototype.onClientChange = function(card) {};
 VCardStore.prototype.REQUEST_TIMEOUT = 3000;
 
 VCardStore.prototype.THROTTLE_TIMEOUT = 500;
+
+VCardStore.prototype.PREFIX = "vcard-";
 
 VCardStore.prototype.hasClient = function(user) {
   return this.clients[user] ? true : false;
@@ -94,7 +98,7 @@ VCardStore.prototype.updateVcard = function(from, message) {
   var userid = new window.XMPP.JID(from).bare().toString();
 
   if (message.attr('xmlns') !== 'vcard-temp' ||
-     !this.storage) {
+     !this._storage) {
     return;
   }
 
@@ -148,42 +152,60 @@ VCardStore.prototype.updateUser = function(user, property, value) {
   this.users[user].lastSeen = Date.now();
   this.users[user].lastUpdated = Date.now();
   this.onUserChange(this.users[user]);
-  this.storage.set('vcard-' + userid, JSON.stringify(this.users[user]));
+  if (this._storage) {
+    this._storage.set(this.PREFIX + userid, JSON.stringify(this.users[user]));
+  }
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {
   var userid = new window.XMPP.JID(user).bare().toString();
-
-  this.storage.get('vcard-' + userid).then(function(result) {
-    if (result === null || result === undefined) {
-      this.fetchVcard(user);
-    } else if (hash && hash !== result.hash) {
-      this.fetchVcard(user);
-    }
-  }.bind(this));
-};
-
-VCardStore.prototype.fetchVcard = function(user) {
   var time = new Date();
-  if (!this.requestTime[user] || (time - this.requestTime[user] >
-                                  this.REQUEST_TIMEOUT)) {
-    this.requestTime[user] = time;
-    this.requestQueue.push(user);
-    this.checkVCardQueue();
+  
+  if (!this.users.hasOwnProperty(userid) ||
+      (hash && this.users[userid].hash !== hash)) {
+    if (!this._requestTime[user] || 
+        (time - this._requestTime[user] > this.REQUEST_TIMEOUT)) {
+      this._requestTime[user] = time;
+      this._requestQueue.push(user);
+      this._checkVCardQueue();
+    }
   }
 };
 
-VCardStore.prototype.checkVCardQueue = function() {
+VCardStore.prototype._checkVCardQueue = function() {
   var time = new Date(), next;
-  if (this.requestQueue.length < 1) {
+  if (this._requestQueue.length < 1) {
     return;
-  } else if ((time - this.fetchTime) > this.THROTTLE_TIMEOUT) {
-    next = this.requestQueue.shift();
-    this.fetchTime = time;
+  } else if ((time - this._fetchTime) > this.THROTTLE_TIMEOUT) {
+    next = this._requestQueue.shift();
+    this._fetchTime = time;
 
     // Request loadCard from delegate.
     this.loadCard(next);
   } else {
-    setTimeout(this.checkVCardQueue.bind(this), this.THROTTLE_TIMEOUT);
+    setTimeout(this._checkVCardQueue.bind(this), this.THROTTLE_TIMEOUT);
   }
+};
+
+VCardStore.prototype._init = function() {
+  var userId, profile;
+  if (!this._storage) {
+    return;
+  }
+
+  this._storage.keys().then(function(keys) {
+    for(var i=0; i<keys.length; i++) {
+      var k = keys[i];
+      if (k.substr(0, this.PREFIX.length) == this.PREFIX) {
+        this._storage.get(k).then(function(k, v) {
+          try {
+            userId = k.substr(this.PREFIX.length);
+            this.users[userId] = JSON.parse(v);
+          } catch(e) {
+            console.warn(e);
+          }
+        }.bind(this, k));
+      }
+    }
+  }.bind(this));
 };
