@@ -1,4 +1,4 @@
-/*globals freedom:true,setTimeout,VCardStore,XMPPSocialProvider */
+/*globals freedom:true,setTimeout,VCardStore,XMPPSocialProvider,console */
 /*jslint indent:2,white:true,sloppy:true */
 
 XMPPSocialProvider.prototype.oAuthRedirectUris = [

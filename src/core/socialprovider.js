@@ -538,7 +538,7 @@ XMPPSocialProvider.prototype.ping_ = function() {
         (!this.lastMessageTimestampMs_ ||
          this.lastMessageTimestampMs_ < pingTimestampMs)) {
       // No response to ping, we are disconnected.
-      console.warn('No ping response from server, logging out');
+      this.logger.warn('No ping response from server, logging out');
       this.logout();
     }
   }.bind(this), this.MAX_MS_PING_REPSONSE_);
@@ -546,7 +546,7 @@ XMPPSocialProvider.prototype.ping_ = function() {
 
 XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
   if (this.pollForDisconnectInterval_) {
-    console.error('startPollingForDisconnect_ called while already polling');
+    this.logger.error('startPollingForDisconnect_ called while already polling');
     return;
   }
 
@@ -558,7 +558,7 @@ XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
       // Timeout expected to run every 1000 ms didn't run for over 2000 ms,
       // probably because the computer went to sleep.  Send a ping to check
       // that we are still connected to the XMPP server.
-      console.log('Detected sleep for ' +
+      this.logger.log('Detected sleep for ' +
           (nowTimestampMs - lastAwakeTimestampMs) + 'ms');
       this.ping_();
     }

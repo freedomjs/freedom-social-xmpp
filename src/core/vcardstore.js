@@ -97,10 +97,12 @@ VCardStore.prototype.getUsers = function() {
 VCardStore.prototype.updateVcard = function(from, message) {
   var userid = new window.XMPP.JID(from).bare().toString();
 
-  if (message.attr('xmlns') !== 'vcard-temp' ||
-     !this._storage) {
+  if (message.attr('xmlns') !== 'vcard-temp') {
     return;
   }
+
+  // Store that we've seen a vcard from the server
+  this.updateUser(userid, "haveVcard", true);
 
   if (message.getChildText("FN")) {
     this.updateUser(userid, "name", message.getChildText("FN"));
@@ -145,7 +147,8 @@ VCardStore.prototype.updateProperty = function(user, property, value) {
 VCardStore.prototype.updateUser = function(user, property, value) {
   if (!this.users[user]) {
     this.users[user] = {
-      userId: user
+      userId: user,
+      haveVcard: false
     };
   }
   this.users[user][property] = value;
@@ -160,11 +163,13 @@ VCardStore.prototype.updateUser = function(user, property, value) {
 VCardStore.prototype.refreshContact = function(user, hash) {
   var userid = new window.XMPP.JID(user).bare().toString();
   var time = new Date();
-  
-  if (!this.users.hasOwnProperty(userid) ||
+
+  if (!this.users.hasOwnProperty(userid) ||     // Haven't seen user
+      this.users[userid].haveVcard === false ||  // Haven't tried to request vcard before 
       (hash && this.users[userid].hash !== hash)) {
     if (!this._requestTime[user] || 
         (time - this._requestTime[user] > this.REQUEST_TIMEOUT)) {
+      this.updateUser(userid, "hash", hash);
       this._requestTime[user] = time;
       this._requestQueue.push(user);
       this._checkVCardQueue();
