@@ -208,7 +208,7 @@ VCardStore.prototype._init = function() {
   }
 
   this._storage.keys().then(function(keys) {
-    for(var i=0; i<keys.length; i++) {
+    for(var i = 0; i < keys.length; i++) {
       var k = keys[i];
       if (k.substr(0, this.PREFIX.length) === this.PREFIX) {
         this._storage.get(k).then(tryLoad.bind(this, k));
