@@ -1,4 +1,4 @@
-/*globals freedom:true,setTimeout,window,VCardStore:true */
+/*globals freedom:true,setTimeout,window,VCardStore:true,console */
 /*jslint indent:2,white:true,sloppy:true */
 
 VCardStore = function () {
@@ -116,7 +116,7 @@ VCardStore.prototype.updateVcard = function(from, message) {
             photo.getChildText('BINVAL')) {
     this.updateUser(userid, "imageData", 'data:' +
       photo.getChildText('TYPE') + ';base64,' +
-      photo.getChildText('BINVAL');
+      photo.getChildText('BINVAL')
     );
   }
 };
@@ -153,7 +153,7 @@ VCardStore.prototype.updateUser = function(user, property, value) {
   this.users[user].lastUpdated = Date.now();
   this.onUserChange(this.users[user]);
   if (this._storage) {
-    this._storage.set(this.PREFIX + userid, JSON.stringify(this.users[user]));
+    this._storage.set(this.PREFIX + user, JSON.stringify(this.users[user]));
   }
 };
 
@@ -189,6 +189,15 @@ VCardStore.prototype._checkVCardQueue = function() {
 
 VCardStore.prototype._init = function() {
   var userId, profile;
+  var tryLoad = function(k, v) {
+    try {
+      userId = k.substr(this.PREFIX.length);
+      this.users[userId] = JSON.parse(v);
+    } catch(e) {
+      console.warn(e);
+    }
+  };
+
   if (!this._storage) {
     return;
   }
@@ -196,15 +205,8 @@ VCardStore.prototype._init = function() {
   this._storage.keys().then(function(keys) {
     for(var i=0; i<keys.length; i++) {
       var k = keys[i];
-      if (k.substr(0, this.PREFIX.length) == this.PREFIX) {
-        this._storage.get(k).then(function(k, v) {
-          try {
-            userId = k.substr(this.PREFIX.length);
-            this.users[userId] = JSON.parse(v);
-          } catch(e) {
-            console.warn(e);
-          }
-        }.bind(this, k));
+      if (k.substr(0, this.PREFIX.length) === this.PREFIX) {
+        this._storage.get(k).then(tryLoad.bind(this, k));
       }
     }
   }.bind(this));
