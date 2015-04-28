@@ -37,7 +37,7 @@ var XMPPSocialProvider = function(dispatchEvent) {
   this.lastMessageTimestampMs_ = null;
   this.pollForDisconnectInterval_ = null;
   this.MAX_MS_WITHOUT_COMMUNICATION_ = 60000;
-  this.MAX_MS_PING_REPSONSE_ = 10000;
+  this.MAX_MS_PING_REPSONSE_ = 5000;
 
   // Metadata about the roster
   this.vCardStore = new VCardStore();
@@ -179,19 +179,23 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
     this.vCardStore.updateProperty(this.id, 'status', 'OFFLINE');
   }.bind(this));
   this.client.addListener('close', function(e) {
-    // This may indicate a broken connection to XMPP.
-    // TODO: handle this.
-    this.logger.error('received unhandled close event', e);
+    this.logger.error('received close event', e);
+    if (this.status === 'ONLINE') {
+      // Check if we are still online, otherwise log out.
+      this.ping_();
+    }
   }.bind(this));
   this.client.addListener('end', function(e) {
-    this.logger.error('received end event, status: ' + this.status, e);
-    if (this.status !== 'ONLINE') {
-      // Reject login promise.
+    if (this.status !== 'ONLINE' && this.client) {
+      // Login is still pending, reject the login promise.
+      this.logger.error('Received end event while logging in');
       continuation(undefined, {
         errcode: 'LOGIN_FAILEDCONNECTION',
         message: 'Received end event'
       });
-    } else {
+    } else if (this.client) {
+      // Got an 'end' event without logout having been called, call logout.
+      this.logger.error('Received unexpected end event');
       this.logout();
     }
   }.bind(this));
@@ -202,7 +206,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
  * Clear any credentials / state in the app.
  * @method clearCachedCredentials
  */
-XMPPSocialProvider.prototype.clearCachedCredentials  = function(continuation) {
+XMPPSocialProvider.prototype.clearCachedCredentials = function(continuation) {
   this.credentials = null;
   continuation();
 };
@@ -277,10 +281,11 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
         var i = 0,
           status = this.vCardStore.getClient(to).status,
           messageType = status === 'ONLINE_WITH_OTHER_APP' ? 'chat' : 'normal',
-          message = new window.XMPP.Element('message', {
+          stanza = new window.XMPP.Element('message', {
             to: to,
             type: messageType
-          }).c('body'),
+          }),
+          message = stanza.c('body'),
           body;
 
         if (status === 'ONLINE') {
@@ -299,6 +304,11 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
           }
           message.t(body);
         }
+
+        stanza.c('nos:skiparchive', {
+          value: 'true',
+          'xmlns:nos' : 'google:nosave'
+        });
 
         try {
           this.client.send(message);
@@ -330,6 +340,17 @@ XMPPSocialProvider.prototype.onMessage = function(msg) {
   this.lastMessageTimestampMs_ = Date.now();
   // Is it a message?
   if (msg.is('message') && msg.getChildText('body') && msg.attrs.type !== 'error') {
+    if (!this.vCardStore.hasClient(msg.attrs.from)) {
+      // If we don't already have a client for the message sender, create a
+      // client with ONLINE_WITH_OTHER_APP.  If we don't do this, we may emit
+      // onClientState events without any status field.
+      // See https://github.com/uProxy/uproxy/issues/892 for more info.
+      // TODO: periodically re-sync the roster so we don't keep this client
+      // ONLINE_WITH_OTHER_APP forever.
+      // https://github.com/freedomjs/freedom-social-xmpp/issues/107
+      this.vCardStore.updateProperty(
+          msg.attrs.from, 'status', 'ONLINE_WITH_OTHER_APP');
+    }
     this.sawClient(msg.attrs.from);
     // TODO: check the agent matches our resource Id so we don't pick up chats not directed
     // at this client.
@@ -517,7 +538,7 @@ XMPPSocialProvider.prototype.ping_ = function() {
         (!this.lastMessageTimestampMs_ ||
          this.lastMessageTimestampMs_ < pingTimestampMs)) {
       // No response to ping, we are disconnected.
-      console.warn('No ping response from server, logging out');
+      this.logger.warn('No ping response from server, logging out');
       this.logout();
     }
   }.bind(this), this.MAX_MS_PING_REPSONSE_);
@@ -525,7 +546,7 @@ XMPPSocialProvider.prototype.ping_ = function() {
 
 XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
   if (this.pollForDisconnectInterval_) {
-    console.error('startPollingForDisconnect_ called while already polling');
+    this.logger.error('startPollingForDisconnect_ called while already polling');
     return;
   }
 
@@ -537,7 +558,7 @@ XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
       // Timeout expected to run every 1000 ms didn't run for over 2000 ms,
       // probably because the computer went to sleep.  Send a ping to check
       // that we are still connected to the XMPP server.
-      console.log('Detected sleep for ' +
+      this.logger.log('Detected sleep for ' +
           (nowTimestampMs - lastAwakeTimestampMs) + 'ms');
       this.ping_();
     }

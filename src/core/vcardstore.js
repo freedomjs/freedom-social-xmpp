@@ -1,15 +1,17 @@
-/*globals freedom:true,setTimeout,window,VCardStore:true */
+/*globals freedom:true,setTimeout,window,VCardStore:true,console */
 /*jslint indent:2,white:true,sloppy:true */
 
 VCardStore = function () {
   if (freedom && freedom['core.storage']) {
-    this.storage = freedom['core.storage']();
+    this._storage = freedom['core.storage']();
   }
   this.clients = {};
   this.users = {};
-  this.requestTime = {};
-  this.requestQueue = [];
-  this.fetchTime = new Date();
+  this._requestTime = {};
+  this._requestQueue = [];
+  this._fetchTime = new Date();
+
+  this._init();
 };
 
 /**
@@ -32,6 +34,12 @@ VCardStore.prototype.REQUEST_TIMEOUT = 3000;
 
 VCardStore.prototype.THROTTLE_TIMEOUT = 500;
 
+VCardStore.prototype.PREFIX = "vcard-";
+
+VCardStore.prototype.hasClient = function(user) {
+  return this.clients[user] ? true : false;
+};
+
 VCardStore.prototype.getClient = function(user) {
   var userid = new window.XMPP.JID(user).bare().toString(), state = {
     userId: userid,
@@ -46,7 +54,7 @@ VCardStore.prototype.getClient = function(user) {
     state.lastSeen = this.clients[user].lastSeen;
     state.lastUpdated = this.clients[user].lastUpdated;
   }
-  
+
   return state;
 };
 
@@ -54,7 +62,7 @@ VCardStore.prototype.getClients = function() {
   var client, cards = {};
   for (client in this.clients) {
     if (this.clients.hasOwnProperty(client)) {
-      cards[client] = this.getClient(client); 
+      cards[client] = this.getClient(client);
     }
   }
   return cards;
@@ -64,7 +72,7 @@ VCardStore.prototype.getUser = function(user) {
   var state = {
     userId: user
   };
-  
+
   if (this.users[user]) {
     state.lastSeen = this.clients[user].lastSeen;
     state.lastUpdated = this.clients[user].lastUpdated;
@@ -87,56 +95,32 @@ VCardStore.prototype.getUsers = function() {
 };
 
 VCardStore.prototype.updateVcard = function(from, message) {
-  var userid = new window.XMPP.JID(from).bare().toString(),
-      user = this.users[userid] || {},
-      name, url, photo,
-      changed = false;
-  if (message.attr('xmlns') !== 'vcard-temp' ||
-     !this.storage) {
+  var userid = new window.XMPP.JID(from).bare().toString();
+
+  if (message.attr('xmlns') !== 'vcard-temp') {
     return;
   }
 
-  user.userId = userid;
-  name = message.getChildText('FN');
-  url = message.getChildText('URL');
-  photo = message.getChild('PHOTO');
+  // Store that we've seen a vcard from the server
+  this.updateUser(userid, "haveVcard", true);
 
-  if (name) {
-    if (name !== user.name) {
-      changed = true;
-    }
-    user.name = name;
+  if (message.getChildText("FN")) {
+    this.updateUser(userid, "name", message.getChildText("FN"));
   }
-  if (url) {
-    if (url !== user.url) {
-      changed = true;
-    }
-    user.url = url;
+  if (message.getChildText("URL")) {
+    this.updateUser(userid, "url", message.getChildText("URL"));
   }
+
+  var photo = message.getChild('PHOTO');
   if (photo && photo.getChildText('EXTVAL')) {
-    if (user.imageData !== photo.getChildText('EXTVAL')) {
-      changed = true;
-    }
-    user.imageData = photo.getChildText('EXTVAL');
+    this.updateUser(userid, "imageData", photo.getChildText("EXTVAL"));
   } else if (photo && photo.getChildText('TYPE') &&
             photo.getChildText('BINVAL')) {
-    url = 'data:' +
+    this.updateUser(userid, "imageData", 'data:' +
       photo.getChildText('TYPE') + ';base64,' +
-      photo.getChildText('BINVAL');
-    if (user.imageData !== url) {
-      changed = true;
-    }
-    user.imageData = url;
+      photo.getChildText('BINVAL')
+    );
   }
-
-  user.lastSeen = Date.now();
-  if (changed) {
-    user.lastUpdated = Date.now();
-    this.users[userid] = user;
-    this.onUserChange(user);
-  }
-
-  this.storage.set('vcard-' + userid, JSON.stringify(user));
 };
 
 /**
@@ -163,48 +147,72 @@ VCardStore.prototype.updateProperty = function(user, property, value) {
 VCardStore.prototype.updateUser = function(user, property, value) {
   if (!this.users[user]) {
     this.users[user] = {
-      userId: user
+      userId: user,
+      haveVcard: false
     };
   }
   this.users[user][property] = value;
   this.users[user].lastSeen = Date.now();
   this.users[user].lastUpdated = Date.now();
   this.onUserChange(this.users[user]);
+  if (this._storage) {
+    this._storage.set(this.PREFIX + user, JSON.stringify(this.users[user]));
+  }
 };
 
 VCardStore.prototype.refreshContact = function(user, hash) {
   var userid = new window.XMPP.JID(user).bare().toString();
-
-  this.storage.get('vcard-' + userid).then(function(result) {
-    if (result === null || result === undefined) {
-      this.fetchVcard(user);
-    } else if (hash && hash !== result.hash) {
-      this.fetchVcard(user);
-    }
-  }.bind(this));
-};
-
-VCardStore.prototype.fetchVcard = function(user) {
   var time = new Date();
-  if (!this.requestTime[user] || (time - this.requestTime[user] >
-                                  this.REQUEST_TIMEOUT)) {
-    this.requestTime[user] = time;
-    this.requestQueue.push(user);
-    this.checkVCardQueue();
+
+  if (!this.users.hasOwnProperty(userid) ||     // Haven't seen user
+      this.users[userid].haveVcard === false ||  // Haven't tried to request vcard before 
+      (hash && this.users[userid].hash !== hash)) {
+    if (!this._requestTime[user] || 
+        (time - this._requestTime[user] > this.REQUEST_TIMEOUT)) {
+      this.updateUser(userid, "hash", hash);
+      this._requestTime[user] = time;
+      this._requestQueue.push(user);
+      this._checkVCardQueue();
+    }
   }
 };
 
-VCardStore.prototype.checkVCardQueue = function() {
+VCardStore.prototype._checkVCardQueue = function() {
   var time = new Date(), next;
-  if (this.requestQueue.length < 1) {
+  if (this._requestQueue.length < 1) {
     return;
-  } else if ((time - this.fetchTime) > this.THROTTLE_TIMEOUT) {
-    next = this.requestQueue.shift();
-    this.fetchTime = time;
+  } else if ((time - this._fetchTime) > this.THROTTLE_TIMEOUT) {
+    next = this._requestQueue.shift();
+    this._fetchTime = time;
 
     // Request loadCard from delegate.
     this.loadCard(next);
   } else {
-    setTimeout(this.checkVCardQueue.bind(this), this.THROTTLE_TIMEOUT);
+    setTimeout(this._checkVCardQueue.bind(this), this.THROTTLE_TIMEOUT);
   }
+};
+
+VCardStore.prototype._init = function() {
+  var userId, profile;
+  var tryLoad = function(k, v) {
+    try {
+      userId = k.substr(this.PREFIX.length);
+      this.users[userId] = JSON.parse(v);
+    } catch(e) {
+      console.warn(e);
+    }
+  };
+
+  if (!this._storage) {
+    return;
+  }
+
+  this._storage.keys().then(function(keys) {
+    for(var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k.substr(0, this.PREFIX.length) === this.PREFIX) {
+        this._storage.get(k).then(tryLoad.bind(this, k));
+      }
+    }
+  }.bind(this));
 };

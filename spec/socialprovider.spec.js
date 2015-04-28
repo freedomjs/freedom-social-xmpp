@@ -21,16 +21,32 @@ describe("Tests for message batching in Social provider", function() {
   };
 
   beforeEach(function() {
+    var knownClients = {
+      'Alice': {clientId: 'Alice', status: 'ONLINE'},
+      'Bob': {clientId: 'Bob', status: 'ONLINE'},
+      'myId': {clientId: 'myId', status: 'ONLINE'},
+      'fromId': {clientId: 'fromId', status: 'ONLINE'}
+    };
     spyOn(window, "VCardStore").and.returnValue({
       loadCard: function() {},
       onUserChange: function() {},
       onClientChange: function() {},
-      updateProperty: function() {},
+      updateProperty: function(clientId, property, value) {
+        if (property == 'status') {
+          knownClients[clientId] = {clientId: clientId, status: value};
+        }
+      },
       refreshContact: function() {},
       getClient: function(clientId) {
-        return {
-          status: "ONLINE"
-        };
+        // getClient defaults status=OFFLINE if the client is unknown
+        if (knownClients[clientId]) {
+          return knownClients[clientId];
+        } else {
+          return {clientId: clientId, status: 'OFFLINE'};
+        }
+      },
+      hasClient: function(clientId) {
+        return knownClients[clientId] ? true : false;
       }
     });
 
@@ -38,6 +54,7 @@ describe("Tests for message batching in Social provider", function() {
     function dispatchEvent(eventType, data) {};
     xmppSocialProvider = new XMPPSocialProvider(dispatchEvent);
     xmppSocialProvider.client = xmppClient;
+    xmppSocialProvider.id = 'myId';
     xmppSocialProvider.loginOpts = {};
     spyOn(xmppSocialProvider.client, 'send');
 
@@ -234,9 +251,8 @@ describe("Tests for message batching in Social provider", function() {
   it('parses JSON encoded arrays', function() {
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
-    var toClient = xmppSocialProvider.vCardStore.getClient('toId');
-    xmppSocialProvider.receiveMessage(
-        fromClient, JSON.stringify(['abc', 'def']));
+    var toClient = xmppSocialProvider.vCardStore.getClient('myId');
+    xmppSocialProvider.receiveMessage('fromId', JSON.stringify(['abc', 'def']));
     expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
         'onMessage', {from: fromClient, to: toClient, message: 'abc'});
     expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
@@ -247,8 +263,8 @@ describe("Tests for message batching in Social provider", function() {
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var jsonString = '{key: "value"}';
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
-    var toClient = xmppSocialProvider.vCardStore.getClient('toId');
-    xmppSocialProvider.receiveMessage(fromClient, jsonString);
+    var toClient = xmppSocialProvider.vCardStore.getClient('myId');
+    xmppSocialProvider.receiveMessage('fromId', jsonString);
     expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
         'onMessage', {from: fromClient, to: toClient, message:jsonString});
   });
@@ -256,13 +272,13 @@ describe("Tests for message batching in Social provider", function() {
   it('does not parse non-JSON messages', function() {
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
-    var toClient = xmppSocialProvider.vCardStore.getClient('toId');
-    xmppSocialProvider.receiveMessage(fromClient, 'hello');
+    var toClient = xmppSocialProvider.vCardStore.getClient('myId');
+    xmppSocialProvider.receiveMessage('fromId', 'hello');
     expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
         'onMessage', {from: fromClient, to: toClient, message: 'hello'});
   });
 
-  it('end event rejects connect if not online', function() {
+  it('end event rejects connect if logging in', function() {
     spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
     var continuationSpy = jasmine.createSpy('spy');
     xmppSocialProvider.connect(continuationSpy);
@@ -280,5 +296,34 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.client.events['online']();
     xmppSocialProvider.client.events['end']();
     expect(xmppSocialProvider.logout).toHaveBeenCalled();
+  });
+
+  it('end event is ignored when user has logged out', function() {
+    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+    var continuationSpy = jasmine.createSpy('spy');
+    xmppSocialProvider.connect(continuationSpy);
+    spyOn(xmppSocialProvider, 'logout');
+    xmppSocialProvider.client.events['online']();
+    expect(continuationSpy.calls.count()).toBe(1);
+    xmppSocialProvider.logout();
+    expect(xmppSocialProvider.logout.calls.count()).toBe(1);
+    expect(continuationSpy.calls.count()).toBe(1);
+  });
+
+  it('creates ONLINE_WITH_OTHER_APP client for messages from unknown client',
+      function() {
+    spyOn(xmppSocialProvider, 'dispatchEvent');
+
+    var message = new window.XMPP.Element(
+        'message', {type: 'chat', from: 'unknownClient'})
+        .c('body').t('hello').up().up();
+    xmppSocialProvider.onMessage(message);
+    expect(xmppSocialProvider.dispatchEvent).toHaveBeenCalledWith(
+        'onMessage',
+        {
+          from: {clientId: 'unknownClient', status: 'ONLINE_WITH_OTHER_APP'},
+          to: {clientId: 'myId', status: 'ONLINE' },
+          message: 'hello'
+        });
   });
 });
