@@ -167,7 +167,6 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
 
     if (this.client) {
       this.client.end();
-      delete this.client;
     }
   }.bind(this));
   this.client.addListener('offline', function(e) {
@@ -588,6 +587,12 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
     this.client.send(new window.XMPP.Element('presence', {
       type: 'unavailable'
     }));
+    this.client.removeAllListeners('online');
+    this.client.removeAllListeners('error');
+    this.client.removeAllListeners('offline');
+    this.client.removeAllListeners('close');
+    this.client.removeAllListeners('end');
+    this.client.removeAllListeners('stanza');
     this.client.end();
     this.client = null;
   }
