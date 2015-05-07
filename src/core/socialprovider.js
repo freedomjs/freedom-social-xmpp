@@ -122,6 +122,17 @@ XMPPSocialProvider.prototype.initializeState = function() {
  * @param {Function} continuation Callback upon connection
  */
 XMPPSocialProvider.prototype.connect = function(continuation) {
+  if (this.client) {
+    var tempCredentials = this.credentials;
+    this.logout();
+    this.credentials = tempCredentials;
+    // continuation(undefined, {
+    //   errcode: 'LOGIN_ALREADYEXISTS',
+    //   message: 'another attempt to login is pending'
+    // });
+    // return;
+  }
+
   var key, jid, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
