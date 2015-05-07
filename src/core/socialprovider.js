@@ -595,13 +595,15 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
     this.client.send(new window.XMPP.Element('presence', {
       type: 'unavailable'
     }));
+    this.client.end();
+    // end() still relies on the client's event listeners
+    // so they can only be removed after calling end().
     this.client.removeAllListeners('online');
     this.client.removeAllListeners('error');
     this.client.removeAllListeners('offline');
     this.client.removeAllListeners('close');
     this.client.removeAllListeners('end');
     this.client.removeAllListeners('stanza');
-    this.client.end();
     this.client = null;
   }
   if (continuation) {
