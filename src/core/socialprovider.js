@@ -123,14 +123,11 @@ XMPPSocialProvider.prototype.initializeState = function() {
  */
 XMPPSocialProvider.prototype.connect = function(continuation) {
   if (this.client) {
-    var tempCredentials = this.credentials;
+    // Store our new credentials since logging out the old client
+    // will clear this.credentials.
+    var newCredentials = this.credentials;
     this.logout();
-    this.credentials = tempCredentials;
-    // continuation(undefined, {
-    //   errcode: 'LOGIN_ALREADYEXISTS',
-    //   message: 'another attempt to login is pending'
-    // });
-    // return;
+    this.credentials = newCredentials;
   }
 
   var key, jid, connectOpts = {
