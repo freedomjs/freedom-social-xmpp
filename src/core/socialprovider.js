@@ -174,7 +174,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
 
 
     if (this.client) {
-      this.client.end();
+      this.logout();
     }
   }.bind(this));
   this.client.addListener('offline', function(e) {
