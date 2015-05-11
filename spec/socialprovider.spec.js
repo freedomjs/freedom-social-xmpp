@@ -213,6 +213,9 @@ describe("Tests for message batching in Social provider", function() {
   describe("Tests for connection", function() {
 
     beforeEach(function() {
+      // Since the client was set in the top-level beforeEach, set it to null
+      // here. Otherwise, connect() will call logout on the social provider
+      // before creating a new client (which would affect our logout spies).
       xmppSocialProvider.client = null;
     });
 
