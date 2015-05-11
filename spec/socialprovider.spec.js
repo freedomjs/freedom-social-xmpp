@@ -9,6 +9,9 @@ describe("Tests for message batching in Social provider", function() {
     addListener: function(eventName, handler) {
       xmppSocialProvider.client.events[eventName] = handler;
     },
+    removeAllListeners: function(eventName) {
+      delete xmppSocialProvider.client.events[eventName];
+    },
     end: function() {}
   };
   freedom = {
@@ -85,7 +88,6 @@ describe("Tests for message batching in Social provider", function() {
     expect(xmppSocialProvider.client.send).toHaveBeenCalled();
   });
 
-
   it("calls callback after send", function() {
     var spy = jasmine.createSpy('callback');
     xmppSocialProvider.sendMessage('Bob', 'Hi', spy);
@@ -161,93 +163,6 @@ describe("Tests for message batching in Social provider", function() {
     }
   });
 
-  it('sets status to OFFLINE when client disconnected', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    xmppSocialProvider.connect();
-    xmppSocialProvider.id = 'id'
-    expect(xmppSocialProvider.client.events['offline']).toBeDefined();
-    spyOn(xmppSocialProvider.vCardStore, 'updateProperty');
-    xmppSocialProvider.client.events['offline']();
-    expect(xmppSocialProvider.vCardStore.updateProperty)
-        .toHaveBeenCalledWith('id', 'status', 'OFFLINE');
-  });
-
-  it('disconnects when no reply to ping', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    spyOn(xmppSocialProvider, 'logout');
-    xmppSocialProvider.connect();
-    xmppSocialProvider.ping_();
-    jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
-    expect(xmppSocialProvider.logout).toHaveBeenCalled();
-  });
-
-  it('stays online when ping response received', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    spyOn(xmppSocialProvider, 'logout');
-    xmppSocialProvider.connect();
-    xmppSocialProvider.ping_();
-    xmppSocialProvider.onMessage(
-        new window.XMPP.Element('iq', {type: 'result'}));
-    jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
-    expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
-  });
-
-  it('pings once per minute if no message received', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    // Set Math.random so that we immediately hit the once-per-minute ping case.
-    spyOn(Math, 'random').and.returnValue((new Date()).getSeconds() / 60);
-    spyOn(xmppSocialProvider, 'ping_')
-    xmppSocialProvider.connect(function() {});
-    // Emit online event to start polling loop.
-    xmppSocialProvider.client.events['online']();
-    jasmine.clock().tick(1001);
-    expect(xmppSocialProvider.ping_).toHaveBeenCalled();
-    // logout must be called to clearInterval on the polling loop
-    xmppSocialProvider.logout();
-  });
-
-  it('does not ping once per minute if a message is received', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    // Set Math.random so that we immediately hit the once-per-minute ping case.
-    spyOn(Math, 'random').and.returnValue((new Date()).getSeconds() / 60);
-    spyOn(xmppSocialProvider, 'ping_')
-    xmppSocialProvider.connect(function() {});
-    // Emit online event to start polling loop.
-    xmppSocialProvider.client.events['online']();
-    // Send a message before the next polling loop.
-    xmppSocialProvider.onMessage(
-        new window.XMPP.Element('iq', {type: 'result'}));
-    jasmine.clock().tick(1001);
-    expect(xmppSocialProvider.ping_).not.toHaveBeenCalled();
-    // logout must be called to clearInterval on the polling loop
-    xmppSocialProvider.logout();
-  });
-
-  it('detects sleep and pings immediately', function() {
-    var nowMs = 0;
-    dateSpy = spyOn(Date, "now").and.callFake(function() { return nowMs; });
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    var setIntervalCallbacks = [];
-    spyOn(window, 'setInterval').and.callFake(function(callback, intervalMs) {
-      setIntervalCallbacks.push(callback);
-    });
-    spyOn(xmppSocialProvider, 'ping_');
-
-    // Connect and emit online event to start polling loop.
-    xmppSocialProvider.connect(function() {});
-    xmppSocialProvider.client.events['online']();
-
-    // Advance the clock by 2010 ms and invoke callbacks.
-    nowMs = 2010;
-    jasmine.clock().tick(2010);
-    setIntervalCallbacks.map(function(callback) { callback(); });
-
-    // Expect sleep to have been detected and ping to be invoked.
-    expect(xmppSocialProvider.ping_).toHaveBeenCalled();
-    // logout must be called to clearInterval on the polling loop
-    xmppSocialProvider.logout();
-  });
-
   it('parses JSON encoded arrays', function() {
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
@@ -278,38 +193,6 @@ describe("Tests for message batching in Social provider", function() {
         'onMessage', {from: fromClient, to: toClient, message: 'hello'});
   });
 
-  it('end event rejects connect if logging in', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    var continuationSpy = jasmine.createSpy('spy');
-    xmppSocialProvider.connect(continuationSpy);
-    spyOn(xmppSocialProvider, 'logout');
-    xmppSocialProvider.client.events['end']();
-    expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
-    expect(continuationSpy).toHaveBeenCalledWith(undefined,
-        {errcode: 'LOGIN_FAILEDCONNECTION', message: 'Received end event'});
-  });
-
-  it('end event calls logout if online', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    xmppSocialProvider.connect(function() {});
-    spyOn(xmppSocialProvider, 'logout');
-    xmppSocialProvider.client.events['online']();
-    xmppSocialProvider.client.events['end']();
-    expect(xmppSocialProvider.logout).toHaveBeenCalled();
-  });
-
-  it('end event is ignored when user has logged out', function() {
-    spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
-    var continuationSpy = jasmine.createSpy('spy');
-    xmppSocialProvider.connect(continuationSpy);
-    spyOn(xmppSocialProvider, 'logout');
-    xmppSocialProvider.client.events['online']();
-    expect(continuationSpy.calls.count()).toBe(1);
-    xmppSocialProvider.logout();
-    expect(xmppSocialProvider.logout.calls.count()).toBe(1);
-    expect(continuationSpy.calls.count()).toBe(1);
-  });
-
   it('creates ONLINE_WITH_OTHER_APP client for messages from unknown client',
       function() {
     spyOn(xmppSocialProvider, 'dispatchEvent');
@@ -325,5 +208,131 @@ describe("Tests for message batching in Social provider", function() {
           to: {clientId: 'myId', status: 'ONLINE' },
           message: 'hello'
         });
+  });
+
+  describe("Tests for connection", function() {
+
+    beforeEach(function() {
+      xmppSocialProvider.client = null;
+    });
+
+    it('end event rejects connect if logging in', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      var continuationSpy = jasmine.createSpy('spy');
+      xmppSocialProvider.connect(continuationSpy);
+      spyOn(xmppSocialProvider, 'logout');
+      xmppSocialProvider.client.events['end']();
+      expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
+      expect(continuationSpy).toHaveBeenCalledWith(undefined,
+          {errcode: 'LOGIN_FAILEDCONNECTION', message: 'Received end event'});
+    });
+
+    it('sets status to OFFLINE when client disconnected', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      xmppSocialProvider.connect();
+      xmppSocialProvider.id = 'id'
+      expect(xmppSocialProvider.client.events['offline']).toBeDefined();
+      spyOn(xmppSocialProvider.vCardStore, 'updateProperty');
+      xmppSocialProvider.client.events['offline']();
+      expect(xmppSocialProvider.vCardStore.updateProperty)
+          .toHaveBeenCalledWith('id', 'status', 'OFFLINE');
+    });
+
+    it('disconnects when no reply to ping', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      spyOn(xmppSocialProvider, 'logout');
+      xmppSocialProvider.connect();
+      xmppSocialProvider.ping_();
+      jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
+      expect(xmppSocialProvider.logout.calls.count()).toEqual(1);
+    });
+
+    it('stays online when ping response received', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      spyOn(xmppSocialProvider, 'logout');
+      xmppSocialProvider.connect();
+      xmppSocialProvider.ping_();
+      xmppSocialProvider.onMessage(
+          new window.XMPP.Element('iq', {type: 'result'}));
+      jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
+      expect(xmppSocialProvider.logout).not.toHaveBeenCalled();
+    });
+
+    it('pings once per minute if no message received', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      // Set Math.random so that we immediately hit the once-per-minute ping case.
+      spyOn(Math, 'random').and.returnValue((new Date()).getSeconds() / 60);
+      spyOn(xmppSocialProvider, 'ping_')
+      xmppSocialProvider.connect(function() {});
+      // Emit online event to start polling loop.
+      xmppSocialProvider.client.events['online']();
+      jasmine.clock().tick(1001);
+      expect(xmppSocialProvider.ping_).toHaveBeenCalled();
+      // logout must be called to clearInterval on the polling loop
+      xmppSocialProvider.logout();
+    });
+
+    it('does not ping once per minute if a message is received', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      // Set Math.random so that we immediately hit the once-per-minute ping case.
+      spyOn(Math, 'random').and.returnValue((new Date()).getSeconds() / 60);
+      spyOn(xmppSocialProvider, 'ping_')
+      xmppSocialProvider.connect(function() {});
+      // Emit online event to start polling loop.
+      xmppSocialProvider.client.events['online']();
+      // Send a message before the next polling loop.
+      xmppSocialProvider.onMessage(
+          new window.XMPP.Element('iq', {type: 'result'}));
+      jasmine.clock().tick(1001);
+      expect(xmppSocialProvider.ping_).not.toHaveBeenCalled();
+      // logout must be called to clearInterval on the polling loop
+      xmppSocialProvider.logout();
+    });
+
+    it('detects sleep and pings immediately', function() {
+      var nowMs = 0;
+      dateSpy = spyOn(Date, "now").and.callFake(function() { return nowMs; });
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      var setIntervalCallbacks = [];
+      spyOn(window, 'setInterval').and.callFake(function(callback, intervalMs) {
+        setIntervalCallbacks.push(callback);
+      });
+      spyOn(xmppSocialProvider, 'ping_');
+
+      // Connect and emit online event to start polling loop.
+      xmppSocialProvider.connect(function() {});
+      xmppSocialProvider.client.events['online']();
+
+      // Advance the clock by 2010 ms and invoke callbacks.
+      nowMs = 2010;
+      jasmine.clock().tick(2010);
+      setIntervalCallbacks.map(function(callback) { callback(); });
+
+      // Expect sleep to have been detected and ping to be invoked.
+      expect(xmppSocialProvider.ping_).toHaveBeenCalled();
+      // logout must be called to clearInterval on the polling loop
+      xmppSocialProvider.logout();
+    });
+
+    it('end event calls logout if online', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      xmppSocialProvider.connect(function() {});
+      spyOn(xmppSocialProvider, 'logout');
+      xmppSocialProvider.client.events['online']();
+      xmppSocialProvider.client.events['end']();
+      expect(xmppSocialProvider.logout).toHaveBeenCalled();
+    });
+
+    it('end event is ignored when user has logged out', function() {
+      spyOn(window.XMPP, 'Client').and.returnValue(xmppClient);
+      var continuationSpy = jasmine.createSpy('spy');
+      xmppSocialProvider.connect(continuationSpy);
+      spyOn(xmppSocialProvider, 'logout');
+      xmppSocialProvider.client.events['online']();
+      expect(continuationSpy.calls.count()).toBe(1);
+      xmppSocialProvider.logout();
+      expect(xmppSocialProvider.logout.calls.count()).toBe(1);
+      expect(continuationSpy.calls.count()).toBe(1);
+    });
   });
 });
