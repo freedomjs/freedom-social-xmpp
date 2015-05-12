@@ -207,7 +207,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
  * @method clearCachedCredentials
  */
 XMPPSocialProvider.prototype.clearCachedCredentials = function(continuation) {
-  delete this.credentials;
+  this.credentials = null;
   continuation();
 };
 
@@ -578,7 +578,6 @@ XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
 
 XMPPSocialProvider.prototype.logout = function(continuation) {
   this.status = 'offline';
-  this.credentials = null;
   this.lastMessageTimestampMs_ = null;
   if (this.pollForDisconnectInterval_) {
     clearInterval(this.pollForDisconnectInterval_);
