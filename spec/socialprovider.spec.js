@@ -56,10 +56,8 @@ describe("Tests for message batching in Social provider", function() {
     // Mock VCardStore, Date and the client.
     function dispatchEvent(eventType, data) {};
     xmppSocialProvider = new XMPPSocialProvider(dispatchEvent);
-    xmppSocialProvider.client = xmppClient;
     xmppSocialProvider.id = 'myId';
     xmppSocialProvider.loginOpts = {};
-    spyOn(xmppSocialProvider.client, 'send');
 
     jasmine.clock().install();
   });
@@ -69,6 +67,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("add first message to batch and save time of message", function() {
+    xmppSocialProvider.client = xmppClient;
     dateSpy = spyOn(Date, "now").and.returnValue(500);
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.messages.Bob[0].message).toEqual('Hi');
@@ -76,12 +75,15 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("set callback after first message is added to batch", function() {
+    xmppSocialProvider.client = xmppClient;
     expect(xmppSocialProvider.sendMessagesTimeout).toBeNull();
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.sendMessagesTimeout).not.toBeNull();
   });
 
   it("send message after 100ms", function() {
+    xmppSocialProvider.client = xmppClient;
+    spyOn(xmppSocialProvider.client, 'send');
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
     jasmine.clock().tick(100);
@@ -90,6 +92,8 @@ describe("Tests for message batching in Social provider", function() {
 
 
   it("calls callback after send", function() {
+    xmppSocialProvider.client = xmppClient;
+    spyOn(xmppSocialProvider.client, 'send');
     var spy = jasmine.createSpy('callback');
     xmppSocialProvider.sendMessage('Bob', 'Hi', spy);
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
@@ -100,6 +104,8 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("timeout resets to 100ms after each message", function() {
+    xmppSocialProvider.client = xmppClient;
+    spyOn(xmppSocialProvider.client, 'send');
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
     jasmine.clock().tick(50);
@@ -119,6 +125,8 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("do not reset timeout if oldest message is from >=2s ago", function() {
+    xmppSocialProvider.client = xmppClient;
+    spyOn(xmppSocialProvider.client, 'send');
     dateSpy = spyOn(Date, "now").and.returnValue(500);
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
@@ -145,6 +153,8 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it("sends message to correct destinations", function() {
+    xmppSocialProvider.client = xmppClient;
+    spyOn(xmppSocialProvider.client, 'send');
     xmppSocialProvider.sendMessage('Bob', 'Hi', function() {});
     xmppSocialProvider.sendMessage('Alice', 'Hi', function() {});
     expect(xmppSocialProvider.client.send).not.toHaveBeenCalled();
@@ -181,7 +191,7 @@ describe("Tests for message batching in Social provider", function() {
     xmppSocialProvider.connect();
     xmppSocialProvider.ping_();
     jasmine.clock().tick(xmppSocialProvider.MAX_MS_PING_REPSONSE_ + 10);
-    expect(xmppSocialProvider.logout).toHaveBeenCalled();
+    expect(xmppSocialProvider.logout.calls.count()).toEqual(1);
   });
 
   it('stays online when ping response received', function() {
@@ -252,6 +262,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it('parses JSON encoded arrays', function() {
+    xmppSocialProvider.client = xmppClient;
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
     var toClient = xmppSocialProvider.vCardStore.getClient('myId');
@@ -263,6 +274,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it('does not parse JSON that is not an array', function() {
+    xmppSocialProvider.client = xmppClient;
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var jsonString = '{key: "value"}';
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
@@ -273,6 +285,7 @@ describe("Tests for message batching in Social provider", function() {
   });
 
   it('does not parse non-JSON messages', function() {
+    xmppSocialProvider.client = xmppClient;
     spyOn(xmppSocialProvider, 'dispatchEvent');
     var fromClient = xmppSocialProvider.vCardStore.getClient('fromId');
     var toClient = xmppSocialProvider.vCardStore.getClient('myId');
@@ -298,7 +311,7 @@ describe("Tests for message batching in Social provider", function() {
     spyOn(xmppSocialProvider, 'logout');
     xmppSocialProvider.client.events['online']();
     xmppSocialProvider.client.events['end']();
-    expect(xmppSocialProvider.logout).toHaveBeenCalled();
+    expect(xmppSocialProvider.logout.calls.count()).toEqual(1);
   });
 
   it('end event is ignored when user has logged out', function() {
@@ -315,6 +328,7 @@ describe("Tests for message batching in Social provider", function() {
 
   it('creates ONLINE_WITH_OTHER_APP client for messages from unknown client',
       function() {
+    xmppSocialProvider.client = xmppClient;
     spyOn(xmppSocialProvider, 'dispatchEvent');
 
     var message = new window.XMPP.Element(
