@@ -122,6 +122,14 @@ XMPPSocialProvider.prototype.initializeState = function() {
  * @param {Function} continuation Callback upon connection
  */
 XMPPSocialProvider.prototype.connect = function(continuation) {
+  if (this.client) {
+    // Store our new credentials since logging out the old client
+    // will clear this.credentials.
+    var newCredentials = this.credentials;
+    this.logout();
+    this.credentials = newCredentials;
+  }
+
   var key, jid, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
@@ -166,8 +174,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
 
 
     if (this.client) {
-      this.client.end();
-      delete this.client;
+      this.logout();
     }
   }.bind(this));
   this.client.addListener('offline', function(e) {
@@ -588,6 +595,14 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
       type: 'unavailable'
     }));
     this.client.end();
+    // end() still relies on the client's event listeners
+    // so they can only be removed after calling end().
+    this.client.removeAllListeners('online');
+    this.client.removeAllListeners('error');
+    this.client.removeAllListeners('offline');
+    this.client.removeAllListeners('close');
+    this.client.removeAllListeners('end');
+    this.client.removeAllListeners('stanza');
     this.client = null;
   }
   if (continuation) {
