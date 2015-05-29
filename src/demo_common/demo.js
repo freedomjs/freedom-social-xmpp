@@ -29,7 +29,7 @@ Chat.prototype.login = function() {
     version: '0.1',
     url: '',
     interactive: true,
-    rememberLogin: false
+    rememberLogin: true
   }).then(function (ret) {
     this.myClientState = ret;
     logger.log("onLogin", this.myClientState);

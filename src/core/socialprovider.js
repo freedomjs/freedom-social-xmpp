@@ -26,6 +26,9 @@ if (typeof global !== 'undefined') {
  */
 var XMPPSocialProvider = function(dispatchEvent) {
   this.dispatchEvent = dispatchEvent;
+
+  this.storage = freedom['core.storage']();
+
   var social = freedom.social ? freedom.social() : freedom();
   this.STATUS = social.STATUS;
   this.ERRCODE = social.ERRCODE;
@@ -90,7 +93,10 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
 XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
   if (msg.cmd && msg.cmd === 'auth') {
     this.credentials = msg.message;
-    this.login(null, continuation);
+    if (!this.client) {
+      this.initializeState();
+    }
+    this.connect(continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
     continuation(undefined, {
       errcode: 'LOGIN_FAILEDCONNECTION',
