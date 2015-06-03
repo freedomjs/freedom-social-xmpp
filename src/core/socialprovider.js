@@ -27,8 +27,6 @@ if (typeof global !== 'undefined') {
 var XMPPSocialProvider = function(dispatchEvent) {
   this.dispatchEvent = dispatchEvent;
 
-  this.storage = freedom['core.storage']();
-
   var social = freedom.social ? freedom.social() : freedom();
   this.STATUS = social.STATUS;
   this.ERRCODE = social.ERRCODE;

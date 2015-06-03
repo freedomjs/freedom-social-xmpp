@@ -34,13 +34,22 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   }
 
   if (!this.credentials) {
+    if (loginOpts.interactive && !loginOpts.rememberLogin) {
+      // Old login logic that gets accessToken and skips refresh tokens
+      this.getAccessTokenWithOAuth_(continuation);
+      return;
+    }
+
+    if (!this.storage) {
+      this.storage = freedom['core.storage']();
+    }
+
     var getCredentialsPromise = loginOpts.interactive ?
         this.getCredentialsInteractive_() : this.getCredentialsFromStorage_();
     getCredentialsPromise.then(function(data) {
       var refreshToken = data.refreshToken;
       var accessToken = data.accessToken;
       var email = data.email;
-      this.logger.error('after getCredentials: ' + refreshToken + ', ' + accessToken + ', ' + email);
       if (this.loginOpts.rememberLogin) {
         this.saveLastRefreshTokenAndEmail_(refreshToken, email);
         this.saveRefreshTokenForEmail_(refreshToken, email);
@@ -66,25 +75,25 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
   this.connect(continuation);
 };
 
-// Returns Promise<refreshToken, accessToken, email>
+// Returns Promise<{refreshToken, accessToken, email}>
 XMPPSocialProvider.prototype.getCredentialsFromStorage_ = function() {
   return new Promise(function(fulfill, reject) {
     this.loadLastRefreshTokenAndEmail_().then(function(data) {
       var email = data.email;
       var refreshToken = data.refreshToken;
-      this.logger.error('loadLastRefreshToken_ returned ' + refreshToken + ', ' + email);
-      this.getAccessToken_(refreshToken).then(function(accessToken) {
+      this.getAccessTokenFromRefreshToken_(refreshToken).then(
+          function(accessToken) {
         fulfill({
             refreshToken: refreshToken,
             accessToken: accessToken,
             email: email});
-      }.bind(this));  // end of getAccessToken_
+      }.bind(this));  // end of getAccessTokenFromRefreshToken_
     }.bind(this));  // end of loadLastRefreshTokenAndEmail_
   }.bind(this));  // end of return new Promise
 };
 
 /**
-  Returns Promise<refreshToken, accessToken, email>
+  Returns Promise<{refreshToken, accessToken, email}>
   Open Google account chooser to let the user pick an account, then request a
   refresh token.  Possible outcomes:
   1. Google gives us a refresh token after closing the oauth window, all good
@@ -105,24 +114,26 @@ XMPPSocialProvider.prototype.getCredentialsInteractive_ = function() {
     // 2 oauth views.
     this.loadLastRefreshTokenAndEmail_().then(function(data) {
       var isFirstLoginAttempt = !(data && data.refreshToken);
-      this.logger.error('isFirstLoginAttempt: ' + isFirstLoginAttempt);
-
       this.tryToGetRefreshToken_(isFirstLoginAttempt, null).then(function(responseObj) {
-        this.logger.error('1st tryToGetRefreshToken_ returned ' + JSON.stringify(responseObj));
+        // tryToGetRefreshToken_ should always give us an access_token, even
+        // if no refresh_token is given.
         var accessToken = responseObj.access_token;
         if (!accessToken) {
           reject(new Error('Could not find access_token'));
         }
-        this.getEmail_(accessToken).then(function(email) {
-          this.logger.error('email: ' + email);
 
+        // Get the user's email, needed loading/saving refresh tokens to/from
+        // storage.
+        this.getEmail_(accessToken).then(function(email) {
           if (responseObj.refresh_token) {
+            // refresh_token was given on first attempt, all done.
             fulfill({
                 refreshToken: responseObj.refresh_token,
                 accessToken: accessToken,
                 email: email});
             return;
           }
+
           // If no refresh_token is returned, it may mean that the user has already
           // granted this app a refresh token.  We should first check to see if we
           // already have a refresh token stored for this user, and if not we should
@@ -131,20 +142,20 @@ XMPPSocialProvider.prototype.getCredentialsInteractive_ = function() {
           // Note loadRefreshTokenForEmail_ will fulfill with null if there is
           // no refresh token saved.
           this.loadRefreshTokenForEmail_(email).then(function(refreshToken) {
-            this.logger.error('loadRefreshTokenForEmail_ returned: ' + refreshToken);
             if (refreshToken) {
+              // A refresh token had already been saved for this email, done.
               fulfill({
                   refreshToken: refreshToken,
                   accessToken: accessToken,
                   email: email});
               return;
             }
+
             // No refresh token was returned to us, or has been stored for this
             // email address (this would happen if the user already granted us
             // a token but re-installed the chrome app).  Try again forcing
             // the approval prompt for this email address.
             this.tryToGetRefreshToken_(true, email).then(function(responseObj) {
-              this.logger.error('2nd tryToGetRefreshToken_ returned: ' + JSON.stringify(responseObj));
               if (responseObj.refresh_token) {
                 fulfill({
                     refreshToken: responseObj.refresh_token,
@@ -192,7 +203,6 @@ XMPPSocialProvider.prototype.getEmail_ = function(accessToken) {
     xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', true);
     xhr.on("onload", function() {
       xhr.getResponseText().then(function(responseText) {
-        // TODO: error handling
         fulfill(JSON.parse(responseText).email);
       }.bind(this));
     }.bind(this));
@@ -201,7 +211,6 @@ XMPPSocialProvider.prototype.getEmail_ = function(accessToken) {
   }.bind(this));
 };
 
-// TODO: use core.xhr everywhere
 XMPPSocialProvider.prototype.getCode_ = function(
     oauth, stateObj, forcePrompt, authUserEmail) {
   var getCodeUrl = 'https://accounts.google.com/o/oauth2/auth?' +
@@ -212,7 +221,6 @@ XMPPSocialProvider.prototype.getCode_ = function(
            (forcePrompt ? '&approval_prompt=force' : '') +
            '&redirect_uri=' + encodeURIComponent(stateObj.redirect) +
            '&state=' + encodeURIComponent(stateObj.state);
-  this.logger.error('getCodeUrl: ' + getCodeUrl);
 
   var url;
   if (authUserEmail) {
@@ -223,11 +231,8 @@ XMPPSocialProvider.prototype.getCode_ = function(
     url = 'https://accounts.google.com/accountchooser?continue=' +
         encodeURIComponent(getCodeUrl);
   }
-  this.logger.error('url: ' + url);   // TODO: remove all extra error trace
 
   return oauth.launchAuthFlow(url, stateObj).then(function(responseUrl) {
-    // TODO: remove
-    this.logger.error('got responseUrl in getCode_: ' + responseUrl);
     return responseUrl.match(/code=([^&]+)/)[1];
   }.bind(this));
 };
@@ -244,34 +249,76 @@ XMPPSocialProvider.prototype.tryToGetRefreshToken_ = function(
             '&client_secret=' + this.clientSecret +
             "&redirect_uri=" + encodeURIComponent(stateObj.redirect) +
             '&grant_type=authorization_code';
-        // TODO: use core.xhr
-        var xhr = new XMLHttpRequest();
+        var xhr = freedom["core.xhr"]();
         xhr.open('POST', 'https://www.googleapis.com/oauth2/v3/token', true);
         xhr.setRequestHeader(
             'content-type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-          // TODO: error checking?
-          fulfill(JSON.parse(this.response));
-        };
-        xhr.send(data);
+        xhr.on('onload', function() {
+          xhr.getResponseText().then(function(responseText) {
+            fulfill(JSON.parse(responseText));
+          });
+        });
+        xhr.send({string: data});
       }.bind(this));
     }.bind(this));
   }.bind(this));
 };
 
-XMPPSocialProvider.prototype.getAccessToken_ = function(refreshToken) {
+XMPPSocialProvider.prototype.getAccessTokenWithOAuth_ = function(continuation) {
+  this.oauth = freedom["core.oauth"]();
+  this.oauth.initiateOAuth(this.oAuthRedirectUris).then(function(stateObj) {
+    var oauthUrl = "https://accounts.google.com/o/oauth2/auth?" +
+             "client_id=" + this.oAuthClientId +
+             "&scope=" + this.oAuthScope +
+             "&redirect_uri=" + encodeURIComponent(stateObj.redirect) +
+             "&state=" + encodeURIComponent(stateObj.state) +
+             "&response_type=token";
+    var url = 'https://accounts.google.com/accountchooser?continue=' +
+        encodeURIComponent(oauthUrl);
+    return this.oauth.launchAuthFlow(url, stateObj);
+  }.bind(this)).then(function(continuation, responseUrl) {
+    var token = responseUrl.match(/access_token=([^&]+)/)[1];
+    var xhr = freedom["core.xhr"]();
+    xhr.open('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', true);
+    xhr.on("onload", function(continuation, token, xhr) {
+      xhr.getResponseText().then(function(continuation, token, responseText) {
+        var response = JSON.parse(responseText);
+        var credentials = {
+          userId: response.email,
+          jid: response.email,
+          oauth2_token: token,
+          oauth2_auth: 'http://www.google.com/talk/protocol/auth',
+          host: 'talk.google.com'
+        };
+        this.onCredentials(continuation, {cmd: 'auth', message: credentials});
+      }.bind(this, continuation, token));
+    }.bind(this, continuation, token, xhr));
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.send();
+  }.bind(this, continuation)).catch(function (continuation, err) {
+    this.logger.error('Error in getAccessTokenWithOAuth_', err);
+    continuation(undefined, {
+      errcode: 'LOGIN_OAUTHERROR',
+      message: err.message
+    });
+  }.bind(this, continuation));
+};
+
+XMPPSocialProvider.prototype.getAccessTokenFromRefreshToken_ =
+    function(refreshToken) {
   return new Promise(function(fulfill, resolve) {
     var data = 'refresh_token=' + refreshToken +
         '&client_id=' + this.oAuthClientId +
         '&client_secret=' + this.clientSecret +
         '&grant_type=refresh_token';
-    var xhr = new XMLHttpRequest();
+    var xhr = freedom["core.xhr"]();
     xhr.open('POST', 'https://www.googleapis.com/oauth2/v3/token', true);
     xhr.setRequestHeader('content-type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-      // TODO: error handling
-      fulfill(JSON.parse(this.response).access_token);
-    };
-    xhr.send(data);
+    xhr.on('onload', function() {
+      xhr.getResponseText().then(function(responseText) {
+        fulfill(JSON.parse(responseText).access_token);
+      });
+    });
+    xhr.send({string: data});
   }.bind(this));
 };
