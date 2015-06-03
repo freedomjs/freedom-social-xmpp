@@ -93,10 +93,7 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
 XMPPSocialProvider.prototype.onCredentials = function(continuation, msg) {
   if (msg.cmd && msg.cmd === 'auth') {
     this.credentials = msg.message;
-    if (!this.client) {
-      this.initializeState();
-    }
-    this.connect(continuation);
+    this.login(null, continuation);
   } else if (msg.cmd && msg.cmd === 'error') {
     continuation(undefined, {
       errcode: 'LOGIN_FAILEDCONNECTION',

@@ -29,60 +29,62 @@ XMPPSocialProvider.prototype.clientSecret = "h_hfPI4jvs9fgOgPweSBKnMu";
  *   rememberLogin: Login credentials will be cached if true.
  */
 XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
-  // TODO: my logic is going to break social providers who want to re-use credentials
-  // that's why I need to revert to the old logic that checked this.credentials
-
-  if (!loginOpts) {
-    continuation(undefined, {
-      errcode: 'LOGIN_OAUTHERROR',
-      message: 'loginOpts must be defined'
-    });
-    return;
-  } else if (loginOpts.interactive && !loginOpts.rememberLogin) {
-    // freedom-social-xmpp no longer supports old login logic, where user
-    // would go through an interactive OAuth flow to just get an access_token.
-    // Now anytime interactive==true, rememberLogin must be true, so that
-    // we can get a refresh_token.
-    continuation(undefined, {
-      errcode: 'LOGIN_OAUTHERROR',
-      message: 'rememberLogin must be true if interactive is true'
-    });
-    return;
+  if (loginOpts) {
+    this.loginOpts = loginOpts;
   }
 
-  this.loginOpts = loginOpts;
-
-  var getRefreshTokenPromise;
-  if (loginOpts.interactive) {
-    getRefreshTokenPromise = this.getRefreshTokenInteractive_();
-  } else {
-    getRefreshTokenPromise = this.loadMostRecentRefreshToken_();
-  }
-
-  getRefreshTokenPromise.then(function(refreshToken) {
-    if (this.loginOpts.rememberLogin) {
-      this.saveMostRecentRefreshToken_(refreshToken);
-    }
-    this.logger.error('in login, got refreshToken: ' + refreshToken);
-    // TODO: optimize to not make the getEmail XHR twice
-    this.getAccessToken_(refreshToken).then(function(accessToken) {
-      this.getCredentials_(accessToken).then(function(credentials) {
-        this.onCredentials(continuation, {cmd: 'auth', message: credentials});
-      }.bind(this));
+  if (!this.credentials) {
+    var getCredentialsPromise = loginOpts.interactive ?
+        this.getCredentialsInteractive_() : this.getCredentialsFromStorage_();
+    getCredentialsPromise.then(function(data) {
+      var refreshToken = data.refreshToken;
+      var accessToken = data.accessToken;
+      var email = data.email;
+      this.logger.error('after getCredentials: ' + refreshToken + ', ' + accessToken + ', ' + email);
+      if (this.loginOpts.rememberLogin) {
+        this.saveLastRefreshTokenAndEmail_(refreshToken, email);
+        this.saveRefreshTokenForEmail_(refreshToken, email);
+      }
+      var credentials = {
+        userId: email, jid: email, oauth2_token: accessToken,
+        oauth2_auth: 'http://www.google.com/talk/protocol/auth',
+        host: 'talk.google.com'
+      };
+      this.onCredentials(continuation, {cmd: 'auth', message: credentials});
+    }.bind(this)).catch(function(e) {
+      this.logger.error('Error getting credentials: ', e);
+      continuation(undefined, {
+        errcode: 'LOGIN_OAUTHERROR', message: 'Error getting refreshToken: ' + e
+      });
     }.bind(this));
-  }.bind(this)).catch(function(e) {
-    this.logger.error('Error getting refreshToken: ', e);
-    continuation(undefined, {
-      errcode: 'LOGIN_OAUTHERROR', message: 'Error getting refreshToken: ' + e
-    });
-  });
+    return;
+  }
+
+  if (!this.client) {
+    this.initializeState();
+  }
+  this.connect(continuation);
 };
 
-
-
-
+// Returns Promise<refreshToken, accessToken, email>
+XMPPSocialProvider.prototype.getCredentialsFromStorage_ = function() {
+  return new Promise(function(fulfill, reject) {
+    this.loadLastRefreshTokenAndEmail_().then(function(data) {
+      var email = data.email;
+      var refreshToken = data.refreshToken;
+      this.logger.error('loadLastRefreshToken_ returned ' + refreshToken + ', ' + email);
+      this.getAccessToken_(refreshToken).then(function(accessToken) {
+        fulfill({
+            refreshToken: refreshToken,
+            accessToken: accessToken,
+            email: email});
+      }.bind(this));  // end of getAccessToken_
+    }.bind(this));  // end of loadLastRefreshTokenAndEmail_
+  }.bind(this));  // end of return new Promise
+};
 
 /**
+  Returns Promise<refreshToken, accessToken, email>
   Open Google account chooser to let the user pick an account, then request a
   refresh token.  Possible outcomes:
   1. Google gives us a refresh token after closing the oauth window, all good
@@ -94,51 +96,66 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
     launch another oauth window which with "approval_prompt=force", so that
     the user grants us "offline access" again and we can get a refresh token
  */
-XMPPSocialProvider.prototype.getRefreshTokenInteractive_ = function() {
-  // TODO: optimize by always setting force=true if no refresh token exists yet
-
+XMPPSocialProvider.prototype.getCredentialsInteractive_ = function() {
   // First try to get a refresh token via the account chooser
   return new Promise(function(fulfill, reject) {
-    this.tryToGetRefreshToken_(false, null).then(function(responseObj) {
-      this.logger.error('1st tryToGetRefreshToken_ returned ' + JSON.stringify(responseObj));
-      if (!responseObj.access_token) {
-        reject(new Error('Could not find access_token'));
-      }
-      this.getEmail_(responseObj.access_token).then(function(email) {
-        this.logger.error('email: ' + email);
+    // Check if there is any refresh token stored.  If not, always force the
+    // approval prompt.  This is a small optimization to ensure that we always
+    // get a refresh token on the 1st login attempt without needing to display
+    // 2 oauth views.
+    this.loadLastRefreshTokenAndEmail_().then(function(data) {
+      var isFirstLoginAttempt = !(data && data.refreshToken);
+      this.logger.error('isFirstLoginAttempt: ' + isFirstLoginAttempt);
 
-        if (responseObj.refresh_token) {
-          this.saveRefreshTokenForEmail_(email, responseObj.refresh_token);
-          fulfill(responseObj.refresh_token);
-          return;
+      this.tryToGetRefreshToken_(isFirstLoginAttempt, null).then(function(responseObj) {
+        this.logger.error('1st tryToGetRefreshToken_ returned ' + JSON.stringify(responseObj));
+        var accessToken = responseObj.access_token;
+        if (!accessToken) {
+          reject(new Error('Could not find access_token'));
         }
-        // If no refresh_token is returned, it may mean that the user has already
-        // granted this app a refresh token.  We should first check to see if we
-        // already have a refresh token stored for this user, and if not we should
-        // prompt them again with approval_prompt=force to ensure we get a refresh
-        // token.
-        // Note loadRefreshTokenForEmail_ will fulfill with null if there is
-        // no refresh token saved.
-        this.loadRefreshTokenForEmail_(email).then(function(refreshToken) {
-          this.logger.error('loadRefreshTokenForEmail_ returned: ' + refreshToken);
-          if (refreshToken) {
-            fulfill(refreshToken);
+        this.getEmail_(accessToken).then(function(email) {
+          this.logger.error('email: ' + email);
+
+          if (responseObj.refresh_token) {
+            fulfill({
+                refreshToken: responseObj.refresh_token,
+                accessToken: accessToken,
+                email: email});
             return;
           }
-          // No refresh token was returned to us, or has been stored for this
-          // email address (this would happen if the user already granted us
-          // a token but re-installed the chrome app).  Try again forcing
-          // the approval prompt for this email address.
-          this.tryToGetRefreshToken_(true, email).then(function(responseObj) {
-            this.logger.error('2nd tryToGetRefreshToken_ returned: ' + JSON.stringify(responseObj));
-            if (responseObj.refresh_token) {
-              this.saveRefreshTokenForEmail_(email, responseObj.refresh_token);
-              fulfill(responseObj.refresh_token);
-            } else {
-              reject(new Error('responseObj does not contain refresh_token'));
+          // If no refresh_token is returned, it may mean that the user has already
+          // granted this app a refresh token.  We should first check to see if we
+          // already have a refresh token stored for this user, and if not we should
+          // prompt them again with approval_prompt=force to ensure we get a refresh
+          // token.
+          // Note loadRefreshTokenForEmail_ will fulfill with null if there is
+          // no refresh token saved.
+          this.loadRefreshTokenForEmail_(email).then(function(refreshToken) {
+            this.logger.error('loadRefreshTokenForEmail_ returned: ' + refreshToken);
+            if (refreshToken) {
+              fulfill({
+                  refreshToken: refreshToken,
+                  accessToken: accessToken,
+                  email: email});
+              return;
             }
-          }.bind(this)).catch(function(error) {
-            reject(new Error('Failed to get refresh_token with forcePrompt'));
+            // No refresh token was returned to us, or has been stored for this
+            // email address (this would happen if the user already granted us
+            // a token but re-installed the chrome app).  Try again forcing
+            // the approval prompt for this email address.
+            this.tryToGetRefreshToken_(true, email).then(function(responseObj) {
+              this.logger.error('2nd tryToGetRefreshToken_ returned: ' + JSON.stringify(responseObj));
+              if (responseObj.refresh_token) {
+                fulfill({
+                    refreshToken: responseObj.refresh_token,
+                    accessToken: accessToken,
+                    email: email});
+              } else {
+                reject(new Error('responseObj does not contain refresh_token'));
+              }
+            }.bind(this)).catch(function(error) {
+              reject(new Error('Failed to get refresh_token with forcePrompt'));
+            }.bind(this));
           }.bind(this));
         }.bind(this));
       }.bind(this));
@@ -146,42 +163,28 @@ XMPPSocialProvider.prototype.getRefreshTokenInteractive_ = function() {
   }.bind(this));
 };
 
-
 XMPPSocialProvider.prototype.saveRefreshTokenForEmail_ =
-    function(email, refrehToken) {
-  this.storage.set('Google-Refreh-Token:' + email, refrehToken);
+    function(refreshToken, email) {
+  this.storage.set('Google-Refresh-Token:' + email, refreshToken);
 };
-
 
 XMPPSocialProvider.prototype.loadRefreshTokenForEmail_ = function(email) {
-  return this.storage.get('Google-Refreh-Token:' + email);
+  return this.storage.get('Google-Refresh-Token:' + email);
 };
 
-
-XMPPSocialProvider.prototype.saveMostRecentRefreshToken_ =
-    function(refrehToken) {
-  this.storage.set('Google-Refreh-Token-MostRecent', refrehToken);
+XMPPSocialProvider.prototype.saveLastRefreshTokenAndEmail_ =
+    function(refreshToken, email) {
+  this.storage.set('Google-Refresh-Token-Last',
+      JSON.stringify({refreshToken: refreshToken, email: email}));
 };
 
-
-XMPPSocialProvider.prototype.loadMostRecentRefreshToken_ = function() {
-  return this.storage.get('Google-Refreh-Token-MostRecent');
-};
-
-
-// TODO: this is resulting in 2 XHRs... can I just keep/save the email?
-XMPPSocialProvider.prototype.getCredentials_ = function(accessToken) {
-  return this.getEmail_(accessToken).then(function(email) {
-    return {
-      userId: email,
-      jid: email,
-      oauth2_token: accessToken,
-      oauth2_auth: 'http://www.google.com/talk/protocol/auth',
-      host: 'talk.google.com'
-    };
+XMPPSocialProvider.prototype.loadLastRefreshTokenAndEmail_ = function() {
+  return new Promise(function(fulfill, reject) {
+    this.storage.get('Google-Refresh-Token-Last').then(function(data) {
+      fulfill(JSON.parse(data));
+    }.bind(this));
   }.bind(this));
 };
-
 
 XMPPSocialProvider.prototype.getEmail_ = function(accessToken) {
   return new Promise(function(fulfill, reject) {
@@ -197,11 +200,6 @@ XMPPSocialProvider.prototype.getEmail_ = function(accessToken) {
     xhr.send();
   }.bind(this));
 };
-
-
-
-
-
 
 // TODO: use core.xhr everywhere
 XMPPSocialProvider.prototype.getCode_ = function(
