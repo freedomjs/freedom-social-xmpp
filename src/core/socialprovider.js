@@ -122,6 +122,14 @@ XMPPSocialProvider.prototype.initializeState = function() {
  * @param {Function} continuation Callback upon connection
  */
 XMPPSocialProvider.prototype.connect = function(continuation) {
+  if (this.client) {
+    // Store our new credentials since logging out the old client
+    // will clear this.credentials.
+    var newCredentials = this.credentials;
+    this.logout();
+    this.credentials = newCredentials;
+  }
+
   var key, jid, connectOpts = {
     xmlns: 'jabber:client',
     jid: this.id,
@@ -166,8 +174,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
 
 
     if (this.client) {
-      this.client.end();
-      delete this.client;
+      this.logout();
     }
   }.bind(this));
   this.client.addListener('offline', function(e) {
@@ -207,7 +214,7 @@ XMPPSocialProvider.prototype.connect = function(continuation) {
  * @method clearCachedCredentials
  */
 XMPPSocialProvider.prototype.clearCachedCredentials = function(continuation) {
-  delete this.credentials;
+  this.credentials = null;
   continuation();
 };
 
@@ -294,10 +301,6 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
             body.push(this.messages[to][i].message);
           }
           message.t(JSON.stringify(body));
-          stanza.c('nos:skiparchive', {
-            value: 'true',
-            'xmlns:nos' : 'google:nosave'
-          });
         } else {
           body = '';
           for (i = 0; i < this.messages[to].length; i += 1) {
@@ -309,6 +312,10 @@ XMPPSocialProvider.prototype.sendMessage = function(to, msg, continuation) {
           message.t(body);
         }
 
+        stanza.c('nos:skiparchive', {
+          value: 'true',
+          'xmlns:nos' : 'google:nosave'
+        });
 
         try {
           this.client.send(message);
@@ -538,7 +545,7 @@ XMPPSocialProvider.prototype.ping_ = function() {
         (!this.lastMessageTimestampMs_ ||
          this.lastMessageTimestampMs_ < pingTimestampMs)) {
       // No response to ping, we are disconnected.
-      console.warn('No ping response from server, logging out');
+      this.logger.warn('No ping response from server, logging out');
       this.logout();
     }
   }.bind(this), this.MAX_MS_PING_REPSONSE_);
@@ -546,7 +553,7 @@ XMPPSocialProvider.prototype.ping_ = function() {
 
 XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
   if (this.pollForDisconnectInterval_) {
-    console.error('startPollingForDisconnect_ called while already polling');
+    this.logger.error('startPollingForDisconnect_ called while already polling');
     return;
   }
 
@@ -558,7 +565,7 @@ XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
       // Timeout expected to run every 1000 ms didn't run for over 2000 ms,
       // probably because the computer went to sleep.  Send a ping to check
       // that we are still connected to the XMPP server.
-      console.log('Detected sleep for ' +
+      this.logger.log('Detected sleep for ' +
           (nowTimestampMs - lastAwakeTimestampMs) + 'ms');
       this.ping_();
     }
@@ -578,7 +585,6 @@ XMPPSocialProvider.prototype.startPollingForDisconnect_ = function() {
 
 XMPPSocialProvider.prototype.logout = function(continuation) {
   this.status = 'offline';
-  this.credentials = null;
   this.lastMessageTimestampMs_ = null;
   if (this.pollForDisconnectInterval_) {
     clearInterval(this.pollForDisconnectInterval_);
@@ -589,6 +595,14 @@ XMPPSocialProvider.prototype.logout = function(continuation) {
       type: 'unavailable'
     }));
     this.client.end();
+    // end() still relies on the client's event listeners
+    // so they can only be removed after calling end().
+    this.client.removeAllListeners('online');
+    this.client.removeAllListeners('error');
+    this.client.removeAllListeners('offline');
+    this.client.removeAllListeners('close');
+    this.client.removeAllListeners('end');
+    this.client.removeAllListeners('stanza');
     this.client = null;
   }
   if (continuation) {
