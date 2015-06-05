@@ -79,6 +79,10 @@ XMPPSocialProvider.prototype.login = function(loginOpts, continuation) {
 XMPPSocialProvider.prototype.getCredentialsFromStorage_ = function() {
   return new Promise(function(fulfill, reject) {
     this.loadLastRefreshTokenAndEmail_().then(function(data) {
+      if (!data) {
+        reject(new Error('Could not load last refresh token and email'));
+        return;
+      }
       var email = data.email;
       var refreshToken = data.refreshToken;
       this.getAccessTokenFromRefreshToken_(refreshToken).then(
@@ -237,6 +241,9 @@ XMPPSocialProvider.prototype.getCode_ = function(
   }.bind(this));
 };
 
+// Returns a Promise which fulfills with the object Google gives us upon
+// requesting a refresh token.  This object will always have an access_token,
+// but may not have a refresh_token if forcePrompt==false.
 XMPPSocialProvider.prototype.tryToGetRefreshToken_ = function(
     forcePrompt, authUserEmail) {
   return new Promise(function(fulfill, reject) {
