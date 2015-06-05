@@ -169,7 +169,7 @@ module.exports = function(grunt) {
     'copy:dist'
   ]);
 
-  // Build` the demos
+  // Build the demos
   grunt.registerTask('demos', [
     'build',
     'copy:demo_chrome_xmpp',
