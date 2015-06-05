@@ -165,11 +165,11 @@ module.exports = function(grunt) {
   // Compile into build/
   grunt.registerTask('build', [
     'jshint',
-//    'browserify',
+    'browserify',
     'copy:dist'
   ]);
 
-  // Build the demos
+  // Build` the demos
   grunt.registerTask('demos', [
     'build',
     'copy:demo_chrome_xmpp',
