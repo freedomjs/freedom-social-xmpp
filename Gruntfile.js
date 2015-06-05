@@ -58,16 +58,6 @@ module.exports = function(grunt) {
         dest: 'build/demo_chrome_google/',
         flatten: true, filter: 'isFile', expand: true
       },
-      demo_chrome_facebook: {
-        src: [
-          'dist/*',
-          'src/demo_common/*',
-          'node_modules/freedom-for-chrome/freedom-for-chrome.js',
-          'src/demo_chrome_facebook/**/*',
-        ],
-        dest: 'build/demo_chrome_facebook/',
-        flatten: true, filter: 'isFile', expand: true
-      },
       demo_firefox_google: {
         src: [ '**/*' ],
         dest: 'build/demo_firefox_google/',
@@ -82,22 +72,6 @@ module.exports = function(grunt) {
           'src/demo_chrome_google/demo.json',
         ],
         dest: 'build/demo_firefox_google/data/',
-        flatten: true, filter: 'isFile', expand: true
-      },
-      demo_firefox_facebook: {
-        src: [ '**/*' ],
-        dest: 'build/demo_firefox_facebook/',
-        cwd: 'src/demo_firefox_facebook/',
-        filter: 'isFile', expand: true,
-      },
-      demo_firefox_facebook_data: {
-        src: [
-          'dist/*',
-          'src/demo_common/**/*',
-          'node_modules/freedom-for-firefox/freedom-for-firefox.jsm',
-          'src/demo_chrome_facebook/demo.json',
-        ],
-        dest: 'build/demo_firefox_facebook/data/',
         flatten: true, filter: 'isFile', expand: true
       },
       jasmine: {
@@ -191,7 +165,7 @@ module.exports = function(grunt) {
   // Compile into build/
   grunt.registerTask('build', [
     'jshint',
-    'browserify',
+//    'browserify',
     'copy:dist'
   ]);
 
@@ -200,11 +174,8 @@ module.exports = function(grunt) {
     'build',
     'copy:demo_chrome_xmpp',
     'copy:demo_chrome_google',
-    'copy:demo_chrome_facebook',
     'copy:demo_firefox_google',
-    'copy:demo_firefox_google_data',
-    'copy:demo_firefox_facebook',
-    'copy:demo_firefox_facebook_data',
+    'copy:demo_firefox_google_data'
   ]);
 
   // Testing meta-task
